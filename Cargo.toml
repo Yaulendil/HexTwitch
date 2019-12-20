@@ -5,8 +5,11 @@ version = "0.1.0-dev0"
 authors = ["Davarice <davarice@protonmail.com>"]
 edition = "2018"
 
-[dependencies]
-hexchat-plugin = "0.2.13"
+#[dependencies]
+#hexchat-plugin = "0.2.13"
+
+[dependencies.hexchat-plugin]
+path = "../rust.hexchat.hexchat-plugin"
 
 [lib]
 name = "hextwitchr"

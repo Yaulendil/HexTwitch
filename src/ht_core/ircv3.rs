@@ -7,11 +7,11 @@ use std::str;
 
 
 pub struct Message<'a> {
-    prefix: &'a str,
-    command: &'a str,
-    args: Vec<&'a str>,
-    trail: &'a str,
-    tags: HashMap<&'a str, &'a str>,
+    pub prefix: &'a str,
+    pub command: &'a str,
+    pub args: Vec<&'a str>,
+    pub trail: &'a str,
+    pub tags: HashMap<&'a str, &'a str>,
 }
 
 
@@ -36,9 +36,9 @@ fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
 ///
 /// Input: `String`
 /// Return: `Message`
-pub fn split<'a>(line: &'a mut String) -> Message<'a> {
+pub fn split<'a>(full_str: &'a str) -> Message<'a> {
     // First, decode the data into something we can work.
-    let full_str: &str = line.as_str();
+//    let full_str: &str = line.as_str();
 
     // Then, initialize the Output Structures.
     let mut tags = HashMap::new();
