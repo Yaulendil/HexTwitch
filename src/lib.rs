@@ -55,10 +55,7 @@ impl Plugin for HexTwitch {
             "PRIVMSG",  // Catch PRIVMSG events; Chat Messages.
 
             |ph: &mut PluginHandle, _word, _word_eol, attr: EventAttrs| {
-
-                // Send to `CURRENT.store()`.
-                unsafe { ht_core::CURRENT.put(ph, attr.tags.as_str()) };
-                // FIXME: `attr.tags` does not live long enough
+                unsafe { ht_core::CURRENT.put(ph, attr.tags) };
 
                 hexchat_plugin::EAT_NONE
             },

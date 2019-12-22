@@ -6,12 +6,20 @@ use std::collections::HashMap;
 use std::str;
 
 
-pub struct Message<'a> {
-    pub prefix: &'a str,
-    pub command: &'a str,
-    pub args: Vec<&'a str>,
-    pub trail: &'a str,
-    pub tags: HashMap<&'a str, &'a str>,
+pub struct Message {
+    pub prefix: String,
+    pub command: String,
+    pub args: Vec<String>,
+    pub trail: String,
+    pub tags: HashMap<String, String>,
+}
+
+
+impl Message{
+    pub fn get_signature(&mut self) -> String {
+        //  TODO: Change to something useful.
+        format!("{}:{}", self.prefix, self.command)
+    }
 }
 
 
@@ -36,37 +44,31 @@ fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
 ///
 /// Input: `String`
 /// Return: `Message`
-pub fn split<'a>(full_str: &'a str) -> Message<'a> {
-    // First, decode the data into something we can work.
-//    let full_str: &str = line.as_str();
-
-    // Then, initialize the Output Structures.
+pub fn split(full_str: String) -> Message {
     let mut tags = HashMap::new();
     let message: &str;
 
-    // Third, break the line down.
+    // Break the line down.
     if full_str.starts_with('@') {
         // The Tags String is the first half of the original message received by IRC. The "regular"
         //  message begins after the first space.
-        let (tag_str, msg_str) = split_at_first(&full_str[1..], " ");
-        message = msg_str;
+        let (tag_str, main_str) = split_at_first(&full_str, " ");
+        message = main_str;
 
         // Break the tagstr into a Split Iterator. Spliterator?
-        let tags_str_iter = tag_str.split(';');
+        let tags_str_iter = tag_str[1..].split(';');
 
         // Loop through the Spliterator of pair strings, and break each one the
         //  rest of the way down. Add values to the HashMap.
         for kvp in tags_str_iter {
-            if !kvp.is_empty() {
-                let (key, val) = split_at_first(kvp, "=");
-                if !key.is_empty() {
-                    tags.insert(key, val);
-                }
+            let (key, val) = split_at_first(kvp, "=");
+            if !key.is_empty() {
+                tags.insert(key.to_string(), val.to_string());
             }
         }
     } else {
         // There are no tags. This is pure message.
-        message = full_str;
+        message = &full_str;
     }
 
     // Now, parse the message itself.
@@ -75,7 +77,7 @@ pub fn split<'a>(full_str: &'a str) -> Message<'a> {
     if message.starts_with(':') {
         // This Message has a Prefix. The Prefix is most likely hostname and/or
         //  server info. It ends at the first space.
-        prefix = split_at_first(&message[1..], " ").0;
+        prefix = &split_at_first(&message, " ").0[1..];
     } else {
         prefix = ""
     }
@@ -87,16 +89,15 @@ pub fn split<'a>(full_str: &'a str) -> Message<'a> {
     // The Command is the first word before any Arguments.
     let (command, args_str) = split_at_first(cmd_and_args, " ");
 
-    // The Arguments should be split apart into a Vector of `str`s.
-    let args = args_str.split_ascii_whitespace().collect::<Vec<&'a str>>();
+    // The Arguments should be split apart into a Vector of `String`s.
+    let args = args_str.split_ascii_whitespace().map(String::from).collect::<Vec<String>>();
 
     // Compile everything into a Message Struct, and send it back up.
-    let output = Message {
-        prefix,
-        command,
+    Message {
+        prefix: prefix.to_string(),
+        command: command.to_string(),
         args,
-        trail,
+        trail: trail.to_string(),
         tags,
-    };
-    output
+    }
 }

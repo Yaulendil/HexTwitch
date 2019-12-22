@@ -2,28 +2,29 @@ mod ircv3;
 
 use hexchat_plugin::{EAT_NONE, EventAttrs, PluginHandle, Word, WordEol};
 use ircv3::{Message, split};
+use std::mem::replace;
 
 
-pub struct Sponge<'a> {
-    pub value: Option<Message<'a>>,
+pub struct Sponge {
+    pub signature: Option<String>,
+    pub value: Option<Message>,
 }
 
-impl<'a> Sponge<'a> {
-    pub fn put(&mut self, _ph: &mut PluginHandle, line: &'a str) {
-        let new: Message = split(line);
+impl Sponge {
+    pub fn put(&mut self, _ph: &mut PluginHandle, line: String) {
+        let mut new: Message = split(line);
+        self.signature = Some(new.get_signature());
         self.value = Some(new);
     }
 
     pub fn pop(&mut self, signature: &str) -> Option<Message> {
         match &self.value {
             None => None,  // If we have no Message, return None.
-            Some(msg) => {
+            Some(_msg) => {
                 // If we have a Message...
-                if msg.prefix == signature {
-                    // ...and the Signature matches, delete Value.
-                    self.value = None;
-                    // And then, return the Message.
-                    Some(msg)  // FIXME
+                if self.signature.as_ref().unwrap_or(&"".to_string()) == signature {
+                    // ...and the Signature matches, return and delete Value.
+                    replace(&mut self.value, None)
                 } else {
                     // Otherwise, keep the Message and return None.
                     None
@@ -35,6 +36,7 @@ impl<'a> Sponge<'a> {
 
 
 pub static mut CURRENT: Sponge = Sponge {
+    signature: None,
     value: None,
 };
 
