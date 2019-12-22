@@ -11,7 +11,7 @@ pub struct Sponge {
 }
 
 impl Sponge {
-    pub fn put(&mut self, _ph: &mut PluginHandle, line: String) {
+    pub fn put(&mut self, _ph: &mut PluginHandle, line: &str) {
         let mut new: Message = split(line);
         self.signature = Some(new.get_signature());
         self.value = Some(new);

@@ -15,10 +15,10 @@ pub struct Message {
 }
 
 
-impl Message{
+impl Message {
     pub fn get_signature(&mut self) -> String {
-        //  TODO: Change to something useful.
         format!("{}:{}", self.prefix, self.command)
+        //  TODO: Change to something useful.
     }
 }
 
@@ -44,7 +44,7 @@ fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
 ///
 /// Input: `String`
 /// Return: `Message`
-pub fn split(full_str: String) -> Message {
+pub fn split(full_str: &str) -> Message {
     let mut tags = HashMap::new();
     let message: &str;
 
