@@ -1,7 +1,7 @@
 mod ircv3;
-mod messaging;
+mod events;
 
-use hexchat_plugin::{EAT_NONE, EventAttrs, InfoId, PluginHandle, Word, WordEol};
+use hexchat_plugin::{EAT_HEXCHAT, EAT_NONE, EventAttrs, InfoId, PluginHandle, Word, WordEol};
 use ircv3::{Message, split};
 use std::mem::replace;
 
@@ -12,7 +12,8 @@ pub struct Sponge {
 }
 
 impl Sponge {
-    pub fn put(&mut self, _ph: &mut PluginHandle, line: &str) {
+//    pub fn put(&mut self, &mut new: Message) {
+    pub fn put(&mut self, line: &str) {
         let mut new: Message = split(line);
         self.signature = Some(new.get_signature());
         self.value = Some(new);
@@ -67,11 +68,25 @@ pub fn cb_server(
                 EAT_NONE
             } else {
                 let msg: Message = split(attr.tags);
-                if &msg.command == "PRIVMSG" {
-                    //  Do not interfere with PRIVMSGs.
-                    EAT_NONE
-                } else {
-                    messaging::handle_event(ph, msg)
+                match msg.command.as_str() {
+                    //  Chat Messages.
+                    "PRIVMSG" => unsafe {
+                        //  FIXME: Passing Tag String causes `split(attr.tags)` to be run twice.
+                        CURRENT.put(attr.tags);
+                        EAT_NONE
+                    },
+                    "WHISPER" => events::whisper(ph, msg),
+
+                    "ROOMSTATE" => EAT_HEXCHAT,
+                    "USERSTATE" => events::userstate(ph, msg),
+
+                    "USERNOTICE" => events::usernotice(ph, msg),
+                    "HOSTTARGET" => events::hosttarget(ph, msg),
+
+                    //  Moderator Actions.
+                    "CLEARMSG" => events::clearmsg(ph, msg),
+                    "CLEARCHAT" => events::clearchat(ph, msg),
+                    _ => EAT_NONE
                 }
             }
         }

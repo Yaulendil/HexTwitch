@@ -23,7 +23,6 @@ struct HexTwitch {
     cmd: Mutex<Option<CommandHookHandle>>,
     print: Mutex<Option<PrintHookHandle>>,
     servmsg: Mutex<Option<ServerHookHandle>>,
-    servmsg_2: Mutex<Option<ServerHookHandle>>,
 }
 
 impl Plugin for HexTwitch {
@@ -50,21 +49,8 @@ impl Plugin for HexTwitch {
             hexchat_plugin::PRI_NORM,  // Normal Priority.
         ));
 
-        // Hook PRIVMSG Server Messages into Store Method of Current Message.
-        *self.servmsg.lock().unwrap() = Some(ph.hook_server_attrs(
-            "PRIVMSG",  // Catch PRIVMSG events; Chat Messages.
-
-            |ph: &mut PluginHandle, _word, _word_eol, attr: EventAttrs| {
-                unsafe { ht_core::CURRENT.put(ph, attr.tags) };
-
-                hexchat_plugin::EAT_NONE
-            },
-
-            hexchat_plugin::PRI_NORM,  // Normal Priority.
-        ));
-
         // Hook RAW LINE Server Messages into the general Handler Callback.
-        *self.servmsg_2.lock().unwrap() = Some(ph.hook_server_attrs(
+        *self.servmsg.lock().unwrap() = Some(ph.hook_server_attrs(
             "RAW LINE",  // Catch all events.
             ht_core::cb_server,  // Send to Server Callback.
             hexchat_plugin::PRI_NORM,  // Normal Priority.
