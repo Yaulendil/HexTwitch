@@ -2,7 +2,7 @@ mod ircv3;
 mod events;
 mod printing;
 
-use hexchat_plugin::{EAT_HEXCHAT, EAT_NONE, InfoId, PluginHandle, Word, WordEol};
+use hexchat_plugin::{EAT_HEXCHAT, EAT_NONE, EventAttrs, InfoId, PluginHandle, Word, WordEol};
 use ircv3::{Message, split};
 use std::mem::replace;
 

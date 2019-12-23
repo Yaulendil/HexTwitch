@@ -24,7 +24,7 @@ impl Message {
 
 
 /// Split a `str` at the first occurrence of another delimiting `str`.
-fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
+pub fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
     match line.find(delim) {
         Some(idx) => (&line[..idx], &line[idx + delim.len()..]),
         None => (line, ""),

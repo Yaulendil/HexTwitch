@@ -9,9 +9,7 @@ extern crate hexchat_plugin;
 
 mod ht_core;
 
-use hexchat_plugin::{
-    CommandHookHandle, EventAttrs, Plugin, PluginHandle, PrintHookHandle, ServerHookHandle
-};
+use hexchat_plugin::{CommandHookHandle, Plugin, PluginHandle, PrintHookHandle, ServerHookHandle};
 use std::sync::Mutex;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
@@ -32,12 +30,10 @@ impl Plugin for HexTwitch {
         // Set Command ASDF to print "qwert" to sanity-check that we are loaded.
         *self.cmd.lock().unwrap() = Some(ph.hook_command(
             "asdf",
-
             |ph, _arg, _arg_eol| {
                 ph.print("qwert");
                 hexchat_plugin::EAT_ALL
             },
-
             hexchat_plugin::PRI_NORM,
             Some("prints 'qwert'"),
         ));
