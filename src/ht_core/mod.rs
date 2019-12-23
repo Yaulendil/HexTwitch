@@ -1,7 +1,8 @@
 mod ircv3;
 mod events;
+mod printing;
 
-use hexchat_plugin::{EAT_HEXCHAT, EAT_NONE, EventAttrs, InfoId, PluginHandle, Word, WordEol};
+use hexchat_plugin::{EAT_HEXCHAT, EAT_NONE, InfoId, PluginHandle, Word, WordEol};
 use ircv3::{Message, split};
 use std::mem::replace;
 
@@ -12,7 +13,7 @@ pub struct Sponge {
 }
 
 impl Sponge {
-//    pub fn put(&mut self, &mut new: Message) {
+    //  pub fn put(&mut self, &mut new: Message) {
     pub fn put(&mut self, line: &str) {
         let mut new: Message = split(line);
         self.signature = Some(new.get_signature());
@@ -78,7 +79,7 @@ pub fn cb_server(
                     "WHISPER" => events::whisper(ph, msg),
 
                     "ROOMSTATE" => EAT_HEXCHAT,
-                    "USERSTATE" => events::userstate(ph, msg),
+                    "USERSTATE" => unsafe { events::userstate(ph, msg) },
 
                     "USERNOTICE" => events::usernotice(ph, msg),
                     "HOSTTARGET" => events::hosttarget(ph, msg),
