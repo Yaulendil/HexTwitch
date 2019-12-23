@@ -48,18 +48,18 @@ pub fn split(full_str: &str) -> Message {
     let mut tags = HashMap::new();
     let message: &str;
 
-    // Break the line down.
+    //  Break the line down.
     if full_str.starts_with('@') {
-        // The Tags String is the first half of the original message received by IRC. The "regular"
-        //  message begins after the first space.
+        //  The Tags String is the first half of the original message received by IRC. The "regular"
+        //      message begins after the first space.
         let (tag_str, main_str) = split_at_first(&full_str, " ");
         message = main_str;
 
-        // Break the tagstr into a Split Iterator. Spliterator?
+        //  Break the tagstr into a Split Iterator. Spliterator?
         let tags_str_iter = tag_str[1..].split(';');
 
-        // Loop through the Spliterator of pair strings, and break each one the
-        //  rest of the way down. Add values to the HashMap.
+        //  Loop through the Spliterator of pair strings, and break each one the
+        //      rest of the way down. Add values to the HashMap.
         for kvp in tags_str_iter {
             let (key, val) = split_at_first(kvp, "=");
             if !key.is_empty() {
@@ -67,32 +67,33 @@ pub fn split(full_str: &str) -> Message {
             }
         }
     } else {
-        // There are no tags. This is pure message.
+        //  There are no tags. This is pure message.
         message = &full_str;
     }
 
-    // Now, parse the message itself.
-    // This format is specified in Section 2.3.1 of RFC 1459.
-    let prefix: &str;
-    if message.starts_with(':') {
-        // This Message has a Prefix. The Prefix is most likely hostname and/or
-        //  server info. It ends at the first space.
-        prefix = &split_at_first(&message, " ").0[1..];
-    } else {
-        prefix = ""
-    }
+    //  Now, parse the message itself.
+    //  This format is specified in Section 2.3.1 of RFC 1459.
+    let prefix: &str = {
+        if message.starts_with(':') {
+            //  This Message has a Prefix. The Prefix is most likely hostname and/or server info. It
+            //      ends at the first space.
+            &split_at_first(&message, " ").0[1..]
+        } else {
+            ""
+        }
+    };
 
-    // The trailing data is found after a space and a colon. Everything up to
-    //  that point is the IRC Command and any Arguments passed to it.
+    //  The trailing data is found after a space and a colon. Everything up to
+    //      that point is the IRC Command and any Arguments passed to it.
     let (cmd_and_args, trail) = split_at_first(message, " :");
 
-    // The Command is the first word before any Arguments.
+    //  The Command is the first word before any Arguments.
     let (command, args_str) = split_at_first(cmd_and_args, " ");
 
-    // The Arguments should be split apart into a Vector of `String`s.
+    //  The Arguments should be split apart into a Vector of `String`s.
     let args = args_str.split_ascii_whitespace().map(String::from).collect::<Vec<String>>();
 
-    // Compile everything into a Message Struct, and send it back up.
+    //  Compile everything into a Message Struct, and send it back up.
     Message {
         prefix: prefix.to_string(),
         command: command.to_string(),
