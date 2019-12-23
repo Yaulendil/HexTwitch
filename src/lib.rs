@@ -45,8 +45,8 @@ impl Plugin for HexTwitch {
 
         // Hook Print Events into Handler.
         *self.print.lock().unwrap() = Some(ph.hook_print(
-            "Channel Message",  // Catch all events.
-            ht_core::cb_print,  // Send to Server Callback.
+            "Channel Message",  // Catch Message Events.
+            ht_core::cb_print,  // Send to Print Callback.
             hexchat_plugin::PRI_NORM,  // Normal Priority.
         ));
 

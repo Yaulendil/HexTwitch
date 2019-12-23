@@ -1,6 +1,7 @@
 mod ircv3;
+mod messaging;
 
-use hexchat_plugin::{EAT_NONE, EventAttrs, PluginHandle, Word, WordEol};
+use hexchat_plugin::{EAT_NONE, EventAttrs, InfoId, PluginHandle, Word, WordEol};
 use ircv3::{Message, split};
 use std::mem::replace;
 
@@ -55,13 +56,24 @@ pub fn cb_print(
 }
 
 
+/// Handle a Server Message, received by the Hook for "RAW LINE".
 pub fn cb_server(
-    _ph: &mut PluginHandle, _word: Word, _word_eol: WordEol, attr: EventAttrs,
+    ph: &mut PluginHandle, _word: Word, _word_eol: WordEol, attr: EventAttrs,
 ) -> hexchat_plugin::Eat {
-//    let msg: Message = split(&attr.tags.as_str());
-    //  TODO:
-    //  if msg.command != "PRIVMSG":
-    //      Check for Subscriptions, etc.
-
-    EAT_NONE
+    match ph.get_info(&InfoId::Network) {
+        None => EAT_NONE,
+        Some(network) => {
+            if &network != "Twitch" {
+                EAT_NONE
+            } else {
+                let msg: Message = split(attr.tags);
+                if &msg.command == "PRIVMSG" {
+                    //  Do not interfere with PRIVMSGs.
+                    EAT_NONE
+                } else {
+                    messaging::handle_event(ph, msg)
+                }
+            }
+        }
+    }
 }
