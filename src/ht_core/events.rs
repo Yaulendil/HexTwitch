@@ -1,64 +1,65 @@
-use hexchat_plugin::{Eat, EAT_ALL, EAT_HEXCHAT, EAT_NONE, PluginHandle};
+use hexchat::{EatMode, get_channel_name, get_network_name};
 use super::ircv3::Message;
 use super::printing::USERSTATE;
 
 
-fn raid(ph: &mut PluginHandle, msg: &Message) -> Eat {
-    EAT_NONE
+fn raid(msg: &Message) -> EatMode {
+    EatMode::None
 }
 
 
-fn special(ph: &mut PluginHandle, msg: &Message, stype: &str) -> Eat {
-    EAT_NONE
+fn special(msg: &Message, stype: &str) -> EatMode {
+    EatMode::None
 }
 
 
-fn subscription(ph: &mut PluginHandle, msg: &Message, stype: &str) -> Eat {
-    EAT_NONE
+fn subscription(msg: &Message, stype: &str) -> EatMode {
+    EatMode::None
 }
 
 
-pub fn whisper(ph: &mut PluginHandle, msg: Message) -> Eat {
-    EAT_NONE
+pub fn whisper(msg: Message) -> EatMode {
+    EatMode::None
 }
 
 
-pub unsafe fn userstate(ph: &mut PluginHandle, msg: Message) -> Eat {
-    USERSTATE.set(
-        format!("{}:{}",
-                ph.get_info(&hexchat_plugin::InfoId::Network).expect("Network not found"),
-                ph.get_info(&hexchat_plugin::InfoId::Channel).expect("Channel not found"),
+pub fn userstate(msg: &Message) -> EatMode {
+    USERSTATE.lock().unwrap().set(
+        format!(
+            "{}:{}",
+            get_network_name().expect("Network not found"),
+            get_channel_name(),
         ),
         msg.tags.get("badges").unwrap(),
     );
-    EAT_ALL
+    EatMode::All
 }
 
 
-pub fn usernotice(ph: &mut PluginHandle, msg: Message) -> Eat {
+pub fn usernotice(msg: Message) -> EatMode {
     match msg.tags.get("msg-id") {
-        None => EAT_NONE,
+        None => EatMode::None,
         Some(stype) => {
             match stype.as_str() {
-                "raid" => raid(ph, &msg),
-                "charity" | "rewardgift" | "ritual" => special(ph, &msg, stype),
-                _ => subscription(ph, &msg, stype)
+                "raid" => raid(&msg),
+                "charity" | "rewardgift" | "ritual" => special(&msg, stype),
+                _ => subscription(&msg, stype),
             }
         }
     }
 }
 
 
-pub fn hosttarget(ph: &mut PluginHandle, msg: Message) -> Eat {
-    EAT_NONE
+pub fn hosttarget(msg: Message) -> EatMode {
+    EatMode::None
 }
 
 
-pub fn clearmsg(ph: &mut PluginHandle, msg: Message) -> Eat {
-    EAT_NONE
+pub fn clearmsg(msg: Message) -> EatMode {
+    EatMode::None
 }
 
 
-pub fn clearchat(ph: &mut PluginHandle, msg: Message) -> Eat {
-    EAT_NONE
+pub fn clearchat(msg: Message) -> EatMode {
+    EatMode::None
 }

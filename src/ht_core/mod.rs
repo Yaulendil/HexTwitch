@@ -2,9 +2,13 @@ mod ircv3;
 mod events;
 mod printing;
 
-use hexchat_plugin::{EAT_HEXCHAT, EAT_NONE, EventAttrs, InfoId, PluginHandle, Word, WordEol};
-use ircv3::{Message, split};
-use std::mem::replace;
+
+use std::sync::Mutex;
+
+use chrono::{DateTime, Utc};
+use hexchat::{EatMode, get_network_name};
+
+use ircv3::Message;
 
 
 pub struct Sponge {
@@ -13,83 +17,77 @@ pub struct Sponge {
 }
 
 impl Sponge {
-    //  pub fn put(&mut self, &mut new: Message) {
-    pub fn put(&mut self, line: &str) {
-        let mut new: Message = split(line);
-        self.signature = Some(new.get_signature());
-        self.value = Some(new);
+    /// Place a Message into the Sponge. The previous Message in the Sponge, if
+    ///     any, is removed. Takes Ownership of the new Message.
+    ///
+    /// Input: `Message`
+    pub fn put(&mut self, mut new: Message) {
+        self.signature.replace(new.get_signature());
+        self.value.replace(new);
     }
 
+    /// Remove the Message from the Sponge, but only if the current Message has
+    ///     the Signature specified.
+    ///
+    /// Input: `&str`
+    /// Return: `Option<Message>`
     pub fn pop(&mut self, signature: &str) -> Option<Message> {
-        match &self.value {
-            None => None,  // If we have no Message, return None.
-            Some(_msg) => {
-                // If we have a Message...
-                if self.signature.as_ref().unwrap_or(&"".to_string()) == signature {
-                    // ...and the Signature matches, return and delete Value.
-                    replace(&mut self.value, None)
-                } else {
-                    // Otherwise, keep the Message and return None.
-                    None
-                }
-            }
+        match (&self.signature, &mut self.value) {
+            (Some(sig), msg) if sig == signature => msg.take(),
+            _ => None,
         }
     }
 }
 
 
-pub static mut CURRENT: Sponge = Sponge {
-    signature: None,
-    value: None,
-};
+safe_static! {
+    static lazy CURRENT: Mutex<Sponge> = Mutex::new(Sponge { signature: None, value: None });
+}
 
 
-pub fn cb_print(
-    _ph: &mut PluginHandle, _word: Word,
-) -> hexchat_plugin::Eat {
-    //  TODO:
-    //  Make signature
-    //  event = CURRENT.pop(signature)
-    //  if event:
-    //      re-emit Print with User Badges, etc.
-    //      EAT_ALL
+pub fn cb_print(_word: &[String], dt: DateTime<Utc>) -> EatMode {
+    //  FIXME
+    let sig: &str = "asdf";
+    //  FIXME
 
-    EAT_NONE
+    match CURRENT.lock().unwrap().pop(sig) {
+        None => EatMode::None,
+        Some(msg) => {
+            //  TODO: Re-emit Print with User Badges, etc.
+//            EatMode::All
+            EatMode::None
+        }
+    }
 }
 
 
 /// Handle a Server Message, received by the Hook for "RAW LINE".
-pub fn cb_server(
-    ph: &mut PluginHandle, _word: Word, _word_eol: WordEol, attr: EventAttrs,
-) -> hexchat_plugin::Eat {
-    match ph.get_info(&InfoId::Network) {
-        None => EAT_NONE,
-        Some(network) => {
-            if &network != "Twitch" {
-                EAT_NONE
-            } else {
-                let msg: Message = split(attr.tags);
-                match msg.command.as_str() {
-                    //  Chat Messages.
-                    "PRIVMSG" => unsafe {
-                        //  FIXME: Passing Tag String causes `split(attr.tags)` to be run twice.
-                        CURRENT.put(attr.tags);
-                        EAT_NONE
-                    },
-                    "WHISPER" => events::whisper(ph, msg),
+pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
+    match get_network_name() {
+        Some(network) if {
+            (&network == "Twitch") || (&network.to_lowercase() == "twitch")
+        } => {
+            let msg: Message = Message::new(&raw);
+            match msg.command.as_str() {
+                //  Chat Messages.
+                "PRIVMSG" => {
+                    CURRENT.lock().unwrap().put(msg);
+                    EatMode::None
+                },
+                "WHISPER" => events::whisper(msg),
 
-                    "ROOMSTATE" => EAT_HEXCHAT,
-                    "USERSTATE" => unsafe { events::userstate(ph, msg) },
+                "ROOMSTATE" => EatMode::Hexchat,
+                "USERSTATE" => events::userstate(&msg),
 
-                    "USERNOTICE" => events::usernotice(ph, msg),
-                    "HOSTTARGET" => events::hosttarget(ph, msg),
+                "USERNOTICE" => events::usernotice(msg),
+                "HOSTTARGET" => events::hosttarget(msg),
 
-                    //  Moderator Actions.
-                    "CLEARMSG" => events::clearmsg(ph, msg),
-                    "CLEARCHAT" => events::clearchat(ph, msg),
-                    _ => EAT_NONE
-                }
+                //  Moderator Actions.
+                "CLEARMSG" => events::clearmsg(msg),
+                "CLEARCHAT" => events::clearchat(msg),
+                _ => EatMode::None,
             }
         }
+        _ => EatMode::None,
     }
 }

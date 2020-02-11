@@ -2,15 +2,15 @@
 name = "HexTwitchR"
 description = "HexChat plugin for Twitch Chat integration over IRC"
 version = "0.1.0-dev0"
-authors = ["Davarice <davarice@protonmail.com>"]
+authors = ["Yaulendil <davarice@protonmail.com>"]
 edition = "2018"
 
-#[dependencies]
-#hexchat-plugin = "0.2.13"
+[dependencies]
+chrono = "0.4"
 
-[dependencies.hexchat-plugin]
-path = "../rust.hexchat.hexchat-plugin"
+[dependencies.hexchat]
+path = "../hexchat-rs"
 
 [lib]
 name = "hextwitchr"
-crate-type = ["dylib"]
+crate-type = ["cdylib"]
