@@ -1,0 +1,121 @@
+Index: plugins/python/python.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- plugins/python/python.py	(revision c1091c38b83ea4267c034817e6b2560e2c54daa3)
++++ plugins/python/python.py	(date 1555379609000)
+@@ -71,6 +71,7 @@
+ class Attribute:
+     def __init__(self):
+         self.time = 0
++        self.ircv3 = ""
+ 
+     def __repr__(self):
+         return '<Attribute object at {}>'.format(id(self))
+@@ -278,6 +279,7 @@
+     word_eol = create_wordlist(word_eol)
+     attr = Attribute()
+     attr.time = attrs.server_time_utc
++    attr.ircv3 = ffi.string(attrs.ircv3_line)
+     return to_cb_ret(hook.callback(word, word_eol, hook.userdata, attr))
+ 
+ 
+Index: src/common/plugin.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/common/plugin.h	(revision c1091c38b83ea4267c034817e6b2560e2c54daa3)
++++ src/common/plugin.h	(date 1555378619000)
+@@ -172,7 +172,7 @@
+ void plugin_auto_load (session *sess);
+ int plugin_emit_command (session *sess, char *name, char *word[], char *word_eol[]);
+ int plugin_emit_server (session *sess, char *name, char *word[], char *word_eol[],
+-						time_t server_time);
++						time_t server_time, char *tags);
+ int plugin_emit_print (session *sess, char *word[], time_t server_time);
+ int plugin_emit_dummy_print (session *sess, char *name);
+ int plugin_emit_keypress (session *sess, unsigned int state, unsigned int keyval, gunichar key);
+Index: src/common/plugin.c
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/common/plugin.c	(revision c1091c38b83ea4267c034817e6b2560e2c54daa3)
++++ src/common/plugin.c	(date 1555378434000)
+@@ -631,11 +631,12 @@
+ 
+ int
+ plugin_emit_server (session *sess, char *name, char *word[], char *word_eol[],
+-					time_t server_time)
++					time_t server_time, char *tags)
+ {
+ 	hexchat_event_attrs attrs;
+ 
+ 	attrs.server_time_utc = server_time;
++	attrs.ircv3_line = tags;
+ 
+ 	return plugin_hook_run (sess, name, word, word_eol, &attrs, 
+ 							HOOK_SERVER | HOOK_SERVER_ATTRS);
+Index: src/common/hexchat-plugin.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/common/hexchat-plugin.h	(revision c1091c38b83ea4267c034817e6b2560e2c54daa3)
++++ src/common/hexchat-plugin.h	(date 1555375093000)
+@@ -52,6 +52,7 @@
+ typedef struct
+ {
+ 	time_t server_time_utc; /* 0 if not used */
++	char *ircv3_line;
+ } hexchat_event_attrs;
+ 
+ #ifndef PLUGIN_C
+Index: src/common/proto-irc.c
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/common/proto-irc.c	(revision c1091c38b83ea4267c034817e6b2560e2c54daa3)
++++ src/common/proto-irc.c	(date 1555375750000)
+@@ -1529,9 +1529,12 @@
+ 	char *word[PDIWORDS+1];
+ 	char *word_eol[PDIWORDS+1];
+ 	char *pdibuf;
++	char *fbuf;
+ 	message_tags_data tags_data = MESSAGE_TAGS_DATA_INIT;
+ 
+ 	pdibuf = g_malloc (len + 1);
++	fbuf = g_malloc (len + 1);
++	strcpy (fbuf, buf);
+ 
+ 	sess = serv->front_session;
+ 
+@@ -1575,7 +1578,7 @@
+ 		word_eol[1] = buf;	/* keep the ":" for plugins */
+ 
+ 		if (plugin_emit_server (sess, type, word, word_eol,
+-								tags_data.timestamp))
++								tags_data.timestamp, fbuf))
+ 			goto xit;
+ 
+ 		word[1]++;
+@@ -1586,7 +1589,7 @@
+ 		word[0] = type = word[1];
+ 
+ 		if (plugin_emit_server (sess, type, word, word_eol,
+-								tags_data.timestamp))
++								tags_data.timestamp, fbuf))
+ 			goto xit;
+ 	}
+ 
+@@ -1611,6 +1614,7 @@
+ 
+ xit:
+ 	g_free (pdibuf);
++	g_free (fbuf);
+ }
+ 
+ void
