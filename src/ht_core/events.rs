@@ -30,20 +30,20 @@ pub fn userstate(msg: &Message) -> EatMode {
             get_network_name().expect("Network not found"),
             get_channel_name(),
         ),
-        msg.tags.get("badges").unwrap(),
+        &msg.get_tag("badges").unwrap_or_else(String::new),
     );
     EatMode::All
 }
 
 
 pub fn usernotice(msg: Message) -> EatMode {
-    match msg.tags.get("msg-id") {
+    match msg.get_tag("msg-id") {
         None => EatMode::None,
         Some(stype) => {
             match stype.as_str() {
                 "raid" => raid(&msg),
-                "charity" | "rewardgift" | "ritual" => special(&msg, stype),
-                _ => subscription(&msg, stype),
+                "charity" | "rewardgift" | "ritual" => special(&msg, &stype),
+                _ => subscription(&msg, &stype),
             }
         }
     }

@@ -21,7 +21,7 @@ impl Sponge {
     ///     any, is removed. Takes Ownership of the new Message.
     ///
     /// Input: `Message`
-    pub fn put(&mut self, mut new: Message) {
+    pub fn put(&mut self, new: Message) {
         self.signature.replace(new.get_signature());
         self.value.replace(new);
     }

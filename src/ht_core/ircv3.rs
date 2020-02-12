@@ -15,29 +15,29 @@ pub fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
 }
 
 
+/// Message: An IRC Message in a usable structure.
+///     ustring : `String`          : UserString: `[nick!]user@host`
+///     command : `String`          : IRC Command.
+///     args    : `Vec<String>`     : Arguments passed to the Command.
+///     trail   : `String`          : Remainder of the Message. Whatever.
+///     tags    : `Option<HashMap>` : IRCv3 Tags. Strings mapped to Strings.
+///                                     This will be `None` if the original
+///                                     message did not include a Tags segment.
 pub struct Message {
     pub ustring: String,
     pub command: String,
     pub args: Vec<String>,
     pub trail: String,
-    pub tags: HashMap<String, String>,
+    pub tags: Option<HashMap<String, String>>,
 }
 
 impl Message {
-    /// Split a raw IRCv3 line into usable data.
-    ///
-    /// Provided a String in IRCv3 format, break it down into a Message Struct.
-    /// Message Struct contains:
-    ///     ustring : `String`        : UserString: `[nick!]user@host`
-    ///     command : `String`        : IRC Command.
-    ///     args    : `Vec<String>`   : Arguments passed to the Command.
-    ///     trail   : `String`        : Remainder of the Message. Whatever.
-    ///     tags    : `HashMap`       : IRCv3 Tags. Strings mapped to Strings.
+    /// Split a raw IRCv3 `String` into a usable `Message`.
     ///
     /// Input: `&str`
     /// Return: `Message`
     pub fn new(full_str: &str) -> Self {
-        let mut tags = HashMap::new();
+        let tags: Option<HashMap<String, String>>;
         let message: &str;
         //  "@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message"
 
@@ -46,6 +46,7 @@ impl Message {
             //  The Tags String is the first half of the original message
             //      received by IRC. The "regular" message begins after the
             //      first space.
+            let mut tagmap: HashMap<String, String> = HashMap::new();
             let (tag_str, main_str) = split_at_first(&full_str, " ");
             message = main_str;
 
@@ -56,9 +57,13 @@ impl Message {
             //      the rest of the way down. Add values to the HashMap.
             for kvp in tags_str_iter {
                 let (key, val) = split_at_first(kvp, "=");
-                if !key.is_empty() { tags.insert(key.to_string(), val.to_string()); }
+                if !key.is_empty() { tagmap.insert(key.to_string(), val.to_string()); }
             }
-        } else { message = &full_str; }
+            tags = Some(tagmap);
+        } else {
+            tags = None;
+            message = &full_str;
+        }
         //  { badges: "bits/100", display-name: "AsdfQwert", emotes: "" }
         //  ":asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message"
 
@@ -104,8 +109,27 @@ impl Message {
     /// Get a `String` representing this `Message` which will identify it.
     ///
     /// Return: `String`
-    pub fn get_signature(&mut self) -> String {
+    pub fn get_signature(&self) -> String {
         format!("{}:{}", self.ustring, self.command)
         //  TODO: Change to something useful.
+    }
+
+    /// Retrieve a Tag from the `Message`.
+    ///
+    /// Input: `&str`
+    /// Return: `Option<String>`
+    pub fn get_tag(&self, key: &str) -> Option<String> {
+        self.tags.as_ref().and_then(|tags| Some(tags.get(key)?.to_owned()))
+    }
+
+    /// Retrieve the name of the User who sent the `Message`. If the User has a
+    ///     Nick, it will be returned; Otherwise, the Username is returned.
+    ///
+    /// Return: `&str`
+    pub fn get_user(&self) -> &str {
+        split_at_first(
+            &self.ustring,
+            if self.ustring.contains('!') { "!" } else { "@" }
+        ).0
     }
 }
