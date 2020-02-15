@@ -56,7 +56,7 @@ impl Message {
     /// Return: `Message`
     pub fn new(full_str: &str) -> Self {
         let tags: Option<HashMap<String, String>>;
-        let message: &str;
+        let full_message: &str;
         //  "@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message"
 
         //  Break the line down.
@@ -66,7 +66,7 @@ impl Message {
             //      first space.
             let mut tagmap: HashMap<String, String> = HashMap::new();
             let (tag_str, main_str) = split_at_first(&full_str, " ");
-            message = main_str;
+            full_message = main_str;
 
             //  Break the tagstr into a Split Iterator. Spliterator?
             let tags_str_iter = tag_str[1..].split(';');
@@ -80,20 +80,26 @@ impl Message {
             tags = Some(tagmap);
         } else {
             tags = None;
-            message = &full_str;
+            full_message = &full_str;
         }
         //  { badges: "bits/100", display-name: "AsdfQwert", emotes: "" }
         //  ":asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message"
 
         //  Now, parse the message itself.
         //  This format is specified in Section 2.3.1 of RFC 1459.
-        let prefix: &str = {
-            if message.starts_with(':') {
-                //  This Message has a Prefix. The Prefix is most likely
-                //      hostname and/or server info. It ends at the first space.
-                &split_at_first(&message, " ").0[1..]
-            } else { "" }
-        };
+        let prefix: &str;
+        let message: &str;
+
+        if full_message.starts_with(':') {
+            //  This Message has a Prefix. The Prefix is most likely
+            //      hostname and/or server info. It ends at the first space.
+            let (p, m) = &split_at_first(full_message, " ");
+            prefix = &p[1..];
+            message = m;
+        } else {
+            prefix = "";
+            message = full_message;
+        }
         //  "asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv"
         //  "PRIVMSG #zxcv arg2 :this is a message"
 
