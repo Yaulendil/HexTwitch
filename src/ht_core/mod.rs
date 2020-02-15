@@ -82,7 +82,7 @@ pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
             let msg: Message = Message::new(&raw);
-            match msg.command.as_str() {
+            let eat = match msg.command.as_str() {
                 //  Chat Messages.
                 "PRIVMSG" => {
                     CURRENT.lock().put(msg);
@@ -100,7 +100,9 @@ pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
                 "CLEARMSG" => events::clearmsg(msg),
                 "CLEARCHAT" => events::clearchat(msg),
                 _ => EatMode::None,
-            }
+            };
+            //  TODO: Take `Option<EatMode>` and, if `None`, print `&raw`.
+            eat
         }
         _ => EatMode::None,
     }
