@@ -106,6 +106,36 @@ impl Message {
         }
     }
 
+    /// Convert this `Message` into a `String` which is suitable for sending
+    ///     over IRC.
+    ///
+    /// Return: `String`
+    pub fn as_str(&self) -> String {
+        let mut out = String::new();
+        if let Some(tags) = &self.tags {
+            out.push('@');
+            out.push_str(&tags.iter()
+                .map(|(key, val)| format!("{}={}", key, val))
+                .collect::<Vec<String>>().join(";"));
+            out.push(' ');
+        }
+        out.push(':');
+        out.push_str(&self.ustring);
+        out.push(' ');
+        out.push_str(&self.command);
+
+        for arg in &self.args {
+            out.push(' ');
+            out.push_str(arg);
+        }
+        if &self.trail != "" {
+            out.push_str(" :");
+            out.push_str(&self.trail);
+        }
+
+        out
+    }
+
     /// Get a `String` representing this `Message` which will identify it.
     ///
     /// Return: `String`
