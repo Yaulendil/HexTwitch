@@ -68,7 +68,7 @@ pub fn hosttarget(msg: Message) -> Option<EatMode> {
 
     echo(
         PrintEvent::CHANNEL_URL,
-        &[&format!("#{}", target), &format!("https://www.twitch.tv/{}", target)],
+        &[format!("#{}", target), format!("https://www.twitch.tv/{}", target)],
     );
 
     Some(EatMode::Hexchat)
@@ -76,10 +76,26 @@ pub fn hosttarget(msg: Message) -> Option<EatMode> {
 
 
 pub fn clearmsg(msg: Message) -> Option<EatMode> {
-    Some(EatMode::None)
+    echo(
+        PrintEvent::SERVER_ERROR,
+        &[format!("A message by <{}> was deleted: {}",
+                  msg.get_tag("login")?, &msg.trail)]
+    );
+    Some(EatMode::Hexchat)
 }
 
 
 pub fn clearchat(msg: Message) -> Option<EatMode> {
-    Some(EatMode::None)
+    let mut text: String = if let Some(t) = msg.get_tag("ban-duration") {
+        format!("{} was timed out for {}s.", &msg.trail, t)
+    } else {
+        format!("{} was banned permanently.", &msg.trail)
+    };
+
+    if let Some(reason) = msg.get_tag("ban-reason") {
+        text.push_str(&format!(" Reason: {}", reason.replace("\\s", " ")));
+    }
+
+    echo(PrintEvent::SERVER_ERROR, &[text]);
+    Some(EatMode::Hexchat)
 }
