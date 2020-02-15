@@ -3,10 +3,9 @@ mod events;
 mod printing;
 
 
-use std::sync::Mutex;
-
 use chrono::{DateTime, Utc};
 use hexchat::{EatMode, get_network_name};
+use parking_lot::Mutex;
 
 use ircv3::Message;
 
@@ -64,7 +63,7 @@ pub fn cb_print(_word: &[String], dt: DateTime<Utc>) -> EatMode {
             let sig: &str = "asdf";
             //  FIXME
 
-            match CURRENT.lock().unwrap().pop(sig) {
+            match CURRENT.lock().pop(sig) {
                 None => EatMode::None,
                 Some(msg) => {
                     //  TODO: Re-emit Print with User Badges, etc.
@@ -86,13 +85,13 @@ pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
             match msg.command.as_str() {
                 //  Chat Messages.
                 "PRIVMSG" => {
-                    CURRENT.lock().unwrap().put(msg);
+                    CURRENT.lock().put(msg);
                     EatMode::None
                 }
                 "WHISPER" => events::whisper(msg),
 
                 "ROOMSTATE" => EatMode::Hexchat,
-                "USERSTATE" => events::userstate(&msg),
+                "USERSTATE" => events::userstate(msg),
 
                 "USERNOTICE" => events::usernotice(msg),
                 "HOSTTARGET" => events::hosttarget(msg),

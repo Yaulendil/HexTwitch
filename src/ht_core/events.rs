@@ -23,8 +23,8 @@ pub fn whisper(msg: Message) -> EatMode {
 }
 
 
-pub fn userstate(msg: &Message) -> EatMode {
-    USERSTATE.lock().unwrap().set(
+pub fn userstate(msg: Message) -> EatMode {
+    USERSTATE.write().set(
         format!(
             "{}:{}",
             get_network_name().expect("Network not found"),

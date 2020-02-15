@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use std::sync::Mutex;
+
+use parking_lot::RwLock;
 
 use super::ircv3::split_at_first;
 
@@ -120,5 +121,5 @@ impl States {
 }
 
 safe_static! {
-    pub static lazy USERSTATE: Mutex<States> = Mutex::new(States { map: None });
+    pub static lazy USERSTATE: RwLock<States> = RwLock::new(States { map: None });
 }
