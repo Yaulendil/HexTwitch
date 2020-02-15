@@ -50,11 +50,35 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
 
             if &msg.trail != "" { line.push_str(&format!(": {}", msg.trail)) };
 
-            echo(PrintEvent::WHOIS_SERVER_LINE, &["SUBSCRIPTION", line]);
+            echo(PrintEvent::WHOIS_SERVER_LINE, &["SUBSCRIPTION", &line]);
         }
 
-        "subgift" => {}
-        "submysterygift" => {}
+        "subgift" => {
+            let mut line = format!(
+                "<{}> is gifted a subscription by <{}>",
+                msg.get_tag("msg-param-recipient-user-name")?,
+                msg.get_tag("login")?,
+            );
+
+            if let Some(streak) = msg.get_tag("msg-param-streak-months") {
+                line.push_str(&format!(" for ({}) months in a row", streak));
+            }
+
+            if let Some(cumul) = msg.get_tag("msg-param-cumulative-months") {
+                line.push_str(&format!(", with ({}) months in total", cumul));
+            }
+
+            echo(PrintEvent::WHOIS_SERVER_LINE, &["SUBSCRIPTION", &line]);
+        }
+        "submysterygift" => {
+            let num = msg.get_tag("msg-param-mass-gift-count")?;
+            echo(PrintEvent::WHOIS_SERVER_LINE, &["SUBSCRIPTION", &format!(
+                "<{}> gives out ({}) random gift subscription{}",
+                msg.get_tag("login")?,
+                num,
+                if &num == "1" { "" } else { "s" },
+            )]);
+        }
 
         "giftpaidupgrade" => {}
         "primepaidupgrade" => {}
