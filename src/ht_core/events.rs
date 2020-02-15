@@ -31,11 +31,50 @@ fn special(msg: &Message, stype: &str) -> Option<EatMode> {
 
 
 fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
-    Some(EatMode::None)
+    //  TODO
+    match stype {
+        "sub" | "resub" => {
+            let mut line = format!("<{}> {}scribes", msg.get_tag("login")?, stype);
+
+            if let Some(plan) = msg.get_tag("msg-param-sub-plan") {
+                if &plan == "Prime" { line.push_str(" with Twitch Prime") };
+            }
+
+            if let Some(streak) = msg.get_tag("msg-param-streak-months") {
+                line.push_str(&format!(" for ({}) months in a row", streak));
+            }
+
+            if let Some(cumul) = msg.get_tag("msg-param-cumulative-months") {
+                line.push_str(&format!(", with ({}) months in total", cumul));
+            }
+
+            if &msg.trail != "" { line.push_str(&format!(": {}", msg.trail)) };
+
+            echo(PrintEvent::WHOIS_SERVER_LINE, &["SUBSCRIPTION", line]);
+        }
+
+        "subgift" => {}
+        "submysterygift" => {}
+
+        "giftpaidupgrade" => {}
+        "primepaidupgrade" => {}
+
+        "bitsbadgetier" => {}
+
+        _ => {
+            echo(PrintEvent::MOTD, &[format!(
+                "Unknown SType '{}': {}",
+                stype,
+                msg.get_tag("system-msg").unwrap_or_else(|| msg.as_str())
+            )]);
+        }
+    }
+    Some(EatMode::Hexchat)
 }
 
 
 pub fn whisper(msg: Message) -> Option<EatMode> {
+    //  TODO
     Some(EatMode::None)
 }
 
@@ -79,7 +118,7 @@ pub fn clearmsg(msg: Message) -> Option<EatMode> {
     echo(
         PrintEvent::SERVER_ERROR,
         &[format!("A message by <{}> was deleted: {}",
-                  msg.get_tag("login")?, &msg.trail)]
+                  msg.get_tag("login")?, &msg.trail)],
     );
     Some(EatMode::Hexchat)
 }
@@ -93,7 +132,9 @@ pub fn clearchat(msg: Message) -> Option<EatMode> {
     };
 
     if let Some(reason) = msg.get_tag("ban-reason") {
-        text.push_str(&format!(" Reason: {}", reason.replace("\\s", " ")));
+        if &reason != "" {
+            text.push_str(&format!(" Reason: {}", reason));
+        }
     }
 
     echo(PrintEvent::SERVER_ERROR, &[text]);
