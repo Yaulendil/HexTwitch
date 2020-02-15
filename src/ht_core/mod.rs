@@ -4,7 +4,7 @@ mod printing;
 
 
 use chrono::{DateTime, Utc};
-use hexchat::{EatMode, get_network_name};
+use hexchat::{EatMode, get_current_channel, get_network_name, print_event_to_channel, PrintEvent};
 use parking_lot::Mutex;
 
 use ircv3::Message;
@@ -82,15 +82,15 @@ pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
             let msg: Message = Message::new(&raw);
-            let eat = match msg.command.as_str() {
+            let opt_eat: Option<EatMode> = match msg.command.as_str() {
                 //  Chat Messages.
                 "PRIVMSG" => {
                     CURRENT.lock().put(msg);
-                    EatMode::None
+                    Some(EatMode::None)
                 }
                 "WHISPER" => events::whisper(msg),
 
-                "ROOMSTATE" => EatMode::Hexchat,
+                "ROOMSTATE" => Some(EatMode::Hexchat),
                 "USERSTATE" => events::userstate(msg),
 
                 "USERNOTICE" => events::usernotice(msg),
@@ -99,10 +99,17 @@ pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
                 //  Moderator Actions.
                 "CLEARMSG" => events::clearmsg(msg),
                 "CLEARCHAT" => events::clearchat(msg),
-                _ => EatMode::None,
+                _ => Some(EatMode::None),
             };
-            //  TODO: Take `Option<EatMode>` and, if `None`, print `&raw`.
-            eat
+
+            if let Some(eat) = opt_eat { eat } else {
+                print_event_to_channel(
+                    &get_current_channel(),
+                    PrintEvent::SERVER_ERROR,
+                    &[&raw],
+                );
+                EatMode::None
+            }
         }
         _ => EatMode::None,
     }
