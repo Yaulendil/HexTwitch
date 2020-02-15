@@ -1,18 +1,15 @@
 use hexchat::{
     EatMode,
     get_channel_name,
-    get_current_channel,
     get_network_name,
-    print_event_to_channel,
     PrintEvent,
 };
 use super::ircv3::Message;
-use super::printing::USERSTATE;
+use super::printing::{echo, USERSTATE};
 
 
 fn raid(msg: &Message) -> Option<EatMode> {
-    print_event_to_channel(
-        &get_current_channel(),
+    echo(
         PrintEvent::MOTD,
         &[format!(
             "{} sends {} raiders to this channel",
@@ -25,8 +22,7 @@ fn raid(msg: &Message) -> Option<EatMode> {
 
 
 fn special(msg: &Message, stype: &str) -> Option<EatMode> {
-    print_event_to_channel(
-        &get_current_channel(),
+    echo(
         PrintEvent::MOTD,
         &[msg.trail.replace("\\s", " ")],
     );
@@ -70,8 +66,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 pub fn hosttarget(msg: Message) -> Option<EatMode> {
     let target = msg.trail.to_lowercase();
 
-    print_event_to_channel(
-        &get_current_channel(),
+    echo(
         PrintEvent::CHANNEL_URL,
         &[&format!("#{}", target), &format!("https://www.twitch.tv/{}", target)],
     );

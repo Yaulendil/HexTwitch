@@ -1,8 +1,14 @@
 use std::collections::HashMap;
 
+use hexchat::{get_current_channel, print_event_to_channel, PrintEvent};
 use parking_lot::RwLock;
 
 use super::ircv3::split_at_first;
+
+
+pub fn echo(event: PrintEvent, args: &[impl AsRef<str>]) {
+    print_event_to_channel(&get_current_channel(), event, args);
+}
 
 
 safe_static! {
@@ -35,29 +41,24 @@ impl Badges {
             let (class, _rank) = split_at_first(pair, "/");
 
             //  TODO: Do not hardcode this.
-            match {
-                match class {
-                    "broadcaster" /**/ => Some('🜲'),
-                    "staff"       /**/ => Some('⚙'),
-                    "admin"       /**/ => Some('α'),
-                    "global-mod"  /**/ => Some('μ'),
-                    "moderator"   /**/ => Some('🗡'),
-                    "subscriber"  /**/ => None,
-                    "vip"         /**/ => Some('⚑'),
-                    "sub-gifter"  /**/ => Some(':'),
-                    "bits-leader" /**/ => Some('❖'),
-                    "bits"        /**/ => None,
-                    "partner"     /**/ => Some('✓'),
-                    "turbo"       /**/ => Some('+'),
-                    "premium"     /**/ => Some('±'),
-                    _ => None,
-                }
+            if let Some(c) = match class {
+                "broadcaster" /**/ => Some('🜲'),
+                "staff"       /**/ => Some('⚙'),
+                "admin"       /**/ => Some('α'),
+                "global-mod"  /**/ => Some('μ'),
+                "moderator"   /**/ => Some('🗡'),
+                "subscriber"  /**/ => None,
+                "vip"         /**/ => Some('⚑'),
+                "sub-gifter"  /**/ => Some(':'),
+                "bits-leader" /**/ => Some('❖'),
+                "bits"        /**/ => None,
+                "partner"     /**/ => Some('✓'),
+                "turbo"       /**/ => Some('+'),
+                "premium"     /**/ => Some('±'),
+                _ => None,
             } {
-                None => {}
-                Some(c) => {
-                    i += 1;
-                    output.push(c);
-                }
+                i += 1;
+                output.push(c);
             }
         }
 
