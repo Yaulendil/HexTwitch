@@ -6,6 +6,24 @@ use std::collections::HashMap;
 use std::str;
 
 
+pub fn escape(line: &str) -> String {
+    line.replace(";", r"\:")
+        .replace(" ", r"\s")
+        .replace("\\", r"\\")
+        .replace("\n", r"\n")
+        .replace("\r", r"\n")
+}
+
+
+pub fn unescape(line: &str) -> String {
+    line.replace(r"\:", ";")
+        .replace(r"\s", " ")
+        .replace(r"\\", "\\")
+        .replace(r"\n", "\n")
+        .replace(r"\n", "\r")
+}
+
+
 /// Split a `str` at the first occurrence of another delimiting `str`.
 pub fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
     match line.find(delim) {
@@ -115,7 +133,12 @@ impl Message {
         if let Some(tags) = &self.tags {
             out.push('@');
             out.push_str(&tags.iter()
-                .map(|(key, val)| format!("{}={}", key, val))
+                .map(|(key, val)|
+                    if val == "" {
+                        key.to_owned()
+                    } else {
+                        format!("{}={}", key, val)
+                    })
                 .collect::<Vec<String>>().join(";"));
             out.push(' ');
         }
@@ -149,7 +172,7 @@ impl Message {
     /// Input: `&str`
     /// Return: `Option<String>`
     pub fn get_tag(&self, key: &str) -> Option<String> {
-        self.tags.as_ref().and_then(|tags| Some(tags.get(key)?.to_owned()))
+        self.tags.as_ref().and_then(|tags| Some(unescape(tags.get(key)?)))
     }
 
     /// Retrieve the name of the User who sent the `Message`. If the User has a
