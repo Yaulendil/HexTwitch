@@ -30,7 +30,6 @@ fn special(msg: &Message, stype: &str) -> Option<EatMode> {
 
 
 fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
-    //  TODO
     match stype {
         "sub" | "resub" => {
             let mut line = format!("<{}> {}scribes", msg.get_tag("login")?, stype);
@@ -79,10 +78,26 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
             )]);
         }
 
-        "giftpaidupgrade" => {}
-        "primepaidupgrade" => {}
+        "giftpaidupgrade" => {
+            echo(EVENT_ALERT, &["UPGRADE", &format!(
+                "<{}> upgrades a gift subscription from <{}>",
+                msg.get_tag("login")?,
+                msg.get_tag("msg-param-sender-login")?,
+            )]);
+        }
+        "primepaidupgrade" => {
+            echo(EVENT_ALERT, &["UPGRADE", &format!(
+                "<{}> upgrades a Twitch Prime subscription",
+                msg.get_tag("login")?,
+            )]);
+        }
 
-        "bitsbadgetier" => {}
+        "bitsbadgetier" => {
+            echo(EVENT_ALERT, &["BITS BADGE", &format!(
+                "<{}> earns a new tier of Bits Badge",
+                msg.get_tag("login")?,
+            )]);
+        }
 
         _ => {
             echo(EVENT_NORMAL, &[format!(
