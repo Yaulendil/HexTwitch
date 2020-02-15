@@ -6,6 +6,18 @@ use parking_lot::RwLock;
 use super::ircv3::split_at_first;
 
 
+/// Channel Events: Subscriptions, Highlighted Messages, etc.
+pub const EVENT_ALERT: PrintEvent = PrintEvent::WHOIS_SERVER_LINE;
+/// Links to other Channels, like Hosting.
+pub const EVENT_CHANNEL: PrintEvent = PrintEvent::CHANNEL_URL;
+/// Red "error" text: Things going wrong, or people being banned.
+pub const EVENT_ERR: PrintEvent = PrintEvent::SERVER_ERROR;
+/// Typical events.
+pub const EVENT_NORMAL: PrintEvent = PrintEvent::MOTD;
+/// Reward Events: Bits and custom Points Rewards.
+pub const EVENT_REWARD: PrintEvent = PrintEvent::WHOIS_AUTHENTICATED;
+
+
 pub fn echo(event: PrintEvent, args: &[impl AsRef<str>]) {
     print_event_to_channel(&get_current_channel(), event, args);
 }

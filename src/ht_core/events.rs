@@ -2,15 +2,14 @@ use hexchat::{
     EatMode,
     get_channel_name,
     get_network_name,
-    PrintEvent,
 };
 use super::ircv3::Message;
-use super::printing::{echo, USERSTATE};
+use super::printing::{echo, EVENT_ALERT, EVENT_CHANNEL, EVENT_ERR, EVENT_NORMAL, USERSTATE};
 
 
 fn raid(msg: &Message) -> Option<EatMode> {
     echo(
-        PrintEvent::MOTD,
+        EVENT_NORMAL,
         &[format!(
             "{} sends {} raiders to this channel",
             msg.get_tag("msg-param-displayName")?,
@@ -23,7 +22,7 @@ fn raid(msg: &Message) -> Option<EatMode> {
 
 fn special(msg: &Message, stype: &str) -> Option<EatMode> {
     echo(
-        PrintEvent::MOTD,
+        EVENT_NORMAL,
         &[msg.trail.replace("\\s", " ")],
     );
     Some(EatMode::Hexchat)
@@ -50,7 +49,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
 
             if &msg.trail != "" { line.push_str(&format!(": {}", msg.trail)) };
 
-            echo(PrintEvent::WHOIS_SERVER_LINE, &["SUBSCRIPTION", &line]);
+            echo(EVENT_ALERT, &["SUBSCRIPTION", &line]);
         }
 
         "subgift" => {
@@ -68,11 +67,11 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
                 line.push_str(&format!(", with ({}) months in total", cumul));
             }
 
-            echo(PrintEvent::WHOIS_SERVER_LINE, &["SUBSCRIPTION", &line]);
+            echo(EVENT_ALERT, &["SUBSCRIPTION", &line]);
         }
         "submysterygift" => {
             let num = msg.get_tag("msg-param-mass-gift-count")?;
-            echo(PrintEvent::WHOIS_SERVER_LINE, &["SUBSCRIPTION", &format!(
+            echo(EVENT_ALERT, &["SUBSCRIPTION", &format!(
                 "<{}> gives out ({}) random gift subscription{}",
                 msg.get_tag("login")?,
                 num,
@@ -86,7 +85,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
         "bitsbadgetier" => {}
 
         _ => {
-            echo(PrintEvent::MOTD, &[format!(
+            echo(EVENT_NORMAL, &[format!(
                 "Unknown SType '{}': {}",
                 stype,
                 msg.get_tag("system-msg").unwrap_or_else(|| msg.as_str())
@@ -130,7 +129,7 @@ pub fn hosttarget(msg: Message) -> Option<EatMode> {
     let target = msg.trail.to_lowercase();
 
     echo(
-        PrintEvent::CHANNEL_URL,
+        EVENT_CHANNEL,
         &[format!("#{}", target), format!("https://www.twitch.tv/{}", target)],
     );
 
@@ -140,7 +139,7 @@ pub fn hosttarget(msg: Message) -> Option<EatMode> {
 
 pub fn clearmsg(msg: Message) -> Option<EatMode> {
     echo(
-        PrintEvent::SERVER_ERROR,
+        EVENT_ERR,
         &[format!("A message by <{}> was deleted: {}",
                   msg.get_tag("login")?, &msg.trail)],
     );
@@ -161,6 +160,6 @@ pub fn clearchat(msg: Message) -> Option<EatMode> {
         }
     }
 
-    echo(PrintEvent::SERVER_ERROR, &[text]);
+    echo(EVENT_ERR, &[text]);
     Some(EatMode::Hexchat)
 }

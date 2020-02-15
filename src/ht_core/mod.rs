@@ -4,11 +4,11 @@ mod printing;
 
 
 use chrono::{DateTime, Utc};
-use hexchat::{EatMode, get_network_name, PrintEvent};
+use hexchat::{EatMode, get_network_name};
 use parking_lot::Mutex;
 
 use ircv3::Message;
-use printing::echo;
+use printing::{echo, EVENT_ERR};
 
 
 pub struct Sponge {
@@ -105,7 +105,7 @@ pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
 
             if let Some(eat) = opt_eat { eat } else {
                 echo(
-                    PrintEvent::SERVER_ERROR,
+                    EVENT_ERR,
                     &[&raw],
                 );
                 EatMode::None
