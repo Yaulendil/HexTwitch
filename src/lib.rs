@@ -12,6 +12,7 @@ mod ht_core;
 
 use std::mem::replace;
 
+use chrono::{DateTime, Utc};
 use hexchat::{
     add_print_event_listener,
     add_raw_server_event_listener,
@@ -39,6 +40,17 @@ enum Hook {
 }
 
 
+macro_rules! hook_print {
+    ($hvec:expr, $event:expr, $func:expr) => {
+        $hvec.push(Hook::PrintHook(add_print_event_listener(
+            $event,  // Catch Message Events.
+            Priority::HIGH,
+            |word, _dt| $func($event, word),
+        )));
+    }
+}
+
+
 #[derive(Default)]
 struct HexTwitch { hooks: Mutex<Vec<Hook>> }
 
@@ -48,8 +60,10 @@ impl Plugin for HexTwitch {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
     fn new() -> Self {
+        let mut hooks: Vec<Hook> = vec![];
+
         // Set Command ASDF to print "qwert" to sanity-check that we are loaded.
-        let cmd = Hook::CommandHook(register_command(
+        hooks.push(Hook::CommandHook(register_command(
             "asdf",
             "prints 'qwert'",
             Priority::NORMAL,
@@ -57,23 +71,24 @@ impl Plugin for HexTwitch {
                 print_plain("qwert");
                 EatMode::All
             },
-        ));
+        )));
 
         // Hook Print Events into Handler.
-        let print = Hook::PrintHook(add_print_event_listener(
-            PrintEvent::CHANNEL_MESSAGE,  // Catch Message Events.
-            Priority::NORMAL,
-            ht_core::cb_print,  // Send to Print Callback.
-        ));
+        hook_print!(hooks, PrintEvent::CHANNEL_MESSAGE, ht_core::cb_print);
+        hook_print!(hooks, PrintEvent::CHANNEL_ACTION, ht_core::cb_print);
+        hook_print!(hooks, PrintEvent::CHANNEL_MSG_HILIGHT, ht_core::cb_print);
+        hook_print!(hooks, PrintEvent::CHANNEL_ACTION_HILIGHT, ht_core::cb_print);
+        hook_print!(hooks, PrintEvent::YOUR_MESSAGE, ht_core::cb_print);
+        hook_print!(hooks, PrintEvent::YOUR_ACTION, ht_core::cb_print);
 
         // Hook RAW LINE Server Messages into the general Handler Callback.
-        let servmsg = Hook::ServerHook(add_raw_server_event_listener(
+        hooks.push(Hook::ServerHook(add_raw_server_event_listener(
             "RAW LINE",  // Catch all events.
             Priority::NORMAL,
             ht_core::cb_server,  // Send to Server Callback.
-        ));
+        )));
 
-        let new: Self = Self { hooks: Mutex::new(vec![cmd, print, servmsg]) };
+        let new: Self = Self { hooks: Mutex::new(hooks) };
 
         print_plain(&format!("{} {} loaded", Self::NAME, Self::VERSION));
         new

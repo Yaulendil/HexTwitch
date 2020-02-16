@@ -4,7 +4,7 @@ mod printing;
 
 
 use chrono::{DateTime, Utc};
-use hexchat::{EatMode, get_network_name};
+use hexchat::{EatMode, get_channel_name, get_network_name, PrintEvent, strip_formatting};
 use parking_lot::Mutex;
 
 use ircv3::Message;
@@ -45,33 +45,30 @@ safe_static! {
 }
 
 
-//macro_rules! if_twitch {
-//    {$b:block} => {
-//        match get_network_name() {
-//            Some(network) if network.eq_ignore_ascii_case("twitch") => {
-//                $b
-//            }
-//            _ => EatMode::None,
-//        }
-//    }
-//}
-
-
-pub fn cb_print(_word: &[String], dt: DateTime<Utc>) -> EatMode {
+pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
-            //  FIXME
-            let sig: &str = "asdf";
-            //  FIXME
+            let sig: &str = &format!(
+                "{}:{}",
+                get_channel_name(),
+                strip_formatting(&word[0]).unwrap_or_default()
+            );
 
-            match CURRENT.lock().pop(sig) {
-                None => EatMode::None,
-                Some(msg) => {
-                    //  TODO: Re-emit Print with User Badges, etc.
-//                    EatMode::All
-                    EatMode::None
+            if let Some(msg) = CURRENT.lock().pop(sig) {
+                //  TODO: Re-emit Print with User Badges, etc.
+
+                match etype {
+                    PrintEvent::CHANNEL_MESSAGE => {}
+                    PrintEvent::CHANNEL_ACTION => {}
+                    PrintEvent::CHANNEL_MSG_HILIGHT => {}
+                    PrintEvent::CHANNEL_ACTION_HILIGHT => {}
+                    PrintEvent::YOUR_MESSAGE => {}
+                    PrintEvent::YOUR_ACTION => {}
+                    _ => return EatMode::None,
                 }
-            }
+
+                EatMode::All
+            } else { EatMode::None }
         }
         _ => EatMode::None,
     }

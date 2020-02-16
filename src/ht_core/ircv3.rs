@@ -169,8 +169,7 @@ impl Message {
     ///
     /// Return: `String`
     pub fn get_signature(&self) -> String {
-        format!("{}:{}", self.ustring, self.command)
-        //  TODO: Change to something useful.
+        format!("{}:{}", self.args.get(0).unwrap_or(&"".to_string()), self.get_user())
     }
 
     /// Retrieve a Tag from the `Message`.
