@@ -8,7 +8,7 @@ use hexchat::{EatMode, get_channel_name, get_network_name, PrintEvent, strip_for
 use parking_lot::Mutex;
 
 use ircv3::Message;
-use printing::{echo, EVENT_ERR};
+use printing::{echo, EVENT_ERR, WHISPER_SIDES};
 
 
 pub struct Sponge {
@@ -46,11 +46,12 @@ safe_static! {
 
 
 pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
+    let channel = get_channel_name();
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
             let sig: &str = &format!(
                 "{}:{}",
-                get_channel_name(),
+                &channel,
                 strip_formatting(&word[0]).unwrap_or_default()
             );
 
@@ -58,6 +59,15 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                 //  TODO: Re-emit Print with User Badges, etc.
 
                 match etype {
+                    PrintEvent::YOUR_MESSAGE | PrintEvent::YOUR_ACTION if {
+                        channel.starts_with(&WHISPER_SIDES)
+                            && channel.ends_with(&WHISPER_SIDES)
+                    } => {
+                        //  User has spoken inside a Whisper Tab. We must take
+                        //      the message typed, and forward it to the Whisper
+                        //      Command via ".w {}".
+                        //  TODO
+                    }
                     PrintEvent::CHANNEL_MESSAGE => {}
                     PrintEvent::CHANNEL_ACTION => {}
                     PrintEvent::CHANNEL_MSG_HILIGHT => {}

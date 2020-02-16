@@ -23,6 +23,9 @@ pub fn echo(event: PrintEvent, args: &[impl AsRef<str>]) {
 }
 
 
+pub static WHISPER_SIDES: &str = "==";
+
+
 safe_static! {
     static lazy BADGE_NONE: &str = "";
 }
