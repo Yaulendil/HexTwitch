@@ -11,8 +11,8 @@ fn raid(msg: &Message) -> Option<EatMode> {
     echo(
         EVENT_NORMAL,
         &[format!(
-            "{} sends {} raiders to this channel",
-            msg.get_tag("msg-param-displayName")?,
+            "#{} sends {} raiders to this channel",
+            msg.get_tag("msg-param-displayName")?.to_lowercase(),
             msg.get_tag("msg-param-viewerCount")?,
         )],
     );
@@ -20,10 +20,10 @@ fn raid(msg: &Message) -> Option<EatMode> {
 }
 
 
-fn special(msg: &Message, stype: &str) -> Option<EatMode> {
+fn special(msg: &Message, _stype: &str) -> Option<EatMode> {
     echo(
         EVENT_NORMAL,
-        &[msg.trail.replace("\\s", " ")],
+        &[msg.get_tag("system-msg")?],
     );
     Some(EatMode::Hexchat)
 }
@@ -43,7 +43,9 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
             }
 
             if let Some(cumul) = msg.get_tag("msg-param-cumulative-months") {
-                line.push_str(&format!(", with ({}) months in total", cumul));
+                if &cumul != "1" {
+                    line.push_str(&format!(", with ({}) months in total", cumul));
+                }
             }
 
             if &msg.trail != "" { line.push_str(&format!(": {}", msg.trail)) };
@@ -63,7 +65,9 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
             }
 
             if let Some(cumul) = msg.get_tag("msg-param-cumulative-months") {
-                line.push_str(&format!(", with ({}) months in total", cumul));
+                if &cumul != "1" {
+                    line.push_str(&format!(", with ({}) months in total", cumul));
+                }
             }
 
             echo(EVENT_ALERT, &["SUBSCRIPTION", &line]);
@@ -140,13 +144,13 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 }
 
 
-pub fn hosttarget(msg: Message) -> Option<EatMode> {
-    let target = msg.trail.to_lowercase();
-
-    echo(
-        EVENT_CHANNEL,
-        &[format!("#{}", target), format!("https://www.twitch.tv/{}", target)],
-    );
+pub fn hosttarget(target: &str) -> Option<EatMode> {
+    if target != "-" {
+        echo(
+            EVENT_CHANNEL,
+            &[format!("#{}", target), format!("https://www.twitch.tv/{}", target)],
+        );
+    }
 
     Some(EatMode::Hexchat)
 }

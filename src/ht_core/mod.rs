@@ -79,7 +79,7 @@ pub fn cb_print(_word: &[String], dt: DateTime<Utc>) -> EatMode {
 
 
 /// Handle a Server Message, received by the Hook for "RAW LINE".
-pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
+pub fn cb_server(word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
             let msg: Message = Message::new(&raw);
@@ -95,7 +95,7 @@ pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
                 "USERSTATE" => events::userstate(msg),
 
                 "USERNOTICE" => events::usernotice(msg),
-                "HOSTTARGET" => events::hosttarget(msg),
+                "HOSTTARGET" => events::hosttarget(&word[3][1..]),
 
                 //  Moderator Actions.
                 "CLEARMSG" => events::clearmsg(msg),
