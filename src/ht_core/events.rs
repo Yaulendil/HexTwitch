@@ -123,11 +123,7 @@ pub fn whisper(msg: Message) -> Option<EatMode> {
 
 pub fn userstate(msg: Message) -> Option<EatMode> {
     USERSTATE.write().set(
-        format!(
-            "{}:{}",
-            get_network_name().expect("Network not found"),
-            get_channel_name(),
-        ),
+        get_channel_name(),
         &msg.get_tag("badges").unwrap_or_else(String::new),
     );
     Some(EatMode::All)

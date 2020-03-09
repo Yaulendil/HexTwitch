@@ -23,13 +23,6 @@ pub fn echo(event: PrintEvent, args: &[impl AsRef<str>]) {
 }
 
 
-pub const WHISPER_SIDES: &str = "==";
-
-
-const BADGE_NONE: &str = "_";
-const MAX_BADGES: usize = 3;
-
-
 static BITS: &[(usize, char)] = &[
     (0, '▴'),
     (100, '⬧'),
@@ -61,9 +54,9 @@ static SUBS: &[(usize, char)] = &[
 fn highest(max: usize, seq: &[(usize, char)]) -> Option<char> {
     let mut out: Option<char> = None;
 
-    for (rank, icon) in seq {
-        if rank <= &max {
-            out.replace(*icon);
+    for &(rank, icon) in seq {
+        if rank <= max {
+            out.replace(icon);
         } else {
             break;
         }
@@ -71,6 +64,11 @@ fn highest(max: usize, seq: &[(usize, char)]) -> Option<char> {
 
     out
 }
+
+
+const BADGE_NONE: &str = "_ ";
+const MAX_BADGES: usize = 3;
+pub const WHISPER_SIDES: &str = "==";
 
 
 /// Badges: A Struct storing the Input and Output of the process of breaking
@@ -131,14 +129,12 @@ impl Badges {
 /// States: Effectively a Box for a HashMap. Stores the Badges for the User in
 ///     each Channel.
 pub struct States {
-    map: Option<HashMap<String, Badges>>,
+    map: HashMap<String, Badges>,
 }
 
 impl States {
-    pub fn init(&mut self) {
-        if self.map.is_none() {
-            self.map.replace(HashMap::new());
-        }
+    fn new() -> Self {
+        Self { map: HashMap::new() }
     }
 
     /// Get the Badges for the User in a given Channel.
@@ -146,7 +142,7 @@ impl States {
     /// Input: `&str`
     /// Return: `&str`
     pub fn get(&self, channel: &str) -> &str {
-        match self.map.as_ref().unwrap().get(&format!("Twitch:{}", channel)) {
+        match self.map.get(channel) {
             Some(badges) => badges.output.as_str(),
             None => BADGE_NONE,
         }
@@ -160,11 +156,11 @@ impl States {
     ///
     /// Input: `String`, `&str`
     pub fn set(&mut self, channel: String, new: &str) {
-        match self.map.as_ref().unwrap().get(&channel) {
+        match self.map.get(&channel) {
             Some(old) if new == old.input => {}  // Channel is in Map, with the same Badges.
             _ => {
                 let badges = Badges::new(new);
-                let map = self.map.as_mut().unwrap();
+                let map = &mut self.map;
 
                 if let Some(b) = map.get_mut(&channel) {
                     *b = badges;
@@ -177,5 +173,5 @@ impl States {
 }
 
 safe_static! {
-    pub static lazy USERSTATE: RwLock<States> = RwLock::new(States { map: None });
+    pub static lazy USERSTATE: RwLock<States> = RwLock::new(States::new());
 }
