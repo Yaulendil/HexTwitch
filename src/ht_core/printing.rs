@@ -23,11 +23,54 @@ pub fn echo(event: PrintEvent, args: &[impl AsRef<str>]) {
 }
 
 
-pub static WHISPER_SIDES: &str = "==";
+pub const WHISPER_SIDES: &str = "==";
 
 
 const BADGE_NONE: &str = "_";
 const MAX_BADGES: usize = 3;
+
+
+static BITS: &[(usize, char)] = &[
+    (0, '▴'),
+    (100, '⬧'),
+    (1000, '⬠'),
+    (5000, '⬡'),
+    (10000, '🟋'),
+    (100000, '🟎'),
+];
+static SUBS: &[(usize, char)] = &[
+    (0, '①'),
+    (3, '③'),
+    (6, '⑥'),
+    (9, '⑨'),
+    (12, 'ⅰ'),
+    (24, 'ⅱ'),
+    (36, 'ⅲ'),
+    (48, 'ⅳ'),
+    (60, 'ⅴ'),
+    (72, 'ⅵ'),
+    (84, 'ⅶ'),
+    (96, 'ⅷ'),
+    (108, 'ⅸ'),
+    (120, 'ⅹ'),
+    (132, 'ⅺ'),
+    (144, 'ⅻ'),
+];
+
+
+fn highest(max: usize, seq: &[(usize, char)]) -> Option<char> {
+    let mut out: Option<char> = None;
+
+    for (rank, icon) in seq {
+        if rank <= &max {
+            out.replace(*icon);
+        } else {
+            break;
+        }
+    }
+
+    out
+}
 
 
 /// Badges: A Struct storing the Input and Output of the process of breaking
@@ -51,7 +94,7 @@ impl Badges {
         for pair in input.split(",") {
             if i >= MAX_BADGES { break; }
 
-            let (class, _rank) = split_at_first(pair, "/");
+            let (class, rank) = split_at_first(pair, "/");
 
             //  TODO: Do not hardcode this.
             if let Some(c) = match class {
@@ -60,11 +103,11 @@ impl Badges {
                 "admin"       /**/ => Some('α'),
                 "global-mod"  /**/ => Some('μ'),
                 "moderator"   /**/ => Some('🗡'),
-                "subscriber"  /**/ => None,
+                "subscriber"  /**/ => highest(rank.parse().unwrap_or(0), &SUBS),
                 "vip"         /**/ => Some('⚑'),
                 "sub-gifter"  /**/ => Some(':'),
                 "bits-leader" /**/ => Some('❖'),
-                "bits"        /**/ => None,
+                "bits"        /**/ => highest(rank.parse().unwrap_or(0), &BITS),
                 "partner"     /**/ => Some('✓'),
                 "turbo"       /**/ => Some('+'),
                 "premium"     /**/ => Some('±'),
