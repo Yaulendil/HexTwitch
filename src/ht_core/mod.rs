@@ -1,14 +1,16 @@
 mod ircv3;
 mod events;
-mod printing;
+pub mod printing;
 
+
+use std::mem::drop;
 
 use chrono::{DateTime, Utc};
 use hexchat::{EatMode, get_channel_name, get_network_name, PrintEvent, strip_formatting};
 use parking_lot::Mutex;
 
 use ircv3::Message;
-use printing::{echo, EVENT_ERR, WHISPER_SIDES};
+use printing::{Badges, echo, EVENT_ERR, USERSTATE, WHISPER_SIDES};
 
 
 pub struct Sponge {
@@ -52,32 +54,54 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
             let sig: &str = &format!(
                 "{}:{}",
                 &channel,
-                strip_formatting(&word[0]).unwrap_or_default()
+                strip_formatting(&word[0]).unwrap_or_default(),
             );
 
-            if let Some(msg) = CURRENT.lock().pop(sig) {
+            let mut guard = CURRENT.lock();
+            let msg_maybe = guard.pop(sig);
+            drop(guard);
+
+            if let Some(msg) = msg_maybe {
                 //  TODO: Re-emit Print with User Badges, etc.
 
                 match etype {
-                    PrintEvent::YOUR_MESSAGE | PrintEvent::YOUR_ACTION if {
-                        channel.starts_with(&WHISPER_SIDES)
-                            && channel.ends_with(&WHISPER_SIDES)
-                    } => {
-                        //  User has spoken inside a Whisper Tab. We must take
-                        //      the message typed, and forward it to the Whisper
-                        //      Command via ".w {}".
-                        //  TODO
-                    }
-                    PrintEvent::CHANNEL_MESSAGE => {}
-                    PrintEvent::CHANNEL_ACTION => {}
-                    PrintEvent::CHANNEL_MSG_HILIGHT => {}
-                    PrintEvent::CHANNEL_ACTION_HILIGHT => {}
-                    PrintEvent::YOUR_MESSAGE => {}
-                    PrintEvent::YOUR_ACTION => {}
-                    _ => return EatMode::None,
-                }
+                    PrintEvent::YOUR_MESSAGE
+                    | PrintEvent::YOUR_ACTION
+                    => {
+                        let badge_str: String = USERSTATE.read().get(&channel).to_string();
+                        echo(etype, &[&word[0], &word[1], &badge_str, &String::new()]);
 
-                EatMode::All
+                        EatMode::All
+                    }
+                    PrintEvent::CHANNEL_MESSAGE
+                    | PrintEvent::CHANNEL_ACTION
+                    | PrintEvent::CHANNEL_MSG_HILIGHT
+                    | PrintEvent::CHANNEL_ACTION_HILIGHT
+                    => {
+                        let badges = Badges::new(
+                            &msg.get_tag("badges").unwrap_or_default()
+                        );
+                        echo(
+                            etype,
+                            &[&word[0] as &str, &word[1], &badges.output, ""],
+                        );
+
+                        EatMode::All
+                    }
+                    _ => EatMode::None
+                }
+            } else if let PrintEvent::YOUR_MESSAGE | PrintEvent::YOUR_ACTION = etype {
+                if channel.starts_with(&WHISPER_SIDES)
+                    && channel.ends_with(&WHISPER_SIDES) {
+                    //  User has spoken inside a Whisper Tab. We must take
+                    //      the message typed, and forward it to the Whisper
+                    //      Command via ".w {}".
+                    //  TODO
+                    EatMode::None
+                } else {
+                    //  TODO
+                    EatMode::None
+                }
             } else { EatMode::None }
         }
         _ => EatMode::None,
@@ -93,7 +117,10 @@ pub fn cb_server(word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
             let opt_eat: Option<EatMode> = match msg.command.as_str() {
                 //  Chat Messages.
                 "PRIVMSG" => {
-                    CURRENT.lock().put(msg);
+                    let mut guard = CURRENT.lock();
+                    guard.put(msg);
+                    drop(guard);
+
                     Some(EatMode::None)
                 }
                 "WHISPER" => events::whisper(msg),

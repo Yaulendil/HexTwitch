@@ -37,7 +37,7 @@ const MAX_BADGES: usize = 3;
 ///     Function.
 pub struct Badges {
     input: String,
-    output: String,
+    pub output: String,
 }
 
 impl Badges {
@@ -92,12 +92,9 @@ pub struct States {
 }
 
 impl States {
-    fn ensure(&mut self, channel: &str) -> Option<&Badges> {
+    pub fn init(&mut self) {
         if self.map.is_none() {
             self.map.replace(HashMap::new());
-            None
-        } else {
-            self.map.as_ref().unwrap().get(channel)
         }
     }
 
@@ -105,9 +102,9 @@ impl States {
     ///
     /// Input: `&str`
     /// Return: `&str`
-    pub fn get(&mut self, channel: &str) -> &str {
-        match self.ensure(channel) {
-            Some(badges) => badges.output.as_str().clone(),
+    pub fn get(&self, channel: &str) -> &str {
+        match self.map.as_ref().unwrap().get(channel) {
+            Some(badges) => badges.output.as_str(),
             None => "",
         }
     }
@@ -120,7 +117,7 @@ impl States {
     ///
     /// Input: `String`, `&str`
     pub fn set(&mut self, channel: String, new: &str) {
-        match self.ensure(&channel) {
+        match self.map.as_ref().unwrap().get(&channel) {
             Some(old) if new == old.input => {}  // Channel is in Map, with the same Badges.
             _ => {
                 let badges = Badges::new(new);

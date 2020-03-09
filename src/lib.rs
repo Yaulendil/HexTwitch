@@ -32,6 +32,8 @@ use hexchat::{
 };
 use parking_lot::Mutex;
 
+use ht_core::printing::USERSTATE;
+
 
 enum Hook {
     CommandHook(Command),
@@ -61,6 +63,9 @@ impl Plugin for HexTwitch {
 
     fn new() -> Self {
         let mut hooks: Vec<Hook> = vec![];
+        {
+            USERSTATE.write().init();
+        }
 
         // Set Command ASDF to print "qwert" to sanity-check that we are loaded.
         hooks.push(Hook::CommandHook(register_command(
