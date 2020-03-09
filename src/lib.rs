@@ -1,7 +1,5 @@
 /*
  * Core package for the HexTwitch Rust Plugin.
- *
- * Purely experimental.
  */
 
 #[macro_use]
@@ -10,9 +8,6 @@ extern crate hexchat;
 mod ht_core;
 
 
-use std::mem::replace;
-
-use chrono::{DateTime, Utc};
 use hexchat::{
     add_print_event_listener,
     add_raw_server_event_listener,
@@ -30,9 +25,8 @@ use hexchat::{
     remove_print_event_listener,
     remove_raw_server_event_listener,
 };
-use parking_lot::Mutex;
 
-use ht_core::printing::USERSTATE;
+use ht_core::{cb_print, cb_server};
 
 
 enum Hook {
@@ -54,7 +48,7 @@ macro_rules! hook_print {
 
 
 #[derive(Default)]
-struct HexTwitch { hooks: Mutex<Vec<Hook>> }
+struct HexTwitch { hooks: Vec<Hook> }
 
 impl Plugin for HexTwitch {
     const NAME: &'static str = env!("CARGO_PKG_NAME");
@@ -62,7 +56,7 @@ impl Plugin for HexTwitch {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
     fn new() -> Self {
-        let mut hooks: Vec<Hook> = vec![];
+        let mut hooks: Vec<Hook> = Vec::new();
 
         // Set Command ASDF to print "qwert" to sanity-check that we are loaded.
         hooks.push(Hook::CommandHook(register_command(
@@ -76,21 +70,21 @@ impl Plugin for HexTwitch {
         )));
 
         // Hook Print Events into Handler.
-        hook_print!(hooks, PrintEvent::CHANNEL_MESSAGE, ht_core::cb_print);
-        hook_print!(hooks, PrintEvent::CHANNEL_ACTION, ht_core::cb_print);
-        hook_print!(hooks, PrintEvent::CHANNEL_MSG_HILIGHT, ht_core::cb_print);
-        hook_print!(hooks, PrintEvent::CHANNEL_ACTION_HILIGHT, ht_core::cb_print);
-        hook_print!(hooks, PrintEvent::YOUR_MESSAGE, ht_core::cb_print);
-        hook_print!(hooks, PrintEvent::YOUR_ACTION, ht_core::cb_print);
+        hook_print!(hooks, PrintEvent::CHANNEL_MESSAGE, cb_print);
+        hook_print!(hooks, PrintEvent::CHANNEL_ACTION, cb_print);
+        hook_print!(hooks, PrintEvent::CHANNEL_MSG_HILIGHT, cb_print);
+        hook_print!(hooks, PrintEvent::CHANNEL_ACTION_HILIGHT, cb_print);
+        hook_print!(hooks, PrintEvent::YOUR_MESSAGE, cb_print);
+        hook_print!(hooks, PrintEvent::YOUR_ACTION, cb_print);
 
         // Hook RAW LINE Server Messages into the general Handler Callback.
         hooks.push(Hook::ServerHook(add_raw_server_event_listener(
             "RAW LINE",  // Catch all events.
             Priority::NORMAL,
-            ht_core::cb_server,  // Send to Server Callback.
+            cb_server,  // Send to Server Callback.
         )));
 
-        let new: Self = Self { hooks: Mutex::new(hooks) };
+        let new: Self = Self { hooks };
 
         print_plain(&format!("{} {} loaded", Self::NAME, Self::VERSION));
         new
@@ -100,8 +94,7 @@ impl Plugin for HexTwitch {
 
 impl Drop for HexTwitch {
     fn drop(&mut self) {
-        let iter: Vec<Hook> = replace(self.hooks.get_mut(), vec![]);
-        for hopt in iter {
+        for hopt in self.hooks.drain(..) {
             match hopt {
                 Hook::CommandHook(handle) => { deregister_command(handle) }
                 Hook::PrintHook(handle) => { remove_print_event_listener(handle) }
