@@ -1,19 +1,30 @@
 use hexchat::{
     EatMode,
     get_channel_name,
-    get_network_name,
 };
 use super::ircv3::Message;
 use super::printing::{echo, EVENT_ALERT, EVENT_CHANNEL, EVENT_ERR, EVENT_NORMAL, USERSTATE};
+
+
+/// This Macro will declare a Macro which returns a String Literal. Meant as a
+///     way to hack some sort of `const` functionality into `format!()` calls.
+macro_rules! constant {
+    ($name:ident, $output:literal) => {
+        macro_rules! $name {
+            () => ($output)
+        }
+    }
+}
+constant!(RAID, "{} raiders arrive from #{}");
 
 
 fn raid(msg: &Message) -> Option<EatMode> {
     echo(
         EVENT_NORMAL,
         &[format!(
-            "#{} sends {} raiders to this channel",
-            msg.get_tag("msg-param-displayName")?.to_lowercase(),
+            RAID!(),
             msg.get_tag("msg-param-viewerCount")?,
+            msg.get_tag("msg-param-displayName")?.to_lowercase(),
         )],
     );
     Some(EatMode::Hexchat)
