@@ -69,7 +69,7 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                     | PrintEvent::YOUR_ACTION
                     => {
                         let badge_str: String = USERSTATE.read().get(&channel).to_string();
-                        echo(etype, &[&word[0], &word[1], &badge_str, &String::new()]);
+                        echo(etype, &[&word[0], &word[1], &String::from("_"), &badge_str]);
 
                         EatMode::All
                     }
@@ -83,7 +83,7 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                         );
                         echo(
                             etype,
-                            &[&word[0] as &str, &word[1], &badges.output, ""],
+                            &[&word[0] as &str, &word[1], "", &badges.output],
                         );
 
                         EatMode::All
@@ -98,8 +98,17 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                     //      Command via ".w {}".
                     //  TODO
                     EatMode::None
+
+                } else if &word[2] == "" {
+                    //  User has spoken in a normal Channel, but has no Badges.
+                    //      Add the Badges from the User State and re-emit.
+                    let badge_str: String = USERSTATE.read().get(&channel).to_string();
+                    echo(etype, &[&word[0], &word[1], &String::from("_"), &badge_str]);
+
+                    EatMode::All
+
                 } else {
-                    //  TODO
+                    //  This is a re-emit. Do nothing.
                     EatMode::None
                 }
             } else { EatMode::None }
@@ -110,7 +119,7 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
 
 
 /// Handle a Server Message, received by the Hook for "RAW LINE".
-pub fn cb_server(word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
+pub fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
             let msg: Message = Message::new(&raw);

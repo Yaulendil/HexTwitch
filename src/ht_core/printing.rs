@@ -26,9 +26,7 @@ pub fn echo(event: PrintEvent, args: &[impl AsRef<str>]) {
 pub static WHISPER_SIDES: &str = "==";
 
 
-safe_static! {
-    static lazy BADGE_NONE: &str = "";
-}
+const BADGE_NONE: &str = "_";
 const MAX_BADGES: usize = 3;
 
 
@@ -77,6 +75,8 @@ impl Badges {
             }
         }
 
+        if i > 0 { output.push(' '); }
+
         Self {
             input: input.to_string(),
             output,
@@ -103,9 +103,9 @@ impl States {
     /// Input: `&str`
     /// Return: `&str`
     pub fn get(&self, channel: &str) -> &str {
-        match self.map.as_ref().unwrap().get(channel) {
+        match self.map.as_ref().unwrap().get(&format!("Twitch:{}", channel)) {
             Some(badges) => badges.output.as_str(),
-            None => "",
+            None => BADGE_NONE,
         }
     }
 
