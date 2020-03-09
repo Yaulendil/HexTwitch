@@ -13,7 +13,7 @@ use ircv3::Message;
 use printing::{Badges, echo, EVENT_ERR, USERSTATE, WHISPER_SIDES};
 
 
-pub struct Sponge {
+pub(crate) struct Sponge {
     pub signature: Option<String>,
     pub value: Option<Message>,
 }
@@ -47,7 +47,19 @@ safe_static! {
 }
 
 
-pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
+/// Reset the Color of a newly-focused Tab.
+pub(crate) fn cb_focus(_etype: PrintEvent, _word: &[String]) -> EatMode {
+    EatMode::None
+}
+
+
+/// Hide a Join Event if it is fake.
+pub(crate) fn cb_join(_etype: PrintEvent, _word: &[String]) -> EatMode {
+    EatMode::None
+}
+
+
+pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
     let channel = get_channel_name();
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
@@ -69,7 +81,7 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                     | PrintEvent::YOUR_ACTION
                     => {
                         let badge_str: String = USERSTATE.read().get(&channel).to_string();
-                        echo(etype, &[&word[0], &word[1], &String::from("_"), &badge_str]);
+                        echo(etype, &[&word[0] as &str, &word[1], "_", &badge_str]);
 
                         EatMode::All
                     }
@@ -103,7 +115,7 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                     //  User has spoken in a normal Channel, but has no Badges.
                     //      Add the Badges from the User State and re-emit.
                     let badge_str: String = USERSTATE.read().get(&channel).to_string();
-                    echo(etype, &[&word[0], &word[1], &String::from("_"), &badge_str]);
+                    echo(etype, &[&word[0] as &str, &word[1], "_", &badge_str]);
 
                     EatMode::All
 
@@ -119,7 +131,7 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
 
 
 /// Handle a Server Message, received by the Hook for "RAW LINE".
-pub fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
+pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
             let msg: Message = Message::new(&raw);
@@ -156,4 +168,14 @@ pub fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
         }
         _ => EatMode::None,
     }
+}
+
+
+pub(crate) fn cmd_title(_arg: &[String]) -> EatMode {
+    EatMode::None
+}
+
+
+pub(crate) fn cmd_tjoin(_arg: &[String]) -> EatMode {
+    EatMode::None
 }

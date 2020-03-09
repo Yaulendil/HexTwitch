@@ -26,7 +26,7 @@ use hexchat::{
     remove_raw_server_event_listener,
 };
 
-use ht_core::{cb_print, cb_server};
+use ht_core::{cb_focus, cb_join, cb_print, cb_server, cmd_title, cmd_tjoin};
 
 
 enum Hook {
@@ -58,7 +58,7 @@ impl Plugin for HexTwitch {
     fn new() -> Self {
         let mut hooks: Vec<Hook> = Vec::new();
 
-        // Set Command ASDF to print "qwert" to sanity-check that we are loaded.
+        //  Set Command ASDF to print "qwert" to sanity-check that we are loaded.
         hooks.push(Hook::CommandHook(register_command(
             "asdf",
             "prints 'qwert'",
@@ -69,7 +69,24 @@ impl Plugin for HexTwitch {
             },
         )));
 
-        // Hook Print Events into Handler.
+        hooks.push(Hook::CommandHook(register_command(
+            "TITLE",
+            "Set the Title of a Twitch Channel.",
+            Priority::NORMAL,
+            cmd_title,
+        )));
+        hooks.push(Hook::CommandHook(register_command(
+            "TWITCHJOIN",
+            "Join a Channel, but only on the Twitch Network.",
+            Priority::NORMAL,
+            cmd_tjoin,
+        )));
+
+        //  Hook Misc Events.
+        // hook_print!(hooks, PrintEvent::, cb_focus);  // FIXME: Missing Event?
+        hook_print!(hooks, PrintEvent::JOIN, cb_join);
+
+        //  Hook Print Events into Handler.
         hook_print!(hooks, PrintEvent::CHANNEL_MESSAGE, cb_print);
         hook_print!(hooks, PrintEvent::CHANNEL_ACTION, cb_print);
         hook_print!(hooks, PrintEvent::CHANNEL_MSG_HILIGHT, cb_print);
@@ -77,17 +94,16 @@ impl Plugin for HexTwitch {
         hook_print!(hooks, PrintEvent::YOUR_MESSAGE, cb_print);
         hook_print!(hooks, PrintEvent::YOUR_ACTION, cb_print);
 
-        // Hook RAW LINE Server Messages into the general Handler Callback.
+        //  Hook RAW LINE Server Messages into the general Handler Callback.
         hooks.push(Hook::ServerHook(add_raw_server_event_listener(
             "RAW LINE",  // Catch all events.
             Priority::NORMAL,
             cb_server,  // Send to Server Callback.
         )));
 
-        let new: Self = Self { hooks };
-
         print_plain(&format!("{} {} loaded", Self::NAME, Self::VERSION));
-        new
+
+        Self { hooks }
     }
 }
 
