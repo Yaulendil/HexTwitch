@@ -11,6 +11,7 @@ mod ht_core;
 use hexchat::{
     add_print_event_listener,
     add_raw_server_event_listener,
+    add_window_event_listener,
     Command,
     deregister_command,
     EatMode,
@@ -24,6 +25,9 @@ use hexchat::{
     register_command,
     remove_print_event_listener,
     remove_raw_server_event_listener,
+    remove_window_event_listener,
+    WindowEvent,
+    WindowEventListener,
 };
 
 use ht_core::{cb_focus, cb_join, cb_print, cb_server, cmd_title, cmd_tjoin};
@@ -33,6 +37,7 @@ enum Hook {
     CommandHook(Command),
     PrintHook(PrintEventListener),
     ServerHook(RawServerEventListener),
+    WindowHook(WindowEventListener),
 }
 
 
@@ -83,7 +88,11 @@ impl Plugin for HexTwitch {
         )));
 
         //  Hook Misc Events.
-        // hook_print!(hooks, PrintEvent::, cb_focus);  // FIXME: Missing Event?
+        hooks.push(Hook::WindowHook(add_window_event_listener(
+            WindowEvent::FOCUS_TAB,
+            Priority::NORMAL,
+            cb_focus,
+        )));
         hook_print!(hooks, PrintEvent::JOIN, cb_join);
 
         //  Hook Print Events into Handler.
@@ -115,6 +124,7 @@ impl Drop for HexTwitch {
                 Hook::CommandHook(handle) => { deregister_command(handle) }
                 Hook::PrintHook(handle) => { remove_print_event_listener(handle) }
                 Hook::ServerHook(handle) => { remove_raw_server_event_listener(handle) }
+                Hook::WindowHook(handle) => { remove_window_event_listener(handle) }
             }
         }
     }

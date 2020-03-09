@@ -6,7 +6,7 @@ pub mod printing;
 use std::mem::drop;
 
 use chrono::{DateTime, Utc};
-use hexchat::{EatMode, get_channel_name, get_network_name, PrintEvent, strip_formatting};
+use hexchat::{ChannelRef, EatMode, get_channel_name, get_network_name, PrintEvent, strip_formatting};
 use parking_lot::Mutex;
 
 use ircv3::Message;
@@ -48,7 +48,7 @@ safe_static! {
 
 
 /// Reset the Color of a newly-focused Tab.
-pub(crate) fn cb_focus(_etype: PrintEvent, _word: &[String]) -> EatMode {
+pub(crate) fn cb_focus(_channel: ChannelRef) -> EatMode {
     EatMode::None
 }
 
