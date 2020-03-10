@@ -50,8 +50,8 @@ safe_static! {
 
 
 /// Reset the Color of a newly-focused Tab.
-pub(crate) fn cb_focus(channel: ChannelRef) -> EatMode {
-    // TABCOLORS.write().reset(channel);
+pub(crate) fn cb_focus(_channel: ChannelRef) -> EatMode {
+    TABCOLORS.write().reset();
     EatMode::None
 }
 
@@ -84,7 +84,7 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                     | PrintEvent::YOUR_ACTION
                     => {
                         let badge_str: String = USERSTATE.read().get(&channel).to_string();
-                        echo(etype, &[&word[0] as &str, &word[1], "_", &badge_str]);
+                        echo(etype, &[&word[0] as &str, &word[1], "_", &badge_str], 2);
 
                         EatMode::All
                     }
@@ -99,6 +99,11 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                         echo(
                             etype,
                             &[&word[0] as &str, &word[1], "", &badges.output],
+                            {
+                                if etype == PrintEvent::CHANNEL_MSG_HILIGHT
+                                    || etype == PrintEvent::CHANNEL_ACTION_HILIGHT
+                                { 3 } else { 2 }
+                            },
                         );
 
                         EatMode::All
@@ -113,15 +118,13 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                     //      Command via ".w {}".
                     //  TODO
                     EatMode::None
-
                 } else if &word[2] == "" {
                     //  User has spoken in a normal Channel, but has no Badges.
                     //      Add the Badges from the User State and re-emit.
                     let badge_str: String = USERSTATE.read().get(&channel).to_string();
-                    echo(etype, &[&word[0] as &str, &word[1], "_", &badge_str]);
+                    echo(etype, &[&word[0] as &str, &word[1], "_", &badge_str], 2);
 
                     EatMode::All
-
                 } else {
                     //  This is a re-emit. Do nothing.
                     EatMode::None
@@ -165,6 +168,7 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
                 echo(
                     EVENT_ERR,
                     &[&raw],
+                    1,
                 );
                 EatMode::None
             }

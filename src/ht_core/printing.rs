@@ -4,6 +4,7 @@ use hexchat::{get_current_channel, print_event_to_channel, PrintEvent};
 use parking_lot::RwLock;
 
 use super::ircv3::split_at_first;
+use super::tabs::TABCOLORS;
 
 
 /// Channel Events: Subscriptions, Highlighted Messages, etc.
@@ -18,8 +19,9 @@ pub const EVENT_NORMAL: PrintEvent = PrintEvent::MOTD;
 pub const EVENT_REWARD: PrintEvent = PrintEvent::WHOIS_AUTHENTICATED;
 
 
-pub fn echo(event: PrintEvent, args: &[impl AsRef<str>]) {
+pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: u8) {
     print_event_to_channel(&get_current_channel(), event, args);
+    TABCOLORS.write().color(tab_color);
 }
 
 

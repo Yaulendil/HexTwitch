@@ -24,6 +24,7 @@ fn raid(msg: &Message) -> Option<EatMode> {
             msg.get_tag("msg-param-viewerCount")?,
             msg.get_tag("msg-param-displayName")?.to_lowercase(),
         )],
+        1,
     );
     Some(EatMode::Hexchat)
 }
@@ -33,6 +34,7 @@ fn special(msg: &Message, _stype: &str) -> Option<EatMode> {
     echo(
         EVENT_NORMAL,
         &[msg.get_tag("system-msg")?],
+        1,
     );
     Some(EatMode::Hexchat)
 }
@@ -61,7 +63,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
 
             if &msg.trail != "" { line.push_str(&format!(": {}", msg.trail)) };
 
-            echo(EVENT_ALERT, &["SUBSCRIPTION", &line]);
+            echo(EVENT_ALERT, &["SUBSCRIPTION", &line], 2);
         }
 
         "subgift" => {
@@ -83,7 +85,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
                 }
             }
 
-            echo(EVENT_ALERT, &["SUBSCRIPTION", &line]);
+            echo(EVENT_ALERT, &["SUBSCRIPTION", &line], 2);
         }
         "submysterygift" => {
             let num = msg.get_tag("msg-param-mass-gift-count")?;
@@ -92,7 +94,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
                 msg.get_tag("login")?,
                 num,
                 if &num == "1" { "" } else { "s" },
-            )]);
+            )], 2);
         }
 
         "giftpaidupgrade" => {
@@ -100,20 +102,20 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
                 "<{}> upgrades a gift subscription from <{}>",
                 msg.get_tag("login")?,
                 msg.get_tag("msg-param-sender-login")?,
-            )]);
+            )], 2);
         }
         "primepaidupgrade" => {
             echo(EVENT_ALERT, &["UPGRADE", &format!(
                 "<{}> upgrades a Twitch Prime subscription",
                 msg.get_tag("login")?,
-            )]);
+            )], 2);
         }
 
         "bitsbadgetier" => {
             echo(EVENT_ALERT, &["BITS BADGE", &format!(
                 "<{}> earns a new tier of Bits Badge",
                 msg.get_tag("login")?,
-            )]);
+            )], 1);
         }
 
         _ => {
@@ -121,7 +123,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
                 "Unknown SType '{}': {}",
                 stype,
                 msg.get_tag("system-msg").unwrap_or_else(|| msg.as_str())
-            )]);
+            )], 1);
         }
     }
     Some(EatMode::Hexchat)
@@ -158,6 +160,7 @@ pub fn hosttarget(target: &str) -> Option<EatMode> {
         echo(
             EVENT_CHANNEL,
             &[format!("#{}", target), format!("https://www.twitch.tv/{}", target)],
+            1,
         );
     }
 
@@ -170,6 +173,7 @@ pub fn clearmsg(msg: Message) -> Option<EatMode> {
         EVENT_ERR,
         &[format!("A message by <{}> was deleted: {}",
                   msg.get_tag("login")?, &msg.trail)],
+        1,
     );
     Some(EatMode::Hexchat)
 }
@@ -188,6 +192,6 @@ pub fn clearchat(msg: Message) -> Option<EatMode> {
         }
     }
 
-    echo(EVENT_ERR, &[text]);
+    echo(EVENT_ERR, &[text], 1);
     Some(EatMode::Hexchat)
 }
