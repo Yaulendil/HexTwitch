@@ -7,7 +7,7 @@ mod tabs;
 use std::mem::drop;
 
 use chrono::{DateTime, Utc};
-use hexchat::{ChannelRef, EatMode, get_channel_name, get_network_name, PrintEvent, strip_formatting};
+use hexchat::{ChannelRef, EatMode, get_channel_name, get_network_name, PrintEvent, send_command, strip_formatting};
 use parking_lot::Mutex;
 
 use ircv3::Message;
@@ -57,8 +57,16 @@ pub(crate) fn cb_focus(_channel: ChannelRef) -> EatMode {
 
 
 /// Hide a Join Event if it is fake.
-pub(crate) fn cb_join(_etype: PrintEvent, _word: &[String]) -> EatMode {
-    EatMode::None
+pub(crate) fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
+    if get_network_name()
+        .unwrap_or_default()
+        .eq_ignore_ascii_case("twitch")
+        && !word[2].contains("tmi.twitch.tv")
+    {
+        EatMode::All
+    } else {
+        EatMode::None
+    }
 }
 
 
@@ -77,8 +85,10 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
             drop(guard);
 
             if let Some(msg) = msg_maybe {
-                //  TODO: Re-emit Print with User Badges, etc.
+                //  Message comes from Server. IRC Representation available.
 
+                //  TODO: Bits
+                //  TODO: Channel Rewards
                 match etype {
                     PrintEvent::YOUR_MESSAGE
                     | PrintEvent::YOUR_ACTION
@@ -106,11 +116,18 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                             },
                         );
 
+                        send_command(&format!(
+                            "RECV :{0}!{0}@twitch.tv/{0} JOIN {1}",
+                            msg.author.user.to_ascii_lowercase(),
+                            channel,
+                        ));
+
                         EatMode::All
                     }
                     _ => EatMode::None
                 }
             } else if let PrintEvent::YOUR_MESSAGE | PrintEvent::YOUR_ACTION = etype {
+                //  No IRC Representation available for Message.
                 if channel.starts_with(&WHISPER_SIDES)
                     && channel.ends_with(&WHISPER_SIDES) {
                     //  User has spoken inside a Whisper Tab. We must take
