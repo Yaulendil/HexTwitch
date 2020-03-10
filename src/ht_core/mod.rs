@@ -1,6 +1,7 @@
 mod ircv3;
 mod events;
 pub mod printing;
+mod tabs;
 
 
 use std::mem::drop;
@@ -11,6 +12,7 @@ use parking_lot::Mutex;
 
 use ircv3::Message;
 use printing::{Badges, echo, EVENT_ERR, USERSTATE, WHISPER_SIDES};
+use tabs::TABCOLORS;
 
 
 pub(crate) struct Sponge {
@@ -48,7 +50,8 @@ safe_static! {
 
 
 /// Reset the Color of a newly-focused Tab.
-pub(crate) fn cb_focus(_channel: ChannelRef) -> EatMode {
+pub(crate) fn cb_focus(channel: ChannelRef) -> EatMode {
+    // TABCOLORS.write().reset(channel);
     EatMode::None
 }
 

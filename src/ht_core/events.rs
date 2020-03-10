@@ -1,7 +1,5 @@
-use hexchat::{
-    EatMode,
-    get_channel_name,
-};
+use hexchat::{EatMode, get_channel_name};
+
 use super::ircv3::Message;
 use super::printing::{echo, EVENT_ALERT, EVENT_CHANNEL, EVENT_ERR, EVENT_NORMAL, USERSTATE};
 
@@ -15,7 +13,7 @@ macro_rules! constant {
         }
     }
 }
-constant!(RAID, "{} raiders arrive from #{}");
+constant!(RAID, "A raid of {} arrives from #{}");
 
 
 fn raid(msg: &Message) -> Option<EatMode> {
@@ -50,7 +48,9 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
             }
 
             if let Some(streak) = msg.get_tag("msg-param-streak-months") {
-                line.push_str(&format!(" for ({}) months in a row", streak));
+                if &streak != "1" {
+                    line.push_str(&format!(" for ({}) months in a row", streak));
+                }
             }
 
             if let Some(cumul) = msg.get_tag("msg-param-cumulative-months") {
@@ -71,8 +71,10 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
                 msg.get_tag("login")?,
             );
 
-            if let Some(streak) = msg.get_tag("msg-param-streak-months") {
-                line.push_str(&format!(" for ({}) months in a row", streak));
+            if let Some(streak) = msg.get_tag("msg-param-months") {
+                if &streak != "1" {
+                    line.push_str(&format!(" for ({}) months in a row", streak));
+                }
             }
 
             if let Some(cumul) = msg.get_tag("msg-param-cumulative-months") {
