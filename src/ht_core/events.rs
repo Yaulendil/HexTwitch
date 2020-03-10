@@ -1,7 +1,15 @@
 use hexchat::{EatMode, get_channel_name};
 
 use super::ircv3::Message;
-use super::printing::{echo, EVENT_ALERT, EVENT_CHANNEL, EVENT_ERR, EVENT_NORMAL, USERSTATE};
+use super::printing::{
+    echo,
+    EVENT_ALERT,
+    EVENT_CHANNEL,
+    EVENT_ERR,
+    EVENT_NORMAL,
+    EVENT_REWARD,
+    USERSTATE,
+};
 
 
 /// This Macro will declare a Macro which returns a String Literal. Meant as a
@@ -14,6 +22,24 @@ macro_rules! constant {
     }
 }
 constant!(RAID, "A raid of {} arrives from #{}");
+
+
+pub fn cheer(name: &str, number: usize) {
+    if number > 0 {
+        echo(
+            EVENT_REWARD,
+            &[
+                "CHEER",
+                &format!("{} cheered", name),
+                &format!("{} bit{}", number, if number == 1 { "" } else { "s" }),
+            ],
+            1,
+        );
+    }
+}
+
+
+pub fn reward() {}
 
 
 fn raid(msg: &Message) -> Option<EatMode> {

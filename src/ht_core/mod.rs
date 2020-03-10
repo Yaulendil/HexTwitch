@@ -87,8 +87,15 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
             if let Some(msg) = msg_maybe {
                 //  Message comes from Server. IRC Representation available.
 
-                //  TODO: Bits
-                //  TODO: Channel Rewards
+                if let Some(tags) = &msg.tags {
+                    if let Some(bits) = tags.get("bits") {
+                        if let Ok(n) = bits.parse::<usize>() {
+                            events::cheer(&msg.author.display_name(), n);
+                        }
+                    }
+                    //  TODO: Channel Rewards
+                }
+
                 match etype {
                     PrintEvent::YOUR_MESSAGE
                     | PrintEvent::YOUR_ACTION
