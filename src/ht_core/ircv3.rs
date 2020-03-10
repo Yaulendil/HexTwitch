@@ -3,7 +3,7 @@
  */
 
 use std::collections::HashMap;
-use std::str;
+use std::fmt;
 
 
 pub fn escape(line: &str) -> String {
@@ -33,8 +33,63 @@ pub fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
 }
 
 
+pub struct Author {
+    pub host: String,
+    pub user: String,
+    pub nick: Option<String>,
+}
+
+impl Author {
+    fn new(ustring: &str) -> Self {
+        let nick: Option<String>;
+        let userhost: &str;
+
+        if ustring.contains('!') {
+            let (n, uh): (&str, &str) = split_at_first(ustring, "!");
+
+            nick = Some(String::from(n));
+            userhost = uh;
+        } else {
+            nick = None;
+            userhost = ustring;
+        }
+
+        let (user, host): (&str, &str) = split_at_first(userhost, "@");
+
+        Self {
+            host: String::from(host),
+            user: String::from(user),
+            nick,
+        }
+    }
+
+    /// Retrieve the display name of the User represented by this `Author`. If
+    ///     the User has a Nick, it will be returned; Otherwise, the Username is
+    ///     returned.
+    ///
+    /// Return: `&str`
+    pub fn display_name(&self) -> &str {
+        if let Some(nick) = &self.nick {
+            &nick
+        } else {
+            &self.user
+        }
+    }
+}
+
+impl fmt::Display for Author {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(nick) = &self.nick {
+            write!(f, "{}!{}@{}", nick, &self.user, &self.host)
+        } else {
+            write!(f, "{}@{}", &self.user, &self.host)
+        }
+    }
+}
+
+
 /// Message: An IRC Message in a usable structure.
-///     ustring : `String`          : UserString: `[nick!]user@host`
+///     author  : `Author`          : UserString: `[nick!]user@host`
 ///     command : `String`          : IRC Command.
 ///     args    : `Vec<String>`     : Arguments passed to the Command.
 ///     trail   : `String`          : Remainder of the Message. Whatever.
@@ -42,7 +97,7 @@ pub fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
 ///                                     This will be `None` if the original
 ///                                     message did not include a Tags segment.
 pub struct Message {
-    pub ustring: String,
+    pub author: Author,
     pub command: String,
     pub args: Vec<String>,
     pub trail: String,
@@ -122,7 +177,7 @@ impl Message {
 
         //  Compile everything into a Message Struct, and send it back up.
         Self {
-            ustring: prefix.to_string(),  // "asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv"
+            author: Author::new(prefix),  // "asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv"
             command: command.to_string(),  // "PRIVMSG"
             args,  // ["#zxcv", "arg2"]
             trail: trail.to_string(),  // "this is a message"
@@ -145,11 +200,12 @@ impl Message {
                     } else {
                         format!("{}={}", key, val)
                     })
-                .collect::<Vec<String>>().join(";"));
+                .collect::<Vec<String>>()
+                .join(";"));
             out.push(' ');
         }
         out.push(':');
-        out.push_str(&self.ustring);
+        out.push_str(&self.author.to_string());
         out.push(' ');
         out.push_str(&self.command);
 
@@ -169,7 +225,7 @@ impl Message {
     ///
     /// Return: `String`
     pub fn get_signature(&self) -> String {
-        format!("{}:{}", self.args.get(0).unwrap_or(&"".to_string()), self.get_user())
+        format!("{}:{}", self.args.get(0).unwrap_or(&"".to_string()), &self.author.user)
     }
 
     /// Retrieve a Tag from the `Message`.
@@ -178,16 +234,5 @@ impl Message {
     /// Return: `Option<String>`
     pub fn get_tag(&self, key: &str) -> Option<String> {
         self.tags.as_ref().and_then(|tags| Some(unescape(tags.get(key)?)))
-    }
-
-    /// Retrieve the name of the User who sent the `Message`. If the User has a
-    ///     Nick, it will be returned; Otherwise, the Username is returned.
-    ///
-    /// Return: `&str`
-    pub fn get_user(&self) -> &str {
-        split_at_first(
-            &self.ustring,
-            if self.ustring.contains('!') { "!" } else { "@" }
-        ).0
     }
 }
