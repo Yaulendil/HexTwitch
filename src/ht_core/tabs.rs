@@ -27,16 +27,14 @@ pub struct Tabs {
 }
 
 impl Tabs {
-    fn new() -> Self {
-        Self { map: HashMap::new() }
-    }
+    fn new() -> Self { Self { map: HashMap::new() } }
 
-    pub fn color(&mut self, color_new: u8) {
+    pub fn color(&mut self, channel: ChannelRef, color_new: u8) {
         let name = get_channel_name();
 
         match self.map.get(&name) {
             Some(color_old) if &color_new <= color_old => {}
-            _ if is_current_focused() => {}
+            _ if is_focused(channel) => {}
             _ => {
                 let map = &mut self.map;
 

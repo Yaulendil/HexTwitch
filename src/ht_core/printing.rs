@@ -20,8 +20,10 @@ pub const EVENT_REWARD: PrintEvent = PrintEvent::WHOIS_AUTHENTICATED;
 
 
 pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: u8) {
-    print_event_to_channel(&get_current_channel(), event, args);
-    TABCOLORS.write().color(tab_color);
+    let channel = get_current_channel();
+
+    print_event_to_channel(&channel, event, args);
+    TABCOLORS.write().color(channel, tab_color);
 }
 
 
