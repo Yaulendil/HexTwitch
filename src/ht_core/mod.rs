@@ -259,6 +259,11 @@ pub(crate) fn cmd_title(arg: &[String]) -> EatMode {
 }
 
 
-pub(crate) fn cmd_tjoin(_arg: &[String]) -> EatMode {
-    EatMode::None
+pub(crate) fn cmd_tjoin(arg: &[String]) -> EatMode {
+    send_command(&format!(
+        "JOIN {}",
+        &arg[1..].join(" "),
+    ));
+
+    EatMode::All
 }
