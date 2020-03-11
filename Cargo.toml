@@ -10,11 +10,14 @@ keywords = ["hexchat", "xchat", "twitch", "irc", "chat", "plugin"]
 
 [dependencies]
 chrono = "0.4"
+hexchat = { git = "https://github.com/Yaulendil/hexchat-rs" }
 parking_lot = { version = "0.7.1", features = ["nightly"] }
-
-[dependencies.hexchat]
-git = "https://github.com/Yaulendil/hexchat-rs"
 
 [lib]
 name = "hextwitchr"
 crate-type = ["cdylib"]
+
+[profile.release]
+panic = "abort"
+lto = true
+codegen-units = 1

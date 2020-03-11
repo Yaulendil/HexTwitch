@@ -6,13 +6,13 @@ use std::collections::HashMap;
 use std::fmt;
 
 
-pub fn escape(line: &str) -> String {
-    line.replace(";", r"\:")
-        .replace(" ", r"\s")
-        .replace("\\", r"\\")
-        .replace("\n", r"\n")
-        .replace("\r", r"\n")
-}
+// pub fn escape(line: &str) -> String {
+//     line.replace(";", r"\:")
+//         .replace(" ", r"\s")
+//         .replace("\\", r"\\")
+//         .replace("\n", r"\n")
+//         .replace("\r", r"\n")
+// }
 
 
 pub fn unescape(line: &str) -> String {

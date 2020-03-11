@@ -1,20 +1,7 @@
 use std::collections::HashMap;
 
-use hexchat::{
-    ChannelRef,
-    get_channel_name,
-    get_current_channel,
-    get_focused_channel,
-    print_event_to_channel,
-    PrintEvent,
-    send_command,
-};
+use hexchat::{ChannelRef, get_channel_name, get_focused_channel, send_command};
 use parking_lot::RwLock;
-
-
-pub fn is_current_focused() -> bool {
-    is_focused(get_current_channel())
-}
 
 
 pub fn is_focused(channel: ChannelRef) -> bool {
