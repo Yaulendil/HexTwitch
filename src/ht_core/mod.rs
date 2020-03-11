@@ -181,13 +181,13 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                 }
             } else if let PrintEvent::YOUR_MESSAGE | PrintEvent::YOUR_ACTION = etype {
                 //  No IRC Representation available for Message.
-                if channel.starts_with(&WHISPER_SIDES)
-                    && channel.ends_with(&WHISPER_SIDES) {
+                if !channel.starts_with("#") {
                     //  User has spoken inside a Whisper Tab. We must take
                     //      the message typed, and forward it to the Whisper
                     //      Command via ".w {}".
-                    //  TODO
-                    EatMode::None
+                    events::whisper_send(etype, &channel, word);
+
+                    EatMode::All
                 } else if &word[2] == "" {
                     //  User has spoken in a normal Channel, but has no Badges.
                     //      Add the Badges from the User State and re-emit.
@@ -220,7 +220,7 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
 
                     Some(EatMode::None)
                 }
-                "WHISPER" => events::whisper(msg),
+                "WHISPER" => events::whisper_recv(msg),
 
                 "ROOMSTATE" => Some(EatMode::Hexchat),
                 "USERSTATE" => events::userstate(msg),

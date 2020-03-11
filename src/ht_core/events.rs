@@ -1,4 +1,12 @@
-use hexchat::{EatMode, get_channel_name};
+use hexchat::{
+    ChannelRef,
+    EatMode,
+    get_channel,
+    get_channel_name,
+    print_event_to_channel,
+    PrintEvent,
+    send_command,
+};
 
 use super::ircv3::Message;
 use super::printing::{
@@ -167,9 +175,40 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
 }
 
 
-pub fn whisper(msg: Message) -> Option<EatMode> {
+fn ensure_tab(name: &str) -> ChannelRef {
+    let channel: ChannelRef;
+
+    if let Some(check) = get_channel("Twitch", &name) {
+        channel = check;
+    } else {
+        send_command(&format!("QUERY {}", &name));
+        channel = get_channel("Twitch", &name)
+            .expect("Failed to ensure Whisper Tab.");
+    }
+
+    //  TODO: Use SETTAB to change Tab Name.
+
+    channel
+}
+
+
+pub fn whisper_recv(msg: Message) -> Option<EatMode> {
+    let user: &str = &msg.author.user;
+    let channel: ChannelRef = ensure_tab(user);
     //  TODO
     Some(EatMode::None)
+}
+
+
+pub fn whisper_send(etype: PrintEvent, user: &str, word: &[String]) {
+    let channel: ChannelRef = ensure_tab(user);
+
+    let etype_dm: PrintEvent = match etype {
+        PrintEvent::YOUR_ACTION => PrintEvent::PRIVATE_ACTION_TO_DIALOG,
+        PrintEvent::YOUR_MESSAGE => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
+        _ => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
+    };
+    //  TODO
 }
 
 
