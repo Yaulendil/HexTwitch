@@ -248,8 +248,14 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
 }
 
 
-pub(crate) fn cmd_title(_arg: &[String]) -> EatMode {
-    EatMode::None
+pub(crate) fn cmd_title(arg: &[String]) -> EatMode {
+    send_command(&format!(
+        "RECV :Twitch@twitch.tv TOPIC #{} :{}",
+        &arg[1].to_ascii_lowercase(),
+        &arg[2..].join(" "),
+    ));
+
+    EatMode::All
 }
 
 
