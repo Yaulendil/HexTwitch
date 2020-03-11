@@ -11,7 +11,15 @@ use hexchat::{ChannelRef, EatMode, get_channel_name, get_network_name, PrintEven
 use parking_lot::Mutex;
 
 use ircv3::Message;
-use printing::{Badges, echo, EVENT_ERR, USERSTATE, WHISPER_SIDES};
+use printing::{
+    Badges,
+    echo,
+    EVENT_ALERT,
+    EVENT_ERR,
+    EVENT_REWARD,
+    USERSTATE,
+    WHISPER_SIDES,
+};
 use tabs::TABCOLORS;
 
 
@@ -93,7 +101,45 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
                             events::cheer(&msg.author.display_name(), n);
                         }
                     }
-                    //  TODO: Channel Rewards
+
+                    if let Some(custom) = tags.get("custom-reward-id") {
+                        if let Some(notif) = events::reward(custom) {
+                            echo(
+                                EVENT_REWARD,
+                                &[
+                                    notif,
+                                    &format!("{}:", &msg.author.display_name()),
+                                    &word[1].as_str(),
+                                ],
+                                2,
+                            );
+                        } else {
+                            echo(
+                                EVENT_REWARD,
+                                &[
+                                    "CUSTOM",
+                                    &format!("({}) {}:", custom, &msg.author.display_name()),
+                                    &word[1].as_str(),
+                                ],
+                                2,
+                            );
+                        }
+
+                        return EatMode::All;
+                    } else if tags.get("msg-id")
+                        .unwrap_or(&String::new())
+                        == "highlighted-message" {
+                        echo(
+                            EVENT_ALERT,
+                            &[
+                                &msg.author.display_name(),
+                                &word[1].as_str(),
+                            ],
+                            2,
+                        );
+
+                        return EatMode::All;
+                    }
                 }
 
                 match etype {
