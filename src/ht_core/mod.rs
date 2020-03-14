@@ -7,7 +7,19 @@ mod tabs;
 use std::mem::drop;
 
 use chrono::{DateTime, Utc};
-use hexchat::{ChannelRef, EatMode, get_channel_name, get_network_name, PrintEvent, send_command, strip_formatting};
+use hexchat::{
+    ChannelRef,
+    EatMode,
+    delete_pref,
+    get_channel_name,
+    get_network_name,
+    get_pref_string,
+    get_prefs,
+    PrintEvent,
+    send_command,
+    set_pref_string,
+    strip_formatting,
+};
 use parking_lot::Mutex;
 
 use ircv3::Message;
@@ -16,6 +28,7 @@ use printing::{
     echo,
     EVENT_ALERT,
     EVENT_ERR,
+    EVENT_NORMAL,
     EVENT_REWARD,
     USERSTATE,
     WHISPER_SIDES,
@@ -83,14 +96,14 @@ fn print_with_irc(channel: &str, etype: PrintEvent, word: &[String], msg: Messag
 
         if let Some(custom) = tags.get("custom-reward-id") {
             //  This Message is a Custom Reward.
-            if let Some(notif) = events::reward(custom) {
+            if let Some(notif) = get_pref_string(custom) {
                 //  We know what it should be called.
                 echo(
                     EVENT_REWARD,
                     &[
-                        notif,
+                        &notif,
                         &format!("{}:", &msg.author.display_name()),
-                        &word[1].as_str(),
+                        &word[1],
                     ],
                     2,
                 );
@@ -103,7 +116,7 @@ fn print_with_irc(channel: &str, etype: PrintEvent, word: &[String], msg: Messag
                     &[
                         "CUSTOM",
                         &format!("({}) {}:", custom, &msg.author.display_name()),
-                        &word[1].as_str(),
+                        &*word[1],
                     ],
                     2,
                 );
@@ -116,8 +129,8 @@ fn print_with_irc(channel: &str, etype: PrintEvent, word: &[String], msg: Messag
             echo(
                 EVENT_ALERT,
                 &[
-                    &msg.author.display_name(),
-                    &word[1].as_str(),
+                    msg.author.display_name(),
+                    &*word[1],
                 ],
                 2,
             );
@@ -131,7 +144,7 @@ fn print_with_irc(channel: &str, etype: PrintEvent, word: &[String], msg: Messag
         | PrintEvent::YOUR_ACTION
         => {
             let badge_str: String = USERSTATE.read().get(&channel).to_string();
-            echo(etype, &[&word[0] as &str, &word[1], "_", &badge_str], 2);
+            echo(etype, &[&*word[0], &*word[1], "_", &*badge_str], 2);
 
             EatMode::All
         }
@@ -145,7 +158,7 @@ fn print_with_irc(channel: &str, etype: PrintEvent, word: &[String], msg: Messag
             );
             echo(
                 etype,
-                &[&word[0] as &str, &word[1], "", &badges.output],
+                &[&*word[0], &*word[1], "", &*badges.output],
                 {
                     if etype == PrintEvent::CHANNEL_MSG_HILIGHT
                         || etype == PrintEvent::CHANNEL_ACTION_HILIGHT
@@ -268,6 +281,50 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
         }
         _ => EatMode::None,
     }
+}
+
+
+pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
+    let mut arg: Vec<&str> = Vec::new();
+    for a in argslice[1..].iter() {
+        if !a.is_empty() { arg.push(&*a); }
+    }
+    let len = arg.len();
+
+    if len < 1 {
+        //  Print the current Reward Names.
+        echo(EVENT_NORMAL, &["REWARD EVENTS:"], 0);
+        for pref in get_prefs() {
+            if !pref.is_empty() {
+                echo(
+                    EVENT_NORMAL,
+                    &[format!(
+                        "{}: '{}'",
+                        pref,
+                        get_pref_string(&pref)
+                            .unwrap_or_default(),
+                    )],
+                    0,
+                );
+            }
+        }
+    } else {
+        if let Ok(_) = {
+            if len < 2 {
+                //  Unset a Reward.
+                delete_pref(&arg[0].to_lowercase())
+            } else {
+                //  Set a Reward.
+                set_pref_string(&arg[0].to_lowercase(), &arg[1..].join(" "))
+            }
+        } {
+            echo(EVENT_NORMAL, &["Preference set."], 0);
+        } else {
+            echo(EVENT_ERR, &["FAILED to set Preference."], 0);
+        }
+    }
+
+    EatMode::All
 }
 
 

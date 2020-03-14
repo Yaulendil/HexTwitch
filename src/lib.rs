@@ -30,7 +30,7 @@ use hexchat::{
     WindowEventListener,
 };
 
-use ht_core::{cb_focus, cb_join, cb_print, cb_server, cmd_title, cmd_tjoin};
+use ht_core::{cb_focus, cb_join, cb_print, cb_server, cmd_reward, cmd_title, cmd_tjoin};
 
 
 enum Hook {
@@ -74,6 +74,12 @@ impl Plugin for HexTwitch {
             },
         )));
 
+        hooks.push(Hook::CommandHook(register_command(
+            "REWARD",
+            "Set the Name of a Custom Reward.\n\nUsage: REWARD <UUID> [<NAME>]",
+            Priority::NORMAL,
+            cmd_reward,
+        )));
         hooks.push(Hook::CommandHook(register_command(
             "TITLE",
             "Set the Title of a Twitch Channel.",

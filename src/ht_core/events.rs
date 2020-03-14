@@ -47,20 +47,6 @@ pub fn cheer(name: &str, number: usize) {
 }
 
 
-pub fn reward(id: &str) -> Option<&str> {
-    //  TODO: Do not hardcode this.
-    match id {
-        "e7c7bd6b-daf0-47fc-8bcf-8912c18bb964" => Some("QUESTION"),  // Coestar
-        "8d4bf0fb-6964-4c58-90ab-1898c4b12133" => Some("VINYL"),  // Coestar
-        "4391ebde-5287-4a68-a4ca-a60487b7500c" => Some("QUESTION"),  // Millbee
-        "4908519c-3084-48ba-ba3c-ff00ee9c5331" => Some("RATE THING"),  // Millbee
-        "ae58f3f3-4c88-4f3d-bae0-580a5c8193ac" => Some("VOICE"),  // Millbee
-        "d8f09468-6bb3-4625-9baf-6682c4ad4da5" => Some("SAY NICE"),  // Millbee
-        _ => None,
-    }
-}
-
-
 fn raid(msg: &Message) -> Option<EatMode> {
     echo(
         EVENT_NORMAL,
