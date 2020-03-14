@@ -72,7 +72,6 @@ fn highest(max: usize, seq: &[(usize, char)]) -> Option<char> {
 
 const BADGE_NONE: &str = "_ ";
 const MAX_BADGES: usize = 3;
-pub const WHISPER_SIDES: &str = "==";
 
 
 /// Badges: A Struct storing the Input and Output of the process of breaking
@@ -98,7 +97,6 @@ impl Badges {
 
             let (class, rank) = split_at_first(pair, "/");
 
-            //  TODO: Do not hardcode this.
             if let Some(c) = match class {
                 "broadcaster" /**/ => Some('🜲'),
                 "staff"       /**/ => Some('⚙'),

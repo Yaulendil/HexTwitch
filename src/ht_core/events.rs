@@ -3,7 +3,7 @@ use hexchat::{
     EatMode,
     get_channel,
     get_channel_name,
-    // print_event_to_channel,
+    print_event_to_channel,
     PrintEvent,
     send_command,
 };
@@ -18,6 +18,10 @@ use super::output::{
     EVENT_REWARD,
     USERSTATE,
 };
+
+
+const WHISPER_LEFT: &str = "==";
+const WHISPER_RIGHT: &str = "==";
 
 
 pub fn cheer(name: &str, number: usize) {
@@ -156,11 +160,10 @@ fn ensure_tab(name: &str) -> ChannelRef {
         channel = check;
     } else {
         send_command(&format!("QUERY {}", &name));
+        send_command(&format!("SETTAB {}{}{}", WHISPER_LEFT, &name, WHISPER_RIGHT));
         channel = get_channel("Twitch", &name)
             .expect("Failed to ensure Whisper Tab.");
     }
-
-    //  TODO: Use SETTAB to change Tab Name.
 
     channel
 }
@@ -169,8 +172,20 @@ fn ensure_tab(name: &str) -> ChannelRef {
 pub fn whisper_recv(msg: Message) -> Option<EatMode> {
     let user: &str = &msg.author.user;
     let channel: ChannelRef = ensure_tab(user);
-    //  TODO
-    Some(EatMode::None)
+
+    let etype: PrintEvent;
+    let text: &str;
+
+    if (&msg.trail).len() >= 4 && (&msg.trail[..4]).eq_ignore_ascii_case("/me ") {
+        etype = PrintEvent::PRIVATE_ACTION_TO_DIALOG;
+        text = &msg.trail[4..];
+    } else {
+        etype = PrintEvent::PRIVATE_MESSAGE_TO_DIALOG;
+        text = &msg.trail;
+    }
+
+    print_event_to_channel(&channel, etype, &[user, text, ""]);
+    Some(EatMode::All)
 }
 
 
