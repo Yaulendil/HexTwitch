@@ -153,7 +153,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
 }
 
 
-fn ensure_tab(name: &str) -> ChannelRef {
+pub fn ensure_tab(name: &str) -> ChannelRef {
     let channel: ChannelRef;
 
     if let Some(check) = get_channel("Twitch", &name) {

@@ -16,7 +16,6 @@ use hexchat::{
     deregister_command,
     EatMode,
     Plugin,
-    plugin,
     print_plain,
     PrintEvent,
     PrintEventListener,
@@ -30,7 +29,16 @@ use hexchat::{
     WindowEventListener,
 };
 
-use ht_core::{cb_focus, cb_join, cb_print, cb_server, cmd_reward, cmd_title, cmd_tjoin};
+use ht_core::{
+    cb_focus,
+    cb_join,
+    cb_print,
+    cb_server,
+    cmd_reward,
+    cmd_title,
+    cmd_tjoin,
+    ensure_tab,
+};
 
 
 enum Hook {
@@ -91,6 +99,12 @@ impl Plugin for HexTwitch {
             "Join a Channel, but only on the Twitch Network.",
             Priority::NORMAL,
             cmd_tjoin,
+        )));
+        hooks.push(Hook::CommandHook(register_command(
+            "W",
+            "Open a Whisper with a Twitch User.",
+            Priority::NORMAL,
+            |args| { ensure_tab(&args[1]); EatMode::All },
         )));
 
         //  Hook Misc Events.

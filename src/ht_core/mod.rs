@@ -21,6 +21,7 @@ use hexchat::{
 };
 use parking_lot::Mutex;
 
+pub use events::ensure_tab;
 use ircv3::Message;
 use output::{
     echo,
