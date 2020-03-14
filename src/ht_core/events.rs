@@ -176,7 +176,7 @@ pub fn whisper_recv(msg: Message) -> Option<EatMode> {
     let etype: PrintEvent;
     let text: &str;
 
-    if (&msg.trail).len() >= 4 && (&msg.trail[..4]).eq_ignore_ascii_case("/me ") {
+    if msg.trail.starts_with("/me ") {
         etype = PrintEvent::PRIVATE_ACTION_TO_DIALOG;
         text = &msg.trail[4..];
     } else {
@@ -190,14 +190,41 @@ pub fn whisper_recv(msg: Message) -> Option<EatMode> {
 
 
 pub fn whisper_send(etype: PrintEvent, user: &str, word: &[String]) {
-    let channel: ChannelRef = ensure_tab(user);
+    //  "asdf qwert" normal -> exec SAY ".w asdf qwert"
+    //  ".w asdf qwert" -> emit "asdf qwert" as private
 
-    let etype_dm: PrintEvent = match etype {
-        PrintEvent::YOUR_ACTION => PrintEvent::PRIVATE_ACTION_TO_DIALOG,
-        PrintEvent::YOUR_MESSAGE => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
-        _ => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
-    };
-    //  TODO
+    let channel: ChannelRef = ensure_tab(user);
+    let mut text: &str = &word[1];
+
+    if text.starts_with(".w ") {
+        //  Normal Message, begins with ".w". The Whisper has been sent. Print
+        //      the message in the Tab.
+        text = text.splitn(3, " ").last().unwrap();
+
+        let etype_dm: PrintEvent = match etype {
+            PrintEvent::YOUR_ACTION => PrintEvent::PRIVATE_ACTION_TO_DIALOG,
+            PrintEvent::YOUR_MESSAGE if text.starts_with("/me ") => {
+                text = &text[4..];
+                PrintEvent::PRIVATE_ACTION_TO_DIALOG
+            }
+            PrintEvent::YOUR_MESSAGE => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
+            _ => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
+        };
+
+        print_event_to_channel(&channel, etype_dm, &[
+            &*word[0],
+            text,
+            &*word[2],
+        ]);
+    } else {
+        //  Normal Message, does NOT begin with ".w". Need to send the Whisper.
+        //      Execute SAY on the message with ".w" prepended.
+        if etype == PrintEvent::YOUR_ACTION {
+            send_command(&format!("SAY .w {} /me {}", &user, text));
+        } else {
+            send_command(&format!("SAY .w {} {}", &user, text));
+        }
+    }
 }
 
 
