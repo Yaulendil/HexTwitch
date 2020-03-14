@@ -3,13 +3,13 @@ use hexchat::{
     EatMode,
     get_channel,
     get_channel_name,
-    print_event_to_channel,
+    // print_event_to_channel,
     PrintEvent,
     send_command,
 };
 
 use super::ircv3::Message;
-use super::printing::{
+use super::output::{
     echo,
     EVENT_ALERT,
     EVENT_CHANNEL,
@@ -18,18 +18,6 @@ use super::printing::{
     EVENT_REWARD,
     USERSTATE,
 };
-
-
-// /// This Macro will declare a Macro which returns a String Literal. Meant as a
-// ///     way to hack some sort of `const` functionality into `format!()` calls.
-// macro_rules! constant {
-//     ($name:ident, $output:literal) => {
-//         macro_rules! $name {
-//             () => ($output)
-//         }
-//     }
-// }
-// constant!(RAID, "A raid of {} arrives from #{}");
 
 
 pub fn cheer(name: &str, number: usize) {
@@ -233,7 +221,7 @@ pub fn hosttarget(target: &str) -> Option<EatMode> {
 pub fn clearmsg(msg: Message) -> Option<EatMode> {
     echo(
         EVENT_ERR,
-        &[format!("A message by <{}> was deleted: {}",
+        &[format!("A message by <{}> is deleted: {}",
                   msg.get_tag("login")?, &msg.trail)],
         1,
     );
@@ -243,9 +231,9 @@ pub fn clearmsg(msg: Message) -> Option<EatMode> {
 
 pub fn clearchat(msg: Message) -> Option<EatMode> {
     let mut text: String = if let Some(t) = msg.get_tag("ban-duration") {
-        format!("{} was timed out for {}s.", &msg.trail, t)
+        format!("{} is timed out for {}s.", &msg.trail, t)
     } else {
-        format!("{} was banned permanently.", &msg.trail)
+        format!("{} is banned permanently.", &msg.trail)
     };
 
     if let Some(reason) = msg.get_tag("ban-reason") {

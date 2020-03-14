@@ -1,8 +1,8 @@
 [package]
 name = "HexTwitchR"
-description = "HexChat plugin for Twitch Chat integration over IRC"
-version = "0.8.0-b0"
-authors = ["Yaulendil <davarice@protonmail.com>"]
+description = "HexChat plugin for Twitch integration over IRC"
+version = "0.9.0-b0"
+authors = ["Yaulendil"]
 repository = "https://github.com/yaulendil/hextwitchr"
 edition = "2018"
 readme = "README.md"

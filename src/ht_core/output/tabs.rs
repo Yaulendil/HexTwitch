@@ -4,7 +4,7 @@ use hexchat::{ChannelRef, get_channel_name, get_focused_channel, send_command};
 use parking_lot::RwLock;
 
 
-pub fn is_focused(channel: ChannelRef) -> bool {
+fn is_focused(channel: ChannelRef) -> bool {
     channel == get_focused_channel().unwrap()
 }
 
