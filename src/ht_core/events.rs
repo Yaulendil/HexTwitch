@@ -231,7 +231,7 @@ pub fn whisper_send(etype: PrintEvent, user: &str, word: &[String]) {
 pub fn userstate(msg: Message) -> Option<EatMode> {
     USERSTATE.write().set(
         get_channel_name(),
-        &msg.get_tag("badges").unwrap_or_else(String::new),
+        msg.get_tag("badges").unwrap_or_default(),
     );
     Some(EatMode::All)
 }

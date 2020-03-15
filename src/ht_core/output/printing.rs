@@ -55,6 +55,26 @@ static SUBS: &[(usize, char)] = &[
 ];
 
 
+fn get_badge(class: &str, rank: &str) -> Option<char> {
+    match class {
+        "broadcaster" /**/ => Some('🜲'),
+        "staff"       /**/ => Some('⚙'),
+        "admin"       /**/ => Some('α'),
+        "global-mod"  /**/ => Some('μ'),
+        "moderator"   /**/ => Some('🗡'),
+        "subscriber"  /**/ => highest(rank.parse().unwrap_or(0), &SUBS),
+        "vip"         /**/ => Some('⚑'),
+        "sub-gifter"  /**/ => Some(':'),
+        "bits-leader" /**/ => Some('❖'),
+        "bits"        /**/ => highest(rank.parse().unwrap_or(0), &BITS),
+        "partner"     /**/ => Some('✓'),
+        "turbo"       /**/ => Some('+'),
+        "premium"     /**/ => Some('±'),
+        _ => None,
+    }
+}
+
+
 fn highest(max: usize, seq: &[(usize, char)]) -> Option<char> {
     let mut out: Option<char> = None;
 
@@ -71,7 +91,7 @@ fn highest(max: usize, seq: &[(usize, char)]) -> Option<char> {
 
 
 const BADGE_NONE: &str = "_ ";
-const MAX_BADGES: usize = 3;
+// const MAX_BADGES: usize = 3;
 
 
 /// Badges: A Struct storing the Input and Output of the process of breaking
@@ -88,40 +108,26 @@ impl Badges {
     ///
     /// Input: `&str`
     /// Return: `Badges`
-    pub fn new(input: &str) -> Self {
-        let mut i: usize = 0;
+    pub fn new(input: String) -> Self {
+        // let mut i: usize = 0;
         let mut output: String = String::new();
 
         for pair in input.split(",") {
-            if i >= MAX_BADGES { break; }
+            // if i >= MAX_BADGES { break; }
 
             let (class, rank) = split_at_first(pair, "/");
 
-            if let Some(c) = match class {
-                "broadcaster" /**/ => Some('🜲'),
-                "staff"       /**/ => Some('⚙'),
-                "admin"       /**/ => Some('α'),
-                "global-mod"  /**/ => Some('μ'),
-                "moderator"   /**/ => Some('🗡'),
-                "subscriber"  /**/ => highest(rank.parse().unwrap_or(0), &SUBS),
-                "vip"         /**/ => Some('⚑'),
-                "sub-gifter"  /**/ => Some(':'),
-                "bits-leader" /**/ => Some('❖'),
-                "bits"        /**/ => highest(rank.parse().unwrap_or(0), &BITS),
-                "partner"     /**/ => Some('✓'),
-                "turbo"       /**/ => Some('+'),
-                "premium"     /**/ => Some('±'),
-                _ => None,
-            } {
-                i += 1;
+            if let Some(c) = get_badge(class, rank) {
+                // i += 1;
                 output.push(c);
             }
         }
 
-        if i > 0 { output.push(' '); }
+        // if i > 0 { output.push(' '); }
+        if output.len() > 0 { output.push(' '); }
 
         Self {
-            input: input.to_string(),
+            input,  // : input.to_string(),
             output,
         }
     }
@@ -157,7 +163,7 @@ impl States {
     ///     given here, the input is NOT evaluated again.
     ///
     /// Input: `String`, `&str`
-    pub fn set(&mut self, channel: String, new: &str) {
+    pub fn set(&mut self, channel: String, new: String) {
         match self.map.get(&channel) {
             Some(old) if new == old.input => {}  // Channel is in Map, with the same Badges.
             _ => {

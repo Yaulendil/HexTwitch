@@ -93,7 +93,7 @@ pub fn print_with_irc(channel: &str, etype: PrintEvent, word: &[String], msg: Me
         | PrintEvent::CHANNEL_ACTION_HILIGHT
         => {
             let badges = Badges::new(
-                &msg.get_tag("badges").unwrap_or_default()
+                msg.get_tag("badges").unwrap_or_default()
             );
             echo(
                 etype,
