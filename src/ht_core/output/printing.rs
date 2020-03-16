@@ -30,10 +30,22 @@ pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: u8) {
 static BITS: &[(usize, char)] = &[
     (0, '▴'),
     (100, '⬧'),
-    (1000, '⬠'),
-    (5000, '⬡'),
-    (10000, '🟋'),
-    (100000, '🟎'),
+    (1_000, '⬠'),
+    (5_000, '⬡'),
+    (10_000, '🟋'),
+    // (25_000, '?'),
+    // (50_000, '?'),
+    // (75_000, '?'),
+    (100_000, '🟎'),
+    // (200_000, '?'),
+    // (300_000, '?'),
+    // (400_000, '?'),
+    // (500_000, '?'),
+    // (600_000, '?'),
+    // (700_000, '?'),
+    // (800_000, '?'),
+    // (900_000, '?'),
+    // (1_000_000, '?'),
 ];
 static SUBS: &[(usize, char)] = &[
     (0, '①'),
@@ -53,17 +65,30 @@ static SUBS: &[(usize, char)] = &[
     (132, 'ⅺ'),
     (144, 'ⅻ'),
 ];
+// static GIFTS: &[(usize, char)] = &[
+//     (0, ':'),
+//     // (5, '?'),
+//     // (10, '?'),
+//     // (25, '?'),
+//     // (50, '?'),
+//     // (100, '?'),
+//     // (250, '?'),
+//     // (500, '?'),
+//     // (1_000, '?'),
+// ];
 
 
 fn get_badge(class: &str, rank: &str) -> Option<char> {
     match class {
         "broadcaster" /**/ => Some('🜲'),
-        "staff"       /**/ => Some('⚙'),
-        "admin"       /**/ => Some('α'),
-        "global-mod"  /**/ => Some('μ'),
-        "moderator"   /**/ => Some('🗡'),
+        "staff"       /**/ => Some('🜨'),
+        "admin"       /**/ => Some('🜶'),
+        "moderator"   /**/ => Some('🗡'),  // ⛨?
         "subscriber"  /**/ => highest(rank.parse().unwrap_or(0), &SUBS),
         "vip"         /**/ => Some('⚑'),
+        "founder"     /**/ => Some('ⲷ'),
+        "sub-gift-leader"  => Some('⁘'),
+        // "sub-gifter"  /**/ => highest(rank.parse().unwrap_or(0), &GIFTS),
         "sub-gifter"  /**/ => Some(':'),
         "bits-leader" /**/ => Some('❖'),
         "bits"        /**/ => highest(rank.parse().unwrap_or(0), &BITS),
