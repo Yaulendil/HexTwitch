@@ -69,17 +69,23 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
             let mut line = format!("<{}> {}scribes", msg.get_tag("login")?, stype);
 
             if let Some(plan) = msg.get_tag("msg-param-sub-plan") {
-                if &plan == "Prime" { line.push_str(" with Twitch Prime") };
+                match &*plan {
+                    "Prime" => { line.push_str(" with Twitch Prime") }
+                    // "1000" => { line.push_str(" at Tier 1 ($5)") }
+                    "2000" => { line.push_str(" at Tier 2 ($10)") }
+                    "3000" => { line.push_str(" at Tier 3 ($25)") }
+                    _ => {}
+                };
             }
 
             if let Some(streak) = msg.get_tag("msg-param-streak-months") {
-                if &streak != "1" {
+                if streak.parse().unwrap_or(0) > 1 {
                     line.push_str(&format!(" for ({}) months in a row", streak));
                 }
             }
 
             if let Some(cumul) = msg.get_tag("msg-param-cumulative-months") {
-                if &cumul != "1" {
+                if cumul.parse().unwrap_or(0) > 1 {
                     line.push_str(&format!(", with ({}) months in total", cumul));
                 }
             }
@@ -97,13 +103,13 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
             );
 
             if let Some(streak) = msg.get_tag("msg-param-months") {
-                if &streak != "1" {
+                if streak.parse().unwrap_or(0) > 1 {
                     line.push_str(&format!(" for ({}) months in a row", streak));
                 }
             }
 
             if let Some(cumul) = msg.get_tag("msg-param-cumulative-months") {
-                if &cumul != "1" {
+                if cumul.parse().unwrap_or(0) > 1 {
                     line.push_str(&format!(", with ({}) months in total", cumul));
                 }
             }
