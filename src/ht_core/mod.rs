@@ -195,7 +195,10 @@ pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
                 delete_pref(&arg[0].to_lowercase())
             } else {
                 //  Set a Reward.
-                set_pref_string(&arg[0].to_lowercase(), &arg[1..].join(" "))
+                set_pref_string(
+                    &arg[0].to_lowercase(),
+                    &arg[1..].join(" ").trim()
+                )
             }
         } {
             echo(EVENT_NORMAL, &["Preference set."], 0);
@@ -212,7 +215,7 @@ pub(crate) fn cmd_title(arg: &[String]) -> EatMode {
     send_command(&format!(
         "RECV :Twitch@twitch.tv TOPIC #{} :{}",
         &arg[1].to_ascii_lowercase(),
-        &arg[2..].join(" "),
+        &arg[2..].join(" ").trim(),
     ));
 
     EatMode::All
@@ -222,7 +225,7 @@ pub(crate) fn cmd_title(arg: &[String]) -> EatMode {
 pub(crate) fn cmd_tjoin(arg: &[String]) -> EatMode {
     send_command(&format!(
         "JOIN {}",
-        &arg[1..].join(" "),
+        &arg[1..].join(" ").trim(),
     ));
 
     EatMode::All
