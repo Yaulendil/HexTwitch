@@ -116,7 +116,6 @@ fn highest(max: usize, seq: &[(usize, char)]) -> Option<char> {
 
 
 const BADGE_NONE: &str = "_ ";
-// const MAX_BADGES: usize = 3;
 
 
 /// Badges: A Struct storing the Input and Output of the process of breaking
@@ -131,28 +130,23 @@ impl Badges {
     /// Break down a string to find the final set of characters. The original
     ///     will be stored.
     ///
-    /// Input: `&str`
+    /// Input: `String`
     /// Return: `Badges`
     pub fn new(input: String) -> Self {
-        // let mut i: usize = 0;
         let mut output: String = String::new();
 
         for pair in input.split(",") {
-            // if i >= MAX_BADGES { break; }
-
             let (class, rank) = split_at_first(pair, "/");
 
             if let Some(c) = get_badge(class, rank) {
-                // i += 1;
                 output.push(c);
             }
         }
 
-        // if i > 0 { output.push(' '); }
         if output.len() > 0 { output.push(' '); }
 
         Self {
-            input,  // : input.to_string(),
+            input,
             output,
         }
     }
@@ -187,7 +181,7 @@ impl States {
     ///     given Channel in the Map was created from the same input as has been
     ///     given here, the input is NOT evaluated again.
     ///
-    /// Input: `String`, `&str`
+    /// Input: `String`, `String`
     pub fn set(&mut self, channel: String, new: String) {
         match self.map.get(&channel) {
             Some(old) if new == old.input => {}  // Channel is in Map, with the same Badges.

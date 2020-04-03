@@ -1,12 +1,13 @@
 [package]
 name = "HexTwitchR"
 description = "HexChat plugin for Twitch integration over IRC"
-version = "1.0.3"
+version = "1.0.4"
 authors = ["Yaulendil"]
 repository = "https://github.com/yaulendil/hextwitchr"
 edition = "2018"
 readme = "README.md"
-keywords = ["hexchat", "xchat", "twitch", "irc", "chat", "plugin"]
+keywords = ["hexchat", "xchat", "twitch", "irc", "plugin"]
+license = "GPL-3.0"
 
 [dependencies]
 chrono = "0.4"
@@ -18,6 +19,5 @@ name = "hextwitchr"
 crate-type = ["cdylib"]
 
 [profile.release]
-panic = "abort"
 lto = true
 codegen-units = 1
