@@ -2,12 +2,7 @@ mod printing;
 mod tabs;
 
 
-use hexchat::{
-    EatMode,
-    get_pref_string,
-    PrintEvent,
-    send_command,
-};
+use hexchat::{EatMode, PrintEvent, send_command};
 
 pub use printing::{
     Badges,
@@ -25,65 +20,28 @@ use super::ircv3::Message;
 
 
 /// Message comes from Server. IRC Representation available.
-pub fn print_with_irc(channel: &str, etype: PrintEvent, word: &[String], msg: Message) -> EatMode {
-    if let Some(tags) = &msg.tags {
-        if let Some(bits) = tags.get("bits") {
+pub fn print_with_irc(
+    channel: &str,
+    etype: PrintEvent,
+    word: &[String],
+    msg: Message,
+) -> EatMode {
+    if msg.tags.is_some() {
+        if let Some(bits) = msg.get_tag("bits") {
             if let Ok(n) = bits.parse::<usize>() {
                 events::cheer(&msg.author.display_name(), n);
             }
         }
 
-        if let Some(custom) = tags.get("custom-reward-id") {
-            //  This Message is a Custom Reward.
-            if let Some(notif) = get_pref_string(custom) {
-                //  We know what it should be called.
-                echo(
-                    EVENT_REWARD,
-                    &[
-                        &notif,
-                        &format!("{}:", &msg.author.display_name()),
-                        &word[1],
-                    ],
-                    2,
-                );
-            } else {
-                //  We do NOT know what it should be called. Use a
-                //      generic "CUSTOM" label, and also print the
-                //      ID.
-                echo(
-                    EVENT_REWARD,
-                    &[
-                        "CUSTOM",
-                        &format!("({}) {}:", custom, &msg.author.display_name()),
-                        &*word[1],
-                    ],
-                    2,
-                );
-            }
-
-            return EatMode::All;
-        } else if tags.get("msg-id")
-            .unwrap_or(&String::new())
-            == "highlighted-message" {
-            echo(
-                EVENT_ALERT,
-                &[
-                    msg.author.display_name(),
-                    &*word[1],
-                ],
-                2,
-            );
-
-            return EatMode::All;
-        }
+        if let Some(eat) = events::reward(word, &msg) { return eat; }
     }
 
     match etype {
         PrintEvent::YOUR_MESSAGE
         | PrintEvent::YOUR_ACTION
         => {
-            let badge_str: String = USERSTATE.read().get(&channel).to_string();
-            echo(etype, &[&*word[0], &*word[1], "_", &*badge_str], 2);
+            let badge_str: String = USERSTATE.read().get(&channel).to_owned();
+            echo(etype, &[&*word[0], &*word[1], "_", &badge_str], 2);
 
             EatMode::All
         }
@@ -127,11 +85,15 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
         events::whisper_send(etype, &channel, word);
 
         EatMode::All
-    } else if &word[2] == "" {
+    } else if word[2].is_empty() {
+        //  FIXME: Currently, a `/ME` Command executed by the User is not given
+        //      the User Badges, while it IS given Badges when received from the
+        //      Server. This seems to be where that goes wrong, but it is not
+        //      clear why.
         //  User has spoken in a normal Channel, but has no Badges.
         //      Add the Badges from the User State and re-emit.
-        let badge_str: String = USERSTATE.read().get(&channel).to_string();
-        echo(etype, &[&word[0] as &str, &word[1], "_", &badge_str], 2);
+        let badge_str: String = USERSTATE.read().get(&channel).to_owned();
+        echo(etype, &[&*word[0], &*word[1], "_", &badge_str], 2);
 
         EatMode::All
     } else {

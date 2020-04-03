@@ -2,6 +2,7 @@ use hexchat::{
     ChannelRef,
     EatMode,
     get_channel,
+    get_pref_string,
     print_event_to_channel,
     PrintEvent,
     send_command,
@@ -24,29 +25,53 @@ const WHISPER_RIGHT: &str = "==";
 
 pub fn cheer(name: &str, number: usize) {
     if number > 0 {
-        echo(
-            EVENT_REWARD,
-            &[
-                "CHEER",
-                &format!("{} cheers", name),
-                &format!("{} bit{}", number, if number == 1 { "" } else { "s" }),
-            ],
-            1,
-        );
+        echo(EVENT_REWARD, &[
+            "CHEER",
+            &format!("{} cheers", name),
+            &format!("{} bit{}", number, if number == 1 { "" } else { "s" }),
+        ], 1)
     }
 }
 
 
+pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
+    if let Some(custom) = msg.get_tag("custom-reward-id") {
+        //  This Message is a Custom Reward.
+        if let Some(notif) = get_pref_string(&custom) {
+            //  We know what it should be called.
+            echo(EVENT_REWARD, &[
+                &notif,
+                &format!("{}:", msg.author.display_name()),
+                &word[1],
+            ], 2);
+        } else {
+            //  We do NOT know what it should be called. Use a generic "CUSTOM"
+            //      label, and also print the ID.
+            echo(EVENT_REWARD, &[
+                "CUSTOM",
+                &format!("({}) {}:", custom, msg.author.display_name()),
+                &word[1],
+            ], 2);
+        }
+
+        Some(EatMode::All)
+    } else if "highlighted-message" == msg.get_tag("msg-id")? {
+        echo(EVENT_ALERT, &[
+            msg.author.display_name(),
+            &word[1],
+        ], 2);
+
+        Some(EatMode::All)
+    } else { None }
+}
+
+
 fn raid(msg: &Message) -> Option<EatMode> {
-    echo(
-        EVENT_NORMAL,
-        &[format!(
-            "A raid of {} arrives from #{}",
-            msg.get_tag("msg-param-viewerCount")?,
-            msg.get_tag("msg-param-displayName")?.to_lowercase(),
-        )],
-        1,
-    );
+    echo(EVENT_NORMAL, &[format!(
+        "A raid of {} arrives from #{}",
+        msg.get_tag("msg-param-viewerCount")?,
+        msg.get_tag("msg-param-displayName")?.to_lowercase(),
+    )], 1);
     Some(EatMode::Hexchat)
 }
 
