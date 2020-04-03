@@ -80,9 +80,9 @@ impl Author {
 impl fmt::Display for Author {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(nick) = &self.nick {
-            write!(f, "{}!{}@{}", nick, &self.user, &self.host)
+            write!(f, "{}!{}@{}", nick, self.user, self.host)
         } else {
-            write!(f, "{}@{}", &self.user, &self.host)
+            write!(f, "{}@{}", self.user, self.host)
         }
     }
 }
@@ -130,7 +130,7 @@ impl Message {
             //      the rest of the way down. Add values to the HashMap.
             for kvp in tags_str_iter {
                 let (key, val) = split_at_first(kvp, "=");
-                if !key.is_empty() { tagmap.insert(key.to_string(), val.to_string()); }
+                if !key.is_empty() { tagmap.insert(String::from(key), String::from(val)); }
             }
             tags = Some(tagmap);
         } else {
@@ -148,7 +148,7 @@ impl Message {
         if full_message.starts_with(':') {
             //  This Message has a Prefix. The Prefix is most likely
             //      hostname and/or server info. It ends at the first space.
-            let (p, m) = &split_at_first(full_message, " ");
+            let (p, m) = split_at_first(full_message, " ");
             prefix = &p[1..];
             message = m;
         } else {
@@ -178,54 +178,22 @@ impl Message {
         //  Compile everything into a Message Struct, and send it back up.
         Self {
             author: Author::new(prefix),  // "asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv"
-            command: command.to_string(),  // "PRIVMSG"
+            command: String::from(command),  // "PRIVMSG"
             args,  // ["#zxcv", "arg2"]
-            trail: trail.to_string(),  // "this is a message"
+            trail: String::from(trail),  // "this is a message"
             tags,  // { badges: "bits/100", display-name: "AsdfQwert", emotes: "" }
         }
-    }
-
-    /// Convert this `Message` into a `String` which is suitable for sending
-    ///     over IRC.
-    ///
-    /// Return: `String`
-    pub fn as_str(&self) -> String {
-        let mut out = String::new();
-        if let Some(tags) = &self.tags {
-            out.push('@');
-            out.push_str(&tags.iter()
-                .map(|(key, val)|
-                    if val == "" {
-                        key.to_owned()
-                    } else {
-                        format!("{}={}", key, val)
-                    })
-                .collect::<Vec<String>>()
-                .join(";"));
-            out.push(' ');
-        }
-        out.push(':');
-        out.push_str(&self.author.to_string());
-        out.push(' ');
-        out.push_str(&self.command);
-
-        for arg in &self.args {
-            out.push(' ');
-            out.push_str(arg);
-        }
-        if &self.trail != "" {
-            out.push_str(" :");
-            out.push_str(&self.trail);
-        }
-
-        out
     }
 
     /// Get a `String` representing this `Message` which will identify it.
     ///
     /// Return: `String`
     pub fn get_signature(&self) -> String {
-        format!("{}:{}", self.args.get(0).unwrap_or(&"".to_string()), &self.author.user)
+        format!(
+            "{}:{}",
+            self.args.get(0).unwrap_or(&String::new()),
+            self.author.user,
+        )
     }
 
     /// Retrieve a Tag from the `Message`.
@@ -234,5 +202,34 @@ impl Message {
     /// Return: `Option<String>`
     pub fn get_tag(&self, key: &str) -> Option<String> {
         self.tags.as_ref().and_then(|tags| Some(unescape(tags.get(key)?)))
+    }
+}
+
+impl fmt::Display for Message {
+    /// Format this `Message` into a format which is suitable for sending over
+    ///     IRC.
+    ///
+    /// Return: `fmt::Result`
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(tags) = &self.tags {
+            let tagline: &str = &tags.iter()
+                .map(
+                    |(key, val)|
+                        if val.is_empty() {
+                            String::from(key)
+                        } else {
+                            format!("{}={}", key, val)
+                        }
+                )
+                .collect::<Vec<String>>()
+                .join(";");
+            write!(f, "@{} ", tagline)?;
+        }
+
+        write!(f, ":{} {}", self.author, self.command)?;
+        for arg in &self.args { write!(f, " {}", arg)?; }
+        if &self.trail != "" { write!(f, " :{}", self.trail)?; }
+
+        Ok(())
     }
 }

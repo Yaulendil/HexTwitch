@@ -174,7 +174,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
             echo(EVENT_NORMAL, &[format!(
                 "Unknown SType '{}': {}",
                 stype,
-                msg.get_tag("system-msg").unwrap_or_else(|| msg.as_str())
+                msg.get_tag("system-msg").unwrap_or_else(|| msg.to_string()),
             )], 1);
         }
     }
