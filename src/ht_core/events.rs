@@ -2,7 +2,6 @@ use hexchat::{
     ChannelRef,
     EatMode,
     get_channel,
-    get_channel_name,
     print_event_to_channel,
     PrintEvent,
     send_command,
@@ -16,7 +15,6 @@ use super::output::{
     EVENT_ERR,
     EVENT_NORMAL,
     EVENT_REWARD,
-    USERSTATE,
 };
 
 
@@ -231,15 +229,6 @@ pub fn whisper_send(etype: PrintEvent, user: &str, word: &[String]) {
             send_command(&format!("SAY .w {} {}", &user, text));
         }
     }
-}
-
-
-pub fn userstate(msg: Message) -> Option<EatMode> {
-    USERSTATE.write().set(
-        get_channel_name(),
-        msg.get_tag("badges").unwrap_or_default(),
-    );
-    Some(EatMode::All)
 }
 
 

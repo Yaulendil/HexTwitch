@@ -30,6 +30,7 @@ use output::{
     print_with_irc,
     print_without_irc,
     TABCOLORS,
+    USERSTATE,
 };
 
 
@@ -139,7 +140,13 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
                 "WHISPER" => events::whisper_recv(msg),
 
                 "ROOMSTATE" => Some(EatMode::Hexchat),
-                "USERSTATE" => events::userstate(msg),
+                "USERSTATE" => {
+                    USERSTATE.write().set(
+                        get_channel_name(),
+                        msg.get_tag("badges").unwrap_or_default(),
+                    );
+                    Some(EatMode::All)
+                },
 
                 "USERNOTICE" => events::usernotice(msg),
                 "HOSTTARGET" => events::hosttarget(&word[3][1..]),
