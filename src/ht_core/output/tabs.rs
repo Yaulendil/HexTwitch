@@ -9,41 +9,37 @@ fn is_focused(channel: ChannelRef) -> bool {
 }
 
 
-pub struct Tabs {
-    map: HashMap<String, u8>,
-}
+pub struct Tabs(HashMap<String, u8>);
 
 impl Tabs {
-    fn new() -> Self { Self { map: HashMap::new() } }
+    fn new() -> Self { Self(HashMap::new()) }
 
     pub fn color(&mut self, channel: ChannelRef, color_new: u8) {
-        let name = get_channel_name();
+        if !is_focused(channel) {
+            let name = get_channel_name();
 
-        match self.map.get(&name) {
-            Some(color_old) if &color_new <= color_old => {}
-            _ if is_focused(channel) => {}
-            _ => {
-                let map = &mut self.map;
+            match self.0.get_mut(&name) {
+                Some(color_old) if &color_new <= color_old => {}
+                guard => {
+                    if let Some(b) = guard {
+                        *b = color_new;
+                    } else {
+                        self.0.insert(name, color_new);
+                    }
 
-                if let Some(b) = map.get_mut(&name) {
-                    *b = color_new;
-                } else {
-                    map.insert(name, color_new);
+                    send_command(&format!("GUI COLOR {}", color_new));
                 }
-
-                send_command(&format!("GUI COLOR {}", color_new));
             }
         }
     }
 
     pub fn reset(&mut self) {
         let name = get_channel_name();
-        let map = &mut self.map;
 
-        if let Some(b) = map.get_mut(&name) {
+        if let Some(b) = self.0.get_mut(&name) {
             *b = 0;
         } else {
-            map.insert(name, 0);
+            self.0.insert(name, 0);
         }
 
         send_command("GUI COLOR 0");

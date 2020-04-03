@@ -52,7 +52,7 @@ enum Hook {
 macro_rules! hook_print {
     ($hvec:expr, $event:expr, $func:expr) => {
         $hvec.push(Hook::PrintHook(add_print_event_listener(
-            $event,  // Catch Message Events.
+            $event,
             Priority::HIGH,
             |word, _dt| $func($event, word),
         )));
@@ -61,7 +61,7 @@ macro_rules! hook_print {
 
 
 #[derive(Default)]
-struct HexTwitch { hooks: Vec<Hook> }
+struct HexTwitch(Vec<Hook>);
 
 impl Plugin for HexTwitch {
     const NAME: &'static str = env!("CARGO_PKG_NAME");
@@ -71,17 +71,7 @@ impl Plugin for HexTwitch {
     fn new() -> Self {
         let mut hooks: Vec<Hook> = Vec::new();
 
-        //  Set Command ASDF to print "qwert" to sanity-check that we are loaded.
-        hooks.push(Hook::CommandHook(register_command(
-            "asdf",
-            "prints 'qwert'",
-            Priority::NORMAL,
-            |_arg| {
-                print_plain("qwert");
-                EatMode::All
-            },
-        )));
-
+        //  Register Plugin Commands, with helptext.
         hooks.push(Hook::CommandHook(register_command(
             "REWARD",
             "Set the Name of a Custom Reward.\n\nUsage: REWARD <UUID> [<NAME>]",
@@ -107,15 +97,10 @@ impl Plugin for HexTwitch {
             |args| { ensure_tab(&args[1]); EatMode::All },
         )));
 
-        //  Hook Misc Events.
-        hooks.push(Hook::WindowHook(add_window_event_listener(
-            WindowEvent::FOCUS_TAB,
-            Priority::NORMAL,
-            cb_focus,
-        )));
+        //  Hook for User Joins.
         hook_print!(hooks, PrintEvent::JOIN, cb_join);
 
-        //  Hook Print Events into Handler.
+        //  Hooks for User Messages.
         hook_print!(hooks, PrintEvent::CHANNEL_MESSAGE, cb_print);
         hook_print!(hooks, PrintEvent::CHANNEL_ACTION, cb_print);
         hook_print!(hooks, PrintEvent::CHANNEL_MSG_HILIGHT, cb_print);
@@ -125,21 +110,28 @@ impl Plugin for HexTwitch {
 
         //  Hook RAW LINE Server Messages into the general Handler Callback.
         hooks.push(Hook::ServerHook(add_raw_server_event_listener(
-            "RAW LINE",  // Catch all events.
+            "RAW LINE",
             Priority::NORMAL,
-            cb_server,  // Send to Server Callback.
+            cb_server,
         )));
 
+        //  Hook Tab Focus events.
+        hooks.push(Hook::WindowHook(add_window_event_listener(
+            WindowEvent::FOCUS_TAB,
+            Priority::NORMAL,
+            cb_focus,
+        )));
+
+        //  Report loadedness.
         print_plain(&format!("{} {} loaded", Self::NAME, Self::VERSION));
 
-        Self { hooks }
+        Self(hooks)
     }
 }
 
-
 impl Drop for HexTwitch {
     fn drop(&mut self) {
-        for hopt in self.hooks.drain(..) {
+        for hopt in self.0.drain(..) {
             match hopt {
                 Hook::CommandHook(handle) => { deregister_command(handle) }
                 Hook::PrintHook(handle) => { remove_print_event_listener(handle) }

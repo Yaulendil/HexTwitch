@@ -152,22 +152,18 @@ impl std::str::FromStr for Badges {
 
 /// States: Effectively a Box for a HashMap. Stores the Badges for the User in
 ///     each Channel.
-pub struct States {
-    map: HashMap<String, Badges>,
-}
+pub struct States(HashMap<String, Badges>);
 
 impl States {
-    fn new() -> Self {
-        Self { map: HashMap::new() }
-    }
+    fn new() -> Self { Self(HashMap::new()) }
 
     /// Get the Badges for the User in a given Channel.
     ///
     /// Input: `&str`
     /// Return: `&str`
     pub fn get(&self, channel: &str) -> &str {
-        match self.map.get(channel) {
-            Some(badges) => &*badges.output,
+        match self.0.get(channel) {
+            Some(badges) => &badges.output,
             None => BADGE_NONE,
         }
     }
@@ -180,16 +176,15 @@ impl States {
     ///
     /// Input: `String`, `String`
     pub fn set(&mut self, channel: String, new: String) {
-        match self.map.get(&channel) {
+        match self.0.get_mut(&channel) {
             Some(old) if new == old.input => {}  // Channel is in Map, with the same Badges.
-            _ => {
+            guard => {
                 let badges: Badges = new.parse().unwrap_or_default();
-                let map = &mut self.map;
 
-                if let Some(b) = map.get_mut(&channel) {
+                if let Some(b) = guard {
                     *b = badges;
                 } else {
-                    map.insert(channel, badges);
+                    self.0.insert(channel, badges);
                 }
             }
         }
