@@ -127,8 +127,8 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
 pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
-            let msg: Message = Message::new(&raw);
-            let opt_eat: Option<EatMode> = match msg.command.as_str() {
+            let msg: Message = raw.parse().expect("Failed to parse IRC Message");
+            let opt_eat: Option<EatMode> = match &*msg.command {
                 //  Chat Messages.
                 "PRIVMSG" => {
                     let mut guard = CURRENT.lock();

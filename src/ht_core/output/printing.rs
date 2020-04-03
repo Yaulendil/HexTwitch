@@ -27,6 +27,7 @@ pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: u8) {
 }
 
 
+const BADGE_NONE: &str = "_ ";
 static BITS: &[(usize, char)] = &[
     (0, '▴'),
     (100, '⬧'),
@@ -115,24 +116,24 @@ fn highest(max: usize, seq: &[(usize, char)]) -> Option<char> {
 }
 
 
-const BADGE_NONE: &str = "_ ";
-
-
 /// Badges: A Struct storing the Input and Output of the process of breaking
 ///     down a badge value. This effectively serves the purpose of a Cached
 ///     Function.
+#[derive(Default)]
 pub struct Badges {
     input: String,
     pub output: String,
 }
 
-impl Badges {
+impl std::str::FromStr for Badges {
+    type Err = ();
+
     /// Break down a string to find the final set of characters. The original
     ///     will be stored.
     ///
-    /// Input: `String`
-    /// Return: `Badges`
-    pub fn new(input: String) -> Self {
+    /// Input: `&str`
+    /// Return: `Result<Badges, ()>`
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         let mut output: String = String::new();
 
         for pair in input.split(",") {
@@ -143,12 +144,8 @@ impl Badges {
             }
         }
 
-        if output.len() > 0 { output.push(' '); }
-
-        Self {
-            input,
-            output,
-        }
+        if !output.is_empty() { output.push(' '); }
+        Ok(Self { input: String::from(input), output })
     }
 }
 
@@ -170,7 +167,7 @@ impl States {
     /// Return: `&str`
     pub fn get(&self, channel: &str) -> &str {
         match self.map.get(channel) {
-            Some(badges) => badges.output.as_str(),
+            Some(badges) => &*badges.output,
             None => BADGE_NONE,
         }
     }
@@ -186,7 +183,7 @@ impl States {
         match self.map.get(&channel) {
             Some(old) if new == old.input => {}  // Channel is in Map, with the same Badges.
             _ => {
-                let badges = Badges::new(new);
+                let badges: Badges = new.parse().unwrap_or_default();
                 let map = &mut self.map;
 
                 if let Some(b) = map.get_mut(&channel) {

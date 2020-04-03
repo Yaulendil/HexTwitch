@@ -105,11 +105,63 @@ pub struct Message {
 }
 
 impl Message {
-    /// Split a raw IRCv3 `String` into a usable `Message`.
+    /// Get a `String` representing this `Message` which will identify it.
+    ///
+    /// Return: `String`
+    pub fn get_signature(&self) -> String {
+        format!(
+            "{}:{}",
+            self.args.get(0).unwrap_or(&String::new()),
+            self.author.user,
+        )
+    }
+
+    /// Retrieve a Tag from the `Message`.
     ///
     /// Input: `&str`
-    /// Return: `Message`
-    pub fn new(full_str: &str) -> Self {
+    /// Return: `Option<String>`
+    pub fn get_tag(&self, key: &str) -> Option<String> {
+        self.tags.as_ref().and_then(|tags| Some(unescape(tags.get(key)?)))
+    }
+}
+
+impl fmt::Display for Message {
+    /// Format this `Message` into a format which is suitable for sending over
+    ///     IRC.
+    ///
+    /// Return: `fmt::Result`
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(tags) = &self.tags {
+            let tagline: &str = &tags.iter()
+                .map(
+                    |(key, val)|
+                        if val.is_empty() {
+                            String::from(key)
+                        } else {
+                            format!("{}={}", key, val)
+                        }
+                )
+                .collect::<Vec<String>>()
+                .join(";");
+            write!(f, "@{} ", tagline)?;
+        }
+
+        write!(f, ":{} {}", self.author, self.command)?;
+        for arg in &self.args { write!(f, " {}", arg)?; }
+        if &self.trail != "" { write!(f, " :{}", self.trail)?; }
+
+        Ok(())
+    }
+}
+
+impl std::str::FromStr for Message {
+    type Err = ();
+
+    /// Split a raw IRC string into a usable `Message`.
+    ///
+    /// Input: `&str`
+    /// Return: `Result<Message, ()>`
+    fn from_str(full_str: &str) -> Result<Self, Self::Err> {
         let tags: Option<HashMap<String, String>>;
         let full_message: &str;
         //  "@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message"
@@ -176,60 +228,12 @@ impl Message {
         //  ["#zxcv", "arg2"]
 
         //  Compile everything into a Message Struct, and send it back up.
-        Self {
+        Ok(Self {
             author: Author::new(prefix),  // "asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv"
             command: String::from(command),  // "PRIVMSG"
             args,  // ["#zxcv", "arg2"]
             trail: String::from(trail),  // "this is a message"
             tags,  // { badges: "bits/100", display-name: "AsdfQwert", emotes: "" }
-        }
-    }
-
-    /// Get a `String` representing this `Message` which will identify it.
-    ///
-    /// Return: `String`
-    pub fn get_signature(&self) -> String {
-        format!(
-            "{}:{}",
-            self.args.get(0).unwrap_or(&String::new()),
-            self.author.user,
-        )
-    }
-
-    /// Retrieve a Tag from the `Message`.
-    ///
-    /// Input: `&str`
-    /// Return: `Option<String>`
-    pub fn get_tag(&self, key: &str) -> Option<String> {
-        self.tags.as_ref().and_then(|tags| Some(unescape(tags.get(key)?)))
-    }
-}
-
-impl fmt::Display for Message {
-    /// Format this `Message` into a format which is suitable for sending over
-    ///     IRC.
-    ///
-    /// Return: `fmt::Result`
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some(tags) = &self.tags {
-            let tagline: &str = &tags.iter()
-                .map(
-                    |(key, val)|
-                        if val.is_empty() {
-                            String::from(key)
-                        } else {
-                            format!("{}={}", key, val)
-                        }
-                )
-                .collect::<Vec<String>>()
-                .join(";");
-            write!(f, "@{} ", tagline)?;
-        }
-
-        write!(f, ":{} {}", self.author, self.command)?;
-        for arg in &self.args { write!(f, " {}", arg)?; }
-        if &self.trail != "" { write!(f, " :{}", self.trail)?; }
-
-        Ok(())
+        })
     }
 }

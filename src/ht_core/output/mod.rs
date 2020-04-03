@@ -29,7 +29,7 @@ pub fn print_with_irc(
     if msg.tags.is_some() {
         if let Some(bits) = msg.get_tag("bits") {
             if let Ok(n) = bits.parse::<usize>() {
-                events::cheer(&msg.author.display_name(), n);
+                events::cheer(msg.author.display_name(), n);
             }
         }
 
@@ -50,9 +50,10 @@ pub fn print_with_irc(
         | PrintEvent::CHANNEL_MSG_HILIGHT
         | PrintEvent::CHANNEL_ACTION_HILIGHT
         => {
-            let badges = Badges::new(
-                msg.get_tag("badges").unwrap_or_default()
-            );
+            let badges: Badges = msg.get_tag("badges")
+                .unwrap_or_default()
+                .parse()
+                .unwrap_or_default();
             echo(
                 etype,
                 &[&*word[0], &*word[1], "", &*badges.output],
