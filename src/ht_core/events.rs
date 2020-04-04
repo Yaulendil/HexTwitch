@@ -113,7 +113,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
                 }
             }
 
-            if &msg.trail != "" { line.push_str(&format!(": {}", msg.trail)) };
+            if !msg.trail.is_empty() { line.push_str(&format!(": {}", msg.trail)) };
 
             echo(EVENT_ALERT, &["SUBSCRIPTION", &line], 2);
         }
@@ -229,17 +229,22 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
 }
 
 
-pub fn whisper_send(etype: PrintEvent, user: &str, word: &[String]) {
+pub fn whisper_send(etype: PrintEvent, channel: &str, word: &[String]) {
     //  "asdf qwert" normal -> exec SAY ".w asdf qwert"
     //  ".w asdf qwert" -> emit "asdf qwert" as private
 
-    let channel: ChannelRef = ensure_tab(user);
     let mut text: &str = &word[1];
 
     if text.starts_with(".w ") {
         //  Normal Message, begins with ".w". The Whisper has been sent. Print
         //      the message in the Tab.
-        text = text.splitn(3, " ").last().unwrap();
+        let v: Vec<&str> = text.splitn(3, " ").collect();
+        let user: &str = v[1];
+        text = v[2];
+
+        if user != channel {
+            echo(PrintEvent::MESSAGE_SEND, &[&user, &text], 2);
+        }
 
         let etype_dm: PrintEvent = match etype {
             PrintEvent::YOUR_ACTION => PrintEvent::PRIVATE_ACTION_TO_DIALOG,
@@ -251,18 +256,16 @@ pub fn whisper_send(etype: PrintEvent, user: &str, word: &[String]) {
             _ => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
         };
 
-        print_event_to_channel(&channel, etype_dm, &[
-            &*word[0],
-            text,
-            &*word[2],
+        print_event_to_channel(&ensure_tab(user), etype_dm, &[
+            word[0].as_str(), text, word[2].as_str(),
         ]);
     } else {
         //  Normal Message, does NOT begin with ".w". Need to send the Whisper.
         //      Execute SAY on the message with ".w" prepended.
         if etype == PrintEvent::YOUR_ACTION {
-            send_command(&format!("SAY .w {} /me {}", &user, text));
+            send_command(&format!("SAY .w {} /me {}", &channel, text));
         } else {
-            send_command(&format!("SAY .w {} {}", &user, text));
+            send_command(&format!("SAY .w {} {}", &channel, text));
         }
     }
 }
@@ -309,7 +312,7 @@ pub fn clearchat(msg: Message) -> Option<EatMode> {
     };
 
     if let Some(reason) = msg.get_tag("ban-reason") {
-        if &reason != "" {
+        if !reason.is_empty() {
             text.push_str(&format!(" Reason: {}", reason));
         }
     }
