@@ -33,6 +33,7 @@ pub fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
 }
 
 
+#[derive(Debug, PartialEq)]
 pub struct Author {
     pub host: String,
     pub user: String,
@@ -96,6 +97,7 @@ impl fmt::Display for Author {
 ///     tags    : `Option<HashMap>` : IRCv3 Tags. Strings mapped to Strings.
 ///                                     This will be `None` if the original
 ///                                     message did not include a Tags segment.
+#[derive(Debug, PartialEq)]
 pub struct Message {
     pub author: Author,
     pub command: String,
@@ -235,5 +237,37 @@ impl std::str::FromStr for Message {
             trail: String::from(trail),  // "this is a message"
             tags,  // { badges: "bits/100", display-name: "AsdfQwert", emotes: "" }
         })
+    }
+}
+
+
+#[cfg(test)]
+mod tests_irc {
+    use super::*;
+
+    /// Test to confirm that converting back and forth between Message and text
+    ///     will always produce the same results.
+    #[test]
+    fn irc_consistency() {
+        for init in &[
+            "@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message",
+            "@badges=subscriber/24,bits/1;emote-sets=0,2652,15749,19194,230961,320370,1228598;user-type= :tmi.twitch.tv USERSTATE #asdfqwert",
+        ] {
+            let to_irc: Message = init.parse().expect("Failed to parse initial string.");
+            let from_irc: String = to_irc.to_string();
+            let back_to_irc: Message = init.parse().expect("Failed to re-parse second string.");
+            let back_from_irc: String = back_to_irc.to_string();
+
+            assert_eq!(
+                to_irc,
+                back_to_irc,
+                "Message produces a String which in turn DOES NOT produce an identical Message.",
+            );
+            assert_eq!(
+                from_irc,
+                back_from_irc,
+                "Strings from Messages are not consistent.",
+            );
+        }
     }
 }
