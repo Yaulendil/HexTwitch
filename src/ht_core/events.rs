@@ -2,6 +2,7 @@ use hexchat::{
     ChannelRef,
     EatMode,
     get_channel,
+    get_channel_name,
     get_pref_string,
     print_event_to_channel,
     PrintEvent,
@@ -213,14 +214,29 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
     print_event_to_channel(&channel, etype, &[user, text, ""]);
     */
 
+    let user = String::from(msg.author());
+
     //  Swap out fields of the Message to reshape it into one that HexChat can
     //      nicely handle for us.
     msg.command = String::from("PRIVMSG");
-    msg.args[0] = String::from(msg.author());
+    msg.args[0] = user.to_owned();
+
+    let etype: PrintEvent;
+    let text: String;
 
     if msg.trail.starts_with("/me ") {
+        etype = PrintEvent::PRIVATE_ACTION;
+        text = msg.trail[4..].to_owned();
+
         //  Action Messages have a different format than simply a `/me` command.
-        msg.trail = format!("ACTION {}", &msg.trail[4..]);
+        msg.trail = format!("ACTION {}", &text);
+    } else {
+        etype = PrintEvent::PRIVATE_MESSAGE;
+        text = msg.trail.to_owned();
+    }
+
+    if get_channel_name() != user {
+        echo(etype, &[user, text], 2);
     }
 
     send_command(&format!("RECV {}", msg));
