@@ -29,7 +29,7 @@ pub fn print_with_irc(
     if msg.tags.is_some() {
         if let Some(bits) = msg.get_tag("bits") {
             if let Ok(n) = bits.parse::<usize>() {
-                events::cheer(msg.author.display_name(), n);
+                events::cheer(msg.author(), n);
             }
         }
 
@@ -66,7 +66,7 @@ pub fn print_with_irc(
 
             send_command(&format!(
                 "RECV :{0}!{0}@twitch.tv/{0} JOIN {1}",
-                msg.author.user.to_ascii_lowercase(),
+                msg.author().to_ascii_lowercase(),
                 channel,
             ));
 

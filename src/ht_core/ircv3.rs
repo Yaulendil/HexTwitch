@@ -11,7 +11,7 @@ use std::fmt;
 //         .replace(" ", r"\s")
 //         .replace("\\", r"\\")
 //         .replace("\n", r"\n")
-//         .replace("\r", r"\n")
+//         .replace("\r", r"\r")
 // }
 
 
@@ -20,7 +20,7 @@ pub fn unescape(line: &str) -> String {
         .replace(r"\s", " ")
         .replace(r"\\", "\\")
         .replace(r"\n", "\n")
-        .replace(r"\n", "\r")
+        .replace(r"\r", "\r")
 }
 
 
@@ -34,63 +34,73 @@ pub fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
 
 
 #[derive(Debug, PartialEq)]
-pub struct Author {
-    pub host: String,
-    pub user: String,
-    pub nick: Option<String>,
+pub enum Prefix {
+    ServerName(String),
+    User {
+        nick: String,
+        user: Option<String>,
+        host: Option<String>,
+    }
 }
 
-impl Author {
-    fn new(ustring: &str) -> Self {
-        let nick: Option<String>;
-        let userhost: &str;
-
-        if ustring.contains('!') {
-            let (n, uh): (&str, &str) = split_at_first(ustring, "!");
-
-            nick = Some(String::from(n));
-            userhost = uh;
-        } else {
-            nick = None;
-            userhost = ustring;
-        }
-
-        let (user, host): (&str, &str) = split_at_first(userhost, "@");
-
-        Self {
-            host: String::from(host),
-            user: String::from(user),
-            nick,
-        }
-    }
-
-    /// Retrieve the display name of the User represented by this `Author`. If
-    ///     the User has a Nick, it will be returned; Otherwise, the Username is
-    ///     returned.
-    ///
-    /// Return: `&str`
-    pub fn display_name(&self) -> &str {
-        if let Some(nick) = &self.nick {
-            &nick
-        } else {
-            &self.user
+impl Prefix {
+    pub fn name(&self) -> &str {
+        #[allow(unused_variables)]
+        match self {
+            Prefix::ServerName(server) => { &server }
+            Prefix::User { nick, user, host } => { &nick }
         }
     }
 }
 
-impl fmt::Display for Author {
+impl fmt::Display for Prefix {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some(nick) = &self.nick {
-            write!(f, "{}!{}@{}", nick, self.user, self.host)
+        match self {
+            Prefix::ServerName(server) => { write!(f, "{}", server) }
+            Prefix::User { nick, user, host } => {
+                write!(f, "{}", nick)?;
+                if let Some(u) = user { write!(f, "!{}", u)?; }
+                if let Some(h) = host { write!(f, "@{}", h)?; }
+                Ok(())
+            }
+        }
+    }
+}
+
+impl std::str::FromStr for Prefix {
+    type Err = ();
+
+    /// Split an IRC Prefix string into an Author.
+    ///
+    /// Input: `&str`
+    /// Return: `Result<Prefix, ()>`
+    fn from_str(mut s: &str) -> Result<Self, Self::Err> {
+        if s.contains('.') && !s.contains('@') {
+            Ok(Prefix::ServerName(String::from(s)))
         } else {
-            write!(f, "{}@{}", self.user, self.host)
+            let user: Option<String>;
+            let host: Option<String>;
+
+            if s.contains('@') {
+                let (a, b) = split_at_first(s, "@");
+                s = a;
+                host = Some(String::from(b));
+            } else { host = None; }
+
+            if s.contains('!') {
+                let (a, b) = split_at_first(s, "!");
+                s = a;
+                user = Some(String::from(b));
+            } else { user = None; }
+
+            Ok(Prefix::User { nick: String::from(s), user, host })
         }
     }
 }
 
 
 /// Message: An IRC Message in a usable structure.
-///     author  : `Author`          : UserString: `[nick!]user@host`
+///     prefix  : `Prefix`          : UserString: `nick[!user][@host]`
 ///     command : `String`          : IRC Command.
 ///     args    : `Vec<String>`     : Arguments passed to the Command.
 ///     trail   : `String`          : Remainder of the Message. Whatever.
@@ -99,7 +109,7 @@ impl fmt::Display for Author {
 ///                                     message did not include a Tags segment.
 #[derive(Debug, PartialEq)]
 pub struct Message {
-    pub author: Author,
+    pub prefix: Prefix,
     pub command: String,
     pub args: Vec<String>,
     pub trail: String,
@@ -107,6 +117,8 @@ pub struct Message {
 }
 
 impl Message {
+    pub fn author(&self) -> &str { self.prefix.name() }
+
     /// Get a `String` representing this `Message` which will identify it.
     ///
     /// Return: `String`
@@ -114,7 +126,7 @@ impl Message {
         format!(
             "{}:{}",
             self.args.get(0).unwrap_or(&String::new()),
-            self.author.user,
+            self.author(),
         )
     }
 
@@ -134,21 +146,20 @@ impl fmt::Display for Message {
     /// Return: `fmt::Result`
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(tags) = &self.tags {
-            let tagline: &str = &tags.iter()
-                .map(
-                    |(key, val)|
-                        if val.is_empty() {
-                            String::from(key)
-                        } else {
-                            format!("{}={}", key, val)
-                        }
-                )
-                .collect::<Vec<String>>()
-                .join(";");
-            write!(f, "@{} ", tagline)?;
+            let mut tagseq = tags.iter().map(
+                |(key, val)|
+                    if val.is_empty() {
+                        String::from(key)
+                    } else {
+                        format!("{}={}", key, val)
+                    }
+            ).collect::<Vec<String>>();
+
+            tagseq.sort_unstable();
+            write!(f, "@{} ", tagseq.join(";"))?;
         }
 
-        write!(f, ":{} {}", self.author, self.command)?;
+        write!(f, ":{} {}", self.prefix, self.command)?;
         for arg in &self.args { write!(f, " {}", arg)?; }
         if &self.trail != "" { write!(f, " :{}", self.trail)?; }
 
@@ -231,7 +242,7 @@ impl std::str::FromStr for Message {
 
         //  Compile everything into a Message Struct, and send it back up.
         Ok(Self {
-            author: Author::new(prefix),  // "asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv"
+            prefix: prefix.parse().unwrap(),  // "asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv"
             command: String::from(command),  // "PRIVMSG"
             args,  // ["#zxcv", "arg2"]
             trail: String::from(trail),  // "this is a message"

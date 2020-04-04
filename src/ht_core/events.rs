@@ -41,7 +41,7 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
             //  We know what it should be called.
             echo(EVENT_REWARD, &[
                 &notif,
-                &format!("{}:", msg.author.display_name()),
+                &format!("{}:", msg.author()),
                 &word[1],
             ], 2);
         } else {
@@ -49,7 +49,7 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
             //      label, and also print the ID.
             echo(EVENT_REWARD, &[
                 "CUSTOM",
-                &format!("({}) {}:", custom, msg.author.display_name()),
+                &format!("({}) {}:", custom, msg.author()),
                 &word[1],
             ], 2);
         }
@@ -57,7 +57,7 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
         Some(EatMode::All)
     } else if "highlighted-message" == msg.get_tag("msg-id")? {
         echo(EVENT_ALERT, &[
-            msg.author.display_name(),
+            msg.author(),
             &word[1],
         ], 2);
 
@@ -199,7 +199,7 @@ pub fn ensure_tab(name: &str) -> ChannelRef {
 
 
 pub fn whisper_recv(msg: Message) -> Option<EatMode> {
-    let user: &str = &msg.author.user;
+    let user: &str = &msg.author();
     let channel: ChannelRef = ensure_tab(user);
 
     let etype: PrintEvent;
