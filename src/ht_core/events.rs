@@ -19,8 +19,8 @@ use super::output::{
 };
 
 
-const WHISPER_LEFT: &str = "==";
-const WHISPER_RIGHT: &str = "==";
+// const WHISPER_LEFT: &str = "==";
+// const WHISPER_RIGHT: &str = "==";
 
 
 pub fn cheer(name: &str, number: usize) {
@@ -92,7 +92,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
             let mut line = format!("<{}> {}scribes", msg.get_tag("login")?, stype);
 
             if let Some(plan) = msg.get_tag("msg-param-sub-plan") {
-                match &*plan {
+                match plan.as_str() {
                     "Prime" => { line.push_str(" with Twitch Prime") }
                     // "1000" => { line.push_str(" at Tier 1 ($5)") }
                     "2000" => { line.push_str(" at Tier 2 ($10)") }
@@ -183,22 +183,19 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
 
 
 pub fn ensure_tab(name: &str) -> ChannelRef {
-    let channel: ChannelRef;
-
-    if let Some(check) = get_channel("Twitch", &name) {
-        channel = check;
-    } else {
-        send_command(&format!("QUERY {}", &name));
-        send_command(&format!("SETTAB {}{}{}", WHISPER_LEFT, &name, WHISPER_RIGHT));
-        channel = get_channel("Twitch", &name)
-            .expect("Failed to ensure Whisper Tab.");
+    match get_channel("Twitch", &name) {
+        Some(check) => { check }
+        None => {
+            send_command(&format!("QUERY {}", &name));
+            // send_command(&format!("SETTAB {}{}{}", WHISPER_LEFT, &name, WHISPER_RIGHT));
+            get_channel("Twitch", &name).expect("Failed to ensure Whisper Tab.")
+        }
     }
-
-    channel
 }
 
 
-pub fn whisper_recv(msg: Message) -> Option<EatMode> {
+pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
+    /*
     let user: &str = &msg.author();
     let channel: ChannelRef = ensure_tab(user);
 
@@ -214,6 +211,20 @@ pub fn whisper_recv(msg: Message) -> Option<EatMode> {
     }
 
     print_event_to_channel(&channel, etype, &[user, text, ""]);
+    */
+
+    //  Swap out fields of the Message to reshape it into one that HexChat can
+    //      nicely handle for us.
+    msg.command = String::from("PRIVMSG");
+    msg.args[0] = String::from(msg.author());
+
+    if msg.trail.starts_with("/me ") {
+        //  Action Messages have a different format than simply a `/me` command.
+        msg.trail = format!("ACTION {}", &msg.trail[4..]);
+    }
+
+    send_command(&format!("RECV {}", msg));
+
     Some(EatMode::All)
 }
 
@@ -292,10 +303,9 @@ pub fn clearmsg(msg: Message) -> Option<EatMode> {
 
 
 pub fn clearchat(msg: Message) -> Option<EatMode> {
-    let mut text: String = if let Some(t) = msg.get_tag("ban-duration") {
-        format!("{} is timed out for {}s.", &msg.trail, t)
-    } else {
-        format!("{} is banned permanently.", &msg.trail)
+    let mut text: String = match msg.get_tag("ban-duration") {
+        Some(t) => { format!("{} is timed out for {}s.", &msg.trail, t) }
+        None => { format!("{} is banned permanently.", &msg.trail) }
     };
 
     if let Some(reason) = msg.get_tag("ban-reason") {
