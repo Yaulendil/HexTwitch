@@ -8,7 +8,7 @@ use hexchat::{
     send_command,
 };
 
-use super::ircv3::Message;
+use super::irc::Message;
 use super::output::{
     echo,
     EVENT_ALERT,

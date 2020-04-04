@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use hexchat::{get_current_channel, print_event_to_channel, PrintEvent};
 use parking_lot::RwLock;
 
-use super::super::ircv3::split_at_first;
+use super::super::irc::split_at_first;
 use super::tabs::TABCOLORS;
 
 

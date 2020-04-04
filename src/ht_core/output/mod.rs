@@ -16,7 +16,7 @@ pub use printing::{
 };
 pub use tabs::TABCOLORS;
 use super::events;
-use super::ircv3::Message;
+use super::irc::Message;
 
 
 /// Message comes from Server. IRC Representation available.

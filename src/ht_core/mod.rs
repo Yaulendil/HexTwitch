@@ -1,5 +1,5 @@
 mod events;
-mod ircv3;
+mod irc;
 mod output;
 
 
@@ -22,7 +22,7 @@ use hexchat::{
 use parking_lot::Mutex;
 
 pub use events::ensure_tab;
-use ircv3::Message;
+use irc::Message;
 use output::{
     echo,
     EVENT_ERR,
