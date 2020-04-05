@@ -9,19 +9,17 @@ use hexchat::{
     send_command,
 };
 
-use super::irc::Message;
-use super::output::{
-    echo,
-    EVENT_ALERT,
-    EVENT_CHANNEL,
-    EVENT_ERR,
-    EVENT_NORMAL,
-    EVENT_REWARD,
+use super::{
+    irc::Message,
+    output::{
+        echo,
+        EVENT_ALERT,
+        EVENT_CHANNEL,
+        EVENT_ERR,
+        EVENT_NORMAL,
+        EVENT_REWARD,
+    },
 };
-
-
-// const WHISPER_LEFT: &str = "==";
-// const WHISPER_RIGHT: &str = "==";
 
 
 pub fn cheer(name: &str, number: usize) {
@@ -183,12 +181,18 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
 }
 
 
+/// Ensure Tab: Given a Channel Name, try to find it in the Twitch Network. If
+///     it is not found, run the Hexchat Command to open it. Then, try to find
+///     it again.
+///
+/// Input: `&str`
+/// Return: `ChannelRef`
+/// Panics: If the Channel is not found after `QUERY` is executed.
 pub fn ensure_tab(name: &str) -> ChannelRef {
     match get_channel("Twitch", &name) {
         Some(check) => { check }
         None => {
             send_command(&format!("QUERY {}", &name));
-            // send_command(&format!("SETTAB {}{}{}", WHISPER_LEFT, &name, WHISPER_RIGHT));
             get_channel("Twitch", &name).expect("Failed to ensure Whisper Tab.")
         }
     }

@@ -15,6 +15,12 @@ use std::fmt;
 // }
 
 
+/// Given a string which has had characters in it replaced with sanitized
+///     stand-ins, replace the stand-ins with the special characters they
+///     represent.
+///
+/// Input: `&str`
+/// Return: `String`
 pub fn unescape(line: &str) -> String {
     line.replace(r"\:", ";")
         .replace(r"\s", " ")
@@ -33,6 +39,9 @@ pub fn split_at_first<'a>(line: &'a str, delim: &'a str) -> (&'a str, &'a str) {
 }
 
 
+/// Prefix: A string used by Servers "to indicate the true origin of a message".
+///     It may be either the hostname of a Server, or a string describing a User
+///     and possibly its hostname.
 #[derive(Debug, PartialEq)]
 pub enum Prefix {
     ServerName(String),
@@ -44,6 +53,11 @@ pub enum Prefix {
 }
 
 impl Prefix {
+    /// Name: Return a representation of the author of a Message, intended for a
+    ///     human to read. If the Prefix is a Server Name, it will be that; If
+    ///     it is instead a User String, it will be the Nick.
+    ///
+    /// Return: `&str`
     pub fn name(&self) -> &str {
         #[allow(unused_variables)]
         match self {
@@ -117,6 +131,9 @@ pub struct Message {
 }
 
 impl Message {
+    /// Author: Return the name, put simply, of the source of this Message.
+    ///
+    /// Return: `&str`
     pub fn author(&self) -> &str { self.prefix.name() }
 
     /// Get a `String` representing this `Message` which will identify it.
@@ -261,11 +278,11 @@ mod tests_irc {
     #[test]
     fn irc_consistency() {
         for init in &[
-            "@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message",
-            "@badges=subscriber/24,bits/1;emote-sets=0,2652,15749,19194,230961,320370,1228598;user-type= :tmi.twitch.tv USERSTATE #asdfqwert",
-            "@login=somejerk;room-id=;target-msg-id=15604c60-4d3b-8c1c-8e7a-c9ec2fb6c0cf;tmi-sent-ts=-6745368778951 :tmi.twitch.tv CLEARMSG #coolchannel :get a real job noob",
-            "@room-id=;target-user-id=8675309;tmi-sent-ts=1582958744397 :tmi.twitch.tv CLEARCHAT #coolchannel :somejerk",
-            "@badges=;color=#DABEEF;display-name=AsdfQwert;emotes=;message-id=2;thread-id=1337-9001;turbo=0;user-id=123456789;user-type= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv WHISPER thyself :asdf"
+            r"@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message",
+            r"@badges=subscriber/24,bits/1;emote-sets=0,2652,15749,19194,230961,320370,1228598;user-type= :tmi.twitch.tv USERSTATE #asdfqwert",
+            r"@login=somejerk;room-id=;target-msg-id=15604c60-4d3b-8c1c-8e7a-c9ec2fb6c0cf;tmi-sent-ts=-6745368778951 :tmi.twitch.tv CLEARMSG #coolchannel :get a real job noob",
+            r"@room-id=;target-user-id=8675309;tmi-sent-ts=1582958744397 :tmi.twitch.tv CLEARCHAT #coolchannel :somejerk",
+            r"@badges=;color=#DABEEF;display-name=Asdf\sQwert;emotes=;message-id=2;thread-id=1337-9001;turbo=0;user-id=123456789;user-type= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv WHISPER thyself :asdf"
         ] {
             let to_irc: Message = init.parse().expect("Failed to parse initial string.");
             let from_irc: String = to_irc.to_string();

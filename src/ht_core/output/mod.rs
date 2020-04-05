@@ -15,8 +15,7 @@ pub use printing::{
     USERSTATE,
 };
 pub use tabs::TABCOLORS;
-use super::events;
-use super::irc::Message;
+use super::{events, irc::Message};
 
 
 /// Message comes from Server. IRC Representation available.

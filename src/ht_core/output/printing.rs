@@ -3,8 +3,10 @@ use std::collections::HashMap;
 use hexchat::{get_current_channel, print_event_to_channel, PrintEvent};
 use parking_lot::RwLock;
 
-use super::super::irc::split_at_first;
-use super::tabs::TABCOLORS;
+use super::{
+    super::irc::split_at_first,
+    tabs::TABCOLORS,
+};
 
 
 /// Channel Events: Subscriptions, Highlighted Messages, etc.
@@ -19,6 +21,9 @@ pub const EVENT_NORMAL: PrintEvent = PrintEvent::MOTD;
 pub const EVENT_REWARD: PrintEvent = PrintEvent::WHOIS_AUTHENTICATED;
 
 
+/// Echo: Print an event to HexChat in the current Channel, and color the tab.
+///
+/// Input: `PrintEvent`, `&[impl AsRef<str>]`, `u8`
 pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: u8) {
     let channel = get_current_channel();
 
@@ -27,7 +32,14 @@ pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: u8) {
 }
 
 
+/// BADGE_NONE: A placeholder Badge string for the User when a UserState has not
+///     been received.
 const BADGE_NONE: &str = "_ ";
+/// BITS: Badge characters for Bits. If a User has a Bits Badge, the User is
+///     given the `char` corresponding to the last value found here which is
+///     LESS THAN OR EQUAL TO the Rank of the Badge.
+/// NOTE: if any value here is not greater than the previous one, it and
+///     subsequent pairs will not be considered in the correct order.
 static BITS: &[(usize, char)] = &[
     (0, '▴'),
     (100, '⬧'),
@@ -48,6 +60,11 @@ static BITS: &[(usize, char)] = &[
     // (900_000, '?'),
     // (1_000_000, '?'),
 ];
+/// SUBS: Badge characters for Subscribers. If a User has a Sub Badge, the User
+///     is given the `char` corresponding to the last value found here which is
+///     LESS THAN OR EQUAL TO the Rank of the Badge.
+/// NOTE: if any value here is not greater than the previous one, it and
+///     subsequent pairs will not be considered in the correct order.
 static SUBS: &[(usize, char)] = &[
     (0, '①'),
     (3, '③'),
@@ -66,6 +83,11 @@ static SUBS: &[(usize, char)] = &[
     (132, 'ⅺ'),
     (144, 'ⅻ'),
 ];
+// /// GIFTS: Badge characters for Subscription Gifters. If a User has a Gifter
+// /// Badge, the User is given the `char` corresponding to the last value found
+// /// here which is LESS THAN OR EQUAL TO the Rank of the Badge.
+// /// NOT E: if any value here is not greater than the previous one, it and
+// ///     subsequent pairs will not be considered in the correct order.
 // static GIFTS: &[(usize, char)] = &[
 //     (0, ':'),
 //     // (5, '?'),
