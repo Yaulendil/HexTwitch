@@ -258,27 +258,31 @@ pub fn whisper_send(etype: PrintEvent, channel: &str, word: &[String]) {
     if text.starts_with(".w ") {
         //  Normal Message, begins with ".w". The Whisper has been sent. Print
         //      the message in the Tab.
-        let v: Vec<&str> = text.splitn(3, " ").collect();
-        let user: &str = v[1];
-        text = v[2];
+        let v: Vec<&str> = text.trim().splitn(3, " ").collect();
 
-        if user != channel {
-            echo(PrintEvent::MESSAGE_SEND, &[&user, &text], 2);
-        }
+        if v.len() > 2 {
+            //  Args :: .w | <user> | <the rest of the text>
+            let user: &str = v[1];
+            text = v[2];
 
-        let etype_dm: PrintEvent = match etype {
-            PrintEvent::YOUR_ACTION => PrintEvent::PRIVATE_ACTION_TO_DIALOG,
-            PrintEvent::YOUR_MESSAGE if text.starts_with("/me ") => {
-                text = &text[4..];
-                PrintEvent::PRIVATE_ACTION_TO_DIALOG
+            if user != channel {
+                echo(PrintEvent::MESSAGE_SEND, &[&user, &text], 2);
             }
-            PrintEvent::YOUR_MESSAGE => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
-            _ => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
-        };
 
-        print_event_to_channel(&ensure_tab(user), etype_dm, &[
-            word[0].as_str(), text, word[2].as_str(),
-        ]);
+            let etype_dm: PrintEvent = match etype {
+                PrintEvent::YOUR_ACTION => PrintEvent::PRIVATE_ACTION_TO_DIALOG,
+                PrintEvent::YOUR_MESSAGE if text.starts_with("/me ") => {
+                    text = &text[4..];
+                    PrintEvent::PRIVATE_ACTION_TO_DIALOG
+                }
+                PrintEvent::YOUR_MESSAGE => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
+                _ => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
+            };
+
+            print_event_to_channel(&ensure_tab(user), etype_dm, &[
+                word[0].as_str(), text, word[2].as_str(),
+            ]);
+        }
     } else {
         //  Normal Message, does NOT begin with ".w". Need to send the Whisper.
         //      Execute SAY on the message with ".w" prepended.

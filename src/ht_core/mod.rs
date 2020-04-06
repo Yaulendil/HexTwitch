@@ -173,7 +173,7 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
 
 pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
     let mut arg: Vec<&str> = Vec::new();
-    for a in argslice[1..].iter() {
+    for a in argslice.iter().skip(1) {
         if !a.is_empty() { arg.push(&*a); }
     }
     let len = arg.len();
@@ -235,5 +235,33 @@ pub(crate) fn cmd_tjoin(arg: &[String]) -> EatMode {
         &arg[1..].join(" ").trim(),
     ));
 
+    EatMode::All
+}
+
+
+pub(crate) fn cmd_whisper(arg: &[String]) -> EatMode {
+    if arg.len() > 1
+        // && get_network_name()
+        // .unwrap_or_default()
+        // .eq_ignore_ascii_case("twitch")
+    {
+        let targ: &str = &arg[1];
+
+        //  Two stage assignment to prevent Temporary Value.
+        let _m: String = arg[2..].join(" ");
+        let msg: &str = _m.trim();
+
+        //  Check for trailing Arguments.
+        if msg.is_empty() {
+            //  None: Switch to Whisper Tab.
+            send_command(&format!("QUERY {}", targ));
+        } else {
+            //  Some: Send through Whisper.
+            send_command(&format!("SAY .w {} {}", targ, msg));
+        }
+    //     EatMode::All
+    // } else {
+    //     EatMode::None
+    }
     EatMode::All
 }

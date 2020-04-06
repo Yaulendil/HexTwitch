@@ -14,7 +14,6 @@ use hexchat::{
     add_window_event_listener,
     Command,
     deregister_command,
-    EatMode,
     Plugin,
     print_plain,
     PrintEvent,
@@ -37,7 +36,7 @@ use ht_core::{
     cmd_reward,
     cmd_title,
     cmd_tjoin,
-    ensure_tab,
+    cmd_whisper,
 };
 
 
@@ -92,9 +91,9 @@ impl Plugin for HexTwitch {
         )));
         hooks.push(Hook::CommandHook(register_command(
             "W",
-            "Open a Whisper with a Twitch User.",
+            "Open a Whisper with a Twitch User.\n\nUsage: W <username> [<message>]",
             Priority::NORMAL,
-            |args| { ensure_tab(&args[1]); EatMode::All },
+            cmd_whisper,
         )));
 
         //  Hook for User Joins.
