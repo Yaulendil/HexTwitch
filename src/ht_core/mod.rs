@@ -27,6 +27,7 @@ use output::{
     echo,
     EVENT_ERR,
     EVENT_NORMAL,
+    EVENT_REWARD,
     print_with_irc,
     print_without_irc,
     TABCOLORS,
@@ -141,12 +142,22 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
 
                 "ROOMSTATE" => Some(EatMode::Hexchat),
                 "USERSTATE" => {
-                    USERSTATE.write().set(
-                        get_channel_name(),
+                    let ch = get_channel_name();
+                    let mut state = USERSTATE.write();
+
+                    if state.set(
+                        ch.to_owned(),
                         msg.get_tag("badges").unwrap_or_default(),
-                    );
+                    ) {
+                        echo(EVENT_REWARD, &[
+                            "BADGES",
+                            "New Badges received:",
+                            state.get(&ch),
+                        ], 0);
+                    }
+
                     Some(EatMode::All)
-                },
+                }
 
                 "USERNOTICE" => events::usernotice(msg),
                 "HOSTTARGET" => events::hosttarget(&word[3][1..]),
@@ -204,7 +215,7 @@ pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
                 //  Set a Reward.
                 set_pref_string(
                     &arg[0].to_lowercase(),
-                    &arg[1..].join(" ").trim()
+                    &arg[1..].join(" ").trim(),
                 )
             }
         } {

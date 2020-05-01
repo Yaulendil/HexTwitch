@@ -195,11 +195,13 @@ impl States {
     ///     but with one significant difference: If the current value for the
     ///     given Channel in the Map was created from the same input as has been
     ///     given here, the input is NOT evaluated again.
+    /// Returns `true` if the Badges were changed, `false` otherwise.
     ///
     /// Input: `String`, `String`
-    pub fn set(&mut self, channel: String, new: String) {
+    /// Output: `bool`
+    pub fn set(&mut self, channel: String, new: String) -> bool {
         match self.0.get_mut(&channel) {
-            Some(old) if new == old.input => {}  // Channel is in Map, with the same Badges.
+            Some(old) if new == old.input => false,  // Channel is in Map, with the same Badges.
             guard => {
                 let badges: Badges = new.parse().unwrap_or_default();
 
@@ -208,6 +210,7 @@ impl States {
                 } else {
                     self.0.insert(channel, badges);
                 }
+                true
             }
         }
     }
