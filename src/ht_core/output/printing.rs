@@ -101,34 +101,34 @@ static SUBS: &[(usize, char)] = &[
 // ];
 
 
-fn get_badge(class: &str, rank: &str) -> Option<char> {
+fn get_badge(class: &str, rank: &str) -> char {
     match class {
-        "broadcaster" /**/ => Some('🜲'),
-        "staff"       /**/ => Some('🜨'),
-        "admin"       /**/ => Some('🜶'),
-        "moderator"   /**/ => Some('🗡'),  // ⛨?
+        "broadcaster" /**/ => '🜲',
+        "staff"       /**/ => '🜨',
+        "admin"       /**/ => '🜶',
+        "moderator"   /**/ => '🗡',  // ⛨?
         "subscriber"  /**/ => highest(rank.parse().unwrap_or(0), &SUBS),
-        "vip"         /**/ => Some('⚑'),
-        "founder"     /**/ => Some('ⲷ'),
-        "sub-gift-leader"  => Some('⁘'),
+        "vip"         /**/ => '⚑',
+        "founder"     /**/ => 'ⲷ',
+        "sub-gift-leader" => '⁘',
         // "sub-gifter"  /**/ => highest(rank.parse().unwrap_or(0), &GIFTS),
-        "sub-gifter"  /**/ => Some(':'),
-        "bits-leader" /**/ => Some('❖'),
+        "sub-gifter"  /**/ => ':',
+        "bits-leader" /**/ => '❖',
         "bits"        /**/ => highest(rank.parse().unwrap_or(0), &BITS),
-        "partner"     /**/ => Some('✓'),
-        "turbo"       /**/ => Some('+'),
-        "premium"     /**/ => Some('±'),
-        _ => None,
+        "partner"     /**/ => '✓',
+        "turbo"       /**/ => '+',
+        "premium"     /**/ => '±',
+        _ => '?',
     }
 }
 
 
-fn highest(max: usize, seq: &[(usize, char)]) -> Option<char> {
-    let mut out: Option<char> = None;
+fn highest(max: usize, seq: &[(usize, char)]) -> char {
+    let mut out: char = '¿';
 
     for &(rank, icon) in seq {
         if rank <= max {
-            out.replace(icon);
+            out = icon;
         } else {
             break;
         }
@@ -161,9 +161,10 @@ impl std::str::FromStr for Badges {
         for pair in input.split(",") {
             let (class, rank) = split_at_first(pair, "/");
 
-            if let Some(c) = get_badge(class, rank) {
-                output.push(c);
-            }
+            // if let Some(c) = get_badge(class, rank) {
+            //     output.push(c);
+            // }
+            output.push(get_badge(class, rank));
         }
 
         if !output.is_empty() { output.push(' '); }
