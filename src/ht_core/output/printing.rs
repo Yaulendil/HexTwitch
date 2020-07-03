@@ -147,28 +147,36 @@ pub struct Badges {
     pub output: String,
 }
 
-impl std::str::FromStr for Badges {
-    type Err = ();
-
+impl Badges {
     /// Break down a string to find the final set of characters. The original
     ///     will be stored.
     ///
-    /// Input: `&str`
+    /// Input: `&str`, `&str`
     /// Return: `Result<Badges, ()>`
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    pub fn from_str(input: &str, info: &str) -> Self {
         let mut output: String = String::new();
 
-        for pair in input.split(",") {
-            let (class, rank) = split_at_first(pair, "/");
+        if !input.is_empty() {
+            for pair in input.split::<&str>(",") {
+                let (class, rank) = split_at_first(pair, "/");
 
-            // if let Some(c) = get_badge(class, rank) {
-            //     output.push(c);
-            // }
-            output.push(get_badge(class, rank));
+                if class == "subscriber" && !info.is_empty() {
+                    for pair_info in info.split::<&str>(",") {
+                        if pair_info.starts_with("subscriber") {
+                            output.push(
+                                get_badge(class, split_at_first(pair_info, "/").1)
+                            );
+                            break;
+                        }
+                    }
+                } else {
+                    output.push(get_badge(class, rank));
+                }
+            }
+
+            if !output.is_empty() { output.push(' '); }
         }
-
-        if !output.is_empty() { output.push(' '); }
-        Ok(Self { input: String::from(input), output })
+        Self { input: input.into(), output }
     }
 }
 
@@ -198,13 +206,13 @@ impl States {
     ///     given here, the input is NOT evaluated again.
     /// Returns `true` if the Badges were changed, `false` otherwise.
     ///
-    /// Input: `String`, `String`
+    /// Input: `String`, `&str`, `&str`
     /// Output: `bool`
-    pub fn set(&mut self, channel: String, new: String) -> bool {
+    pub fn set(&mut self, channel: String, new: &str, info: &str) -> bool {
         match self.0.get_mut(&channel) {
             Some(old) if new == old.input => false,  // Channel is in Map, with the same Badges.
             guard => {
-                let badges: Badges = new.parse().unwrap_or_default();
+                let badges: Badges = Badges::from_str(new, info);
 
                 if let Some(b) = guard {
                     *b = badges;

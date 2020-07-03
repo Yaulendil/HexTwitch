@@ -39,8 +39,12 @@ pub fn print_with_irc(
         PrintEvent::YOUR_MESSAGE
         | PrintEvent::YOUR_ACTION
         => {
-            let badge_str: String = USERSTATE.read().get(&channel).to_owned();
-            echo(etype, &[&*word[0], &*word[1], "_", &badge_str], 2);
+            echo(etype, &[
+                &*word[0],
+                &*word[1],
+                "_",
+                USERSTATE.read().get(&channel),
+            ], 2);
 
             EatMode::All
         }
@@ -49,10 +53,10 @@ pub fn print_with_irc(
         | PrintEvent::CHANNEL_MSG_HILIGHT
         | PrintEvent::CHANNEL_ACTION_HILIGHT
         => {
-            let badges: Badges = msg.get_tag("badges")
-                .unwrap_or_default()
-                .parse()
-                .unwrap_or_default();
+            let badges: Badges = Badges::from_str(
+                &msg.get_tag("badges").unwrap_or_default(),
+                &msg.get_tag("badge-info").unwrap_or_default(),
+            );
             echo(
                 etype,
                 &[&*word[0], &*word[1], "", &*badges.output],

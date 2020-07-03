@@ -147,7 +147,8 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
 
                     if state.set(
                         ch.to_owned(),
-                        msg.get_tag("badges").unwrap_or_default(),
+                        &msg.get_tag("badges").unwrap_or_default(),
+                        &msg.get_tag("badge-info").unwrap_or_default(),
                     ) {
                         echo(EVENT_REWARD, &[
                             "BADGES",
