@@ -97,8 +97,12 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
         //      clear why.
         //  User has spoken in a normal Channel, but has no Badges.
         //      Add the Badges from the User State and re-emit.
-        let badge_str: String = USERSTATE.read().get(&channel).to_owned();
-        echo(etype, &[&*word[0], &*word[1], "_", &badge_str], 2);
+        echo(etype, &[
+            &*word[0],
+            &*word[1],
+            "_",
+            USERSTATE.read().get(&channel),
+        ], 2);
 
         EatMode::All
     } else {
