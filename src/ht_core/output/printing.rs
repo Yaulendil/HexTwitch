@@ -103,21 +103,29 @@ static SUBS: &[(usize, char)] = &[
 
 fn get_badge(class: &str, rank: &str) -> char {
     match class {
-        "broadcaster" /**/ => '🜲',
-        "staff"       /**/ => '🜨',
-        "admin"       /**/ => '🜶',
-        "moderator"   /**/ => '🗡',  // ⛨?
-        "subscriber"  /**/ => highest(rank.parse().unwrap_or(0), &SUBS),
-        "vip"         /**/ => '⚑',
-        "founder"     /**/ => 'ⲷ',
+        "broadcaster"   /**/ => '🜲',
+        "staff"         /**/ => '🜨',
+        "admin"         /**/ => '🜶',
+
+        "moderator"     /**/ => '🗡',  // ⛨?
+        "subscriber"    /**/ => highest(rank.parse().unwrap_or(0), &SUBS),
+        "vip"           /**/ => '⚑',
+        "founder"       /**/ => 'ⲷ',
+
         "sub-gift-leader" => '⁘',
-        // "sub-gifter"  /**/ => highest(rank.parse().unwrap_or(0), &GIFTS),
-        "sub-gifter"  /**/ => ':',
-        "bits-leader" /**/ => '❖',
-        "bits"        /**/ => highest(rank.parse().unwrap_or(0), &BITS),
-        "partner"     /**/ => '✓',
-        "turbo"       /**/ => '+',
-        "premium"     /**/ => '±',
+        // "sub-gifter"    /**/ => highest(rank.parse().unwrap_or(0), &GIFTS),
+        "sub-gifter"    /**/ => ':',
+        "bits-charity"  /**/ => '🝔',
+        "bits-leader"   /**/ => '❖',
+        "bits"          /**/ => highest(rank.parse().unwrap_or(0), &BITS),
+        "hype-train"    /**/ => '.',
+
+        "partner"       /**/ => '✓',
+        "turbo"         /**/ => '+',
+        "premium"       /**/ => '±',
+
+        "glhf-pledge"   /**/ => '~',
+        "twitchconAmsterdam2020" => 'c',
         _ => '?',
     }
 }
