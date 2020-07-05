@@ -166,7 +166,7 @@ impl fmt::Display for Message {
             let mut tagseq = tags.iter().map(
                 |(key, val)|
                     if val.is_empty() {
-                        String::from(key)
+                        key.to_owned()
                     } else {
                         format!("{}={}", key, val)
                     }
@@ -201,9 +201,10 @@ impl std::str::FromStr for Message {
             //  The Tags String is the first half of the original message
             //      received by IRC. The "regular" message begins after the
             //      first space.
-            let mut tagmap: HashMap<String, String> = HashMap::new();
             let (tag_str, main_str) = split_at_first(&full_str, " ");
             full_message = main_str;
+
+            let mut tagmap = HashMap::with_capacity(tag_str.matches(';').count() + 1);
 
             //  Break the tagstr into a Split Iterator. Spliterator?
             let tags_str_iter = tag_str[1..].split(';');
@@ -217,7 +218,7 @@ impl std::str::FromStr for Message {
             tags = Some(tagmap);
         } else {
             tags = None;
-            full_message = &full_str;
+            full_message = full_str;
         }
         //  { badges: "bits/100", display-name: "AsdfQwert", emotes: "" }
         //  ":asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message"
@@ -230,8 +231,8 @@ impl std::str::FromStr for Message {
         if full_message.starts_with(':') {
             //  This Message has a Prefix. The Prefix is most likely
             //      hostname and/or server info. It ends at the first space.
-            let (p, m) = split_at_first(full_message, " ");
-            prefix = &p[1..];
+            let (p, m) = split_at_first(&full_message[1..], " ");
+            prefix = p;
             message = m;
         } else {
             prefix = "";
@@ -252,7 +253,7 @@ impl std::str::FromStr for Message {
         //  "#zxcv arg2"
 
         //  The Arguments should be split apart into a Vector of `String`s.
-        let args = args_str.split_ascii_whitespace()
+        let args: Vec<String> = args_str.split_ascii_whitespace()
             .map(String::from)
             .collect::<Vec<String>>();
         //  ["#zxcv", "arg2"]

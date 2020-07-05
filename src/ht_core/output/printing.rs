@@ -162,7 +162,7 @@ impl Badges {
     /// Input: `&str`, `&str`
     /// Return: `Result<Badges, ()>`
     pub fn from_str(input: &str, info: &str) -> Self {
-        let mut output: String = String::new();
+        let mut output: String = String::with_capacity(16);
 
         if !input.is_empty() {
             for pair in input.split::<&str>(",") {
@@ -183,6 +183,7 @@ impl Badges {
             }
 
             if !output.is_empty() { output.push(' '); }
+            output.shrink_to_fit();
         }
         Self { input: input.into(), output }
     }

@@ -5,7 +5,7 @@ use parking_lot::RwLock;
 
 
 fn is_focused(channel: ChannelRef) -> bool {
-    channel == get_focused_channel().unwrap()
+    Some(channel) == get_focused_channel()
 }
 
 
@@ -27,13 +27,15 @@ impl Tabs {
             let name = get_channel_name();
 
             match self.0.get_mut(&name) {
-                Some(color_old) if &color_new <= color_old => {}
-                guard => {
-                    match guard {
-                        Some(b) => { *b = color_new; }
-                        None => { self.0.insert(name, color_new); }
-                    }
-
+                Some(color_old) if &color_new <= color_old => {}  // No change.
+                Some(color_old) => {
+                    // New color is greater than old color. Replace.
+                    *color_old = color_new;
+                    send_command(&format!("GUI COLOR {}", color_new));
+                }
+                None => {
+                    // No old color. Insert new color.
+                    self.0.insert(name, color_new);
                     send_command(&format!("GUI COLOR {}", color_new));
                 }
             }
@@ -46,7 +48,7 @@ impl Tabs {
         let name = get_channel_name();
 
         match self.0.get_mut(&name) {
-            Some(b) => { *b = 0; }
+            Some(color) => { *color = 0; }
             None => { self.0.insert(name, 0); }
         }
 
