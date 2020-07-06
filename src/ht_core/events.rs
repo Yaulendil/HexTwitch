@@ -1,4 +1,4 @@
-use std::fmt::Write as FmtWrite;
+use std::fmt::Write;
 
 use hexchat::{
     ChannelRef,
@@ -332,14 +332,15 @@ pub fn clearmsg(msg: Message) -> Option<EatMode> {
 
 
 pub fn clearchat(msg: Message) -> Option<EatMode> {
-    let mut text: String = match msg.get_tag("ban-duration") {
-        Some(t) => { format!("{} is timed out for {}s.", &msg.trail, t) }
-        None => { format!("{} is banned permanently.", &msg.trail) }
+    let mut text = String::with_capacity(128);
+    match msg.get_tag("ban-duration") {
+        Some(t) => { write!(&mut text, "{} is timed out for {}s.", &msg.trail, t).ok()?; }
+        None => { write!(&mut text, "{} is banned permanently.", &msg.trail).ok()?; }
     };
 
     if let Some(reason) = msg.get_tag("ban-reason") {
         if !reason.is_empty() {
-            text.push_str(&format!(" Reason: {}", reason));
+            write!(&mut text, " Reason: {}", reason).ok()?;
         }
     }
 
