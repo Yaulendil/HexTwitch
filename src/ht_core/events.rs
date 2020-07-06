@@ -1,3 +1,5 @@
+use std::fmt::Write as FmtWrite;
+
 use hexchat::{
     ChannelRef,
     EatMode,
@@ -76,11 +78,7 @@ fn raid(msg: &Message) -> Option<EatMode> {
 
 
 fn special(msg: &Message, _stype: &str) -> Option<EatMode> {
-    echo(
-        EVENT_NORMAL,
-        &[msg.get_tag("system-msg")?],
-        1,
-    );
+    echo(EVENT_NORMAL, &[msg.get_tag("system-msg")?], 1);
     Some(EatMode::Hexchat)
 }
 
@@ -88,7 +86,9 @@ fn special(msg: &Message, _stype: &str) -> Option<EatMode> {
 fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
     match stype {
         "sub" | "resub" => {
-            let mut line = format!("<{}> {}scribes", msg.get_tag("login")?, stype);
+            // Maximum possible usage should be 369 bytes; 384=256+128
+            let mut line = String::with_capacity(384);
+            write!(&mut line, "<{}> {}scribes", msg.get_tag("login")?, stype).ok()?;
 
             if let Some(plan) = msg.get_tag("msg-param-sub-plan") {
                 match plan.as_str() {
@@ -102,37 +102,39 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
 
             if let Some(streak) = msg.get_tag("msg-param-streak-months") {
                 if streak.parse().unwrap_or(0) > 1 {
-                    line.push_str(&format!(" for ({}) months in a row", streak));
+                    write!(&mut line, " for ({}) months in a row", streak).ok()?;
                 }
             }
 
             if let Some(cumul) = msg.get_tag("msg-param-cumulative-months") {
                 if cumul.parse().unwrap_or(0) > 1 {
-                    line.push_str(&format!(", with ({}) months in total", cumul));
+                    write!(&mut line, ", with ({}) months in total", cumul).ok()?;
                 }
             }
 
-            if !msg.trail.is_empty() { line.push_str(&format!(": {}", msg.trail)) };
+            if !msg.trail.is_empty() { write!(&mut line, ": {}", msg.trail).ok()?; }
 
             echo(EVENT_ALERT, &["SUBSCRIPTION", &line], 2);
         }
 
         "subgift" => {
-            let mut line = format!(
+            let mut line = String::with_capacity(137);
+            write!(
+                &mut line,
                 "<{}> is gifted a subscription by <{}>",
                 msg.get_tag("msg-param-recipient-user-name")?,
                 msg.get_tag("login")?,
-            );
+            ).ok()?;
 
             if let Some(streak) = msg.get_tag("msg-param-months") {
                 if streak.parse().unwrap_or(0) > 1 {
-                    line.push_str(&format!(" for ({}) months in a row", streak));
+                    write!(&mut line, " for ({}) months in a row", streak).ok()?;
                 }
             }
 
             if let Some(cumul) = msg.get_tag("msg-param-cumulative-months") {
                 if cumul.parse().unwrap_or(0) > 1 {
-                    line.push_str(&format!(", with ({}) months in total", cumul));
+                    write!(&mut line, ", with ({}) months in total", cumul).ok()?;
                 }
             }
 
@@ -299,7 +301,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
     let stype = msg.get_tag("msg-id")?;
     match stype.as_str() {
         "raid" => raid(&msg),
-        "charity" | "rewardgift" | "ritual" => special(&msg, &stype),
+        "bitsbadgetier" | "charity" | "rewardgift" | "ritual" => special(&msg, &stype),
         _ => subscription(&msg, &stype),
     }
 }
