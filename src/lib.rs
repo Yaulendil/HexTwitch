@@ -2,6 +2,8 @@
  * Core package for the HexTwitch Rust Plugin.
  */
 
+#![feature(test)]
+
 #[macro_use]
 extern crate hexchat;
 

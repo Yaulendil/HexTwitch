@@ -6,27 +6,61 @@ use std::collections::HashMap;
 use std::fmt;
 
 
-// pub fn escape(line: &str) -> String {
-//     line.replace(";", r"\:")
-//         .replace(" ", r"\s")
-//         .replace("\\", r"\\")
-//         .replace("\n", r"\n")
-//         .replace("\r", r"\r")
-// }
+/*/// Given a string which may contain characters which are not allowed in an IRC
+///     Tag String, replace all such characters with escaped substitutions.
+///
+/// Allocates a new String.
+///
+/// Input: `&str`
+/// Return: `String`
+pub fn escape(line: &str) -> String {
+    let mut out = String::with_capacity(line.len());
+
+    for each in line.chars() {
+        match each {
+            '\\' => out.push_str(r"\\"),
+            '\n' => out.push_str(r"\n"),
+            '\r' => out.push_str(r"\r"),
+            ' ' => out.push_str(r"\s"),
+            ';' => out.push_str(r"\:"),
+            other => out.push(other),
+        }
+    }
+
+    out
+}*/
 
 
 /// Given a string which has had characters in it replaced with sanitized
 ///     stand-ins, replace the stand-ins with the special characters they
 ///     represent.
 ///
+/// Allocates a new String.
+///
 /// Input: `&str`
 /// Return: `String`
 pub fn unescape(line: &str) -> String {
-    line.replace(r"\:", ";")
-        .replace(r"\s", " ")
-        .replace(r"\\", "\\")
-        .replace(r"\n", "\n")
-        .replace(r"\r", "\r")
+    let mut out = String::with_capacity(line.len());
+    let mut iter = line.chars();
+
+    while let Some(first) = iter.next() {
+        if first == '\\' {
+            match iter.next() {
+                Some('\\') => out.push('\\'),
+                Some('n') => out.push('\n'),
+                Some('r') => out.push('\r'),
+                Some('s') => out.push(' '),
+                Some(':') => out.push(';'),
+                None => out.push(first),
+                Some(other) => {
+                    out.push(first);
+                    out.push(other);
+                }
+            }
+        } else { out.push(first) }
+    }
+
+    out
 }
 
 
@@ -49,7 +83,7 @@ pub enum Prefix {
         nick: String,
         user: Option<String>,
         host: Option<String>,
-    }
+    },
 }
 
 impl Prefix {
@@ -152,6 +186,8 @@ impl Message {
     /// Input: `&str`
     /// Return: `Option<String>`
     pub fn get_tag(&self, key: &str) -> Option<String> {
+        //  NOTE: Benchmarking seems to show that it is faster to unescape Tag
+        //      values on demand, here, rather than ahead of time.
         self.tags.as_ref().and_then(|tags| Some(unescape(tags.get(key)?)))
     }
 }
@@ -269,25 +305,31 @@ impl std::str::FromStr for Message {
     }
 }
 
-
 #[cfg(test)]
 mod tests_irc {
+    extern crate test;
+
     use super::*;
+    use test::Bencher;
+
+
+    const SAMPLES: &[&str] = &[
+        r"@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message",
+        r"@badges=subscriber/24,bits/1;emote-sets=0,2652,15749,19194,230961,320370,1228598;user-type= :tmi.twitch.tv USERSTATE #asdfqwert",
+        r"@login=somejerk;room-id=;target-msg-id=15604c60-4d3b-8c1c-8e7a-c9ec2fb6c0cf;tmi-sent-ts=-6745368778951 :tmi.twitch.tv CLEARMSG #coolchannel :get a real job noob",
+        r"@room-id=;target-user-id=8675309;tmi-sent-ts=1582958744397 :tmi.twitch.tv CLEARCHAT #coolchannel :somejerk",
+        r"@badges=;color=#DABEEF;display-name=Asdf\sQwert;emotes=;message-id=2;thread-id=1337-9001;turbo=0;user-id=123456789;user-type= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv WHISPER thyself :asdf"
+    ];
+
 
     /// Test to confirm that converting back and forth between Message and text
     ///     will always produce the same results.
     #[test]
-    fn irc_consistency() {
-        for init in &[
-            r"@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message",
-            r"@badges=subscriber/24,bits/1;emote-sets=0,2652,15749,19194,230961,320370,1228598;user-type= :tmi.twitch.tv USERSTATE #asdfqwert",
-            r"@login=somejerk;room-id=;target-msg-id=15604c60-4d3b-8c1c-8e7a-c9ec2fb6c0cf;tmi-sent-ts=-6745368778951 :tmi.twitch.tv CLEARMSG #coolchannel :get a real job noob",
-            r"@room-id=;target-user-id=8675309;tmi-sent-ts=1582958744397 :tmi.twitch.tv CLEARCHAT #coolchannel :somejerk",
-            r"@badges=;color=#DABEEF;display-name=Asdf\sQwert;emotes=;message-id=2;thread-id=1337-9001;turbo=0;user-id=123456789;user-type= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv WHISPER thyself :asdf"
-        ] {
+    fn test_irc_consistency() {
+        for init in SAMPLES {
             let to_irc: Message = init.parse().expect("Failed to parse initial string.");
             let from_irc: String = to_irc.to_string();
-            let back_to_irc: Message = init.parse().expect("Failed to re-parse second string.");
+            let back_to_irc: Message = from_irc.parse().expect("Failed to re-parse second string.");
             let back_from_irc: String = back_to_irc.to_string();
 
             assert_eq!(
@@ -300,6 +342,38 @@ mod tests_irc {
                 back_from_irc,
                 "Strings from Messages are not consistent.",
             );
+        }
+    }
+
+    /// Benchmark performance of `&str`s being parsed into `Message`s..
+    #[bench]
+    fn bench_samples_0tags(b: &mut Bencher) {
+        for init in SAMPLES {
+            b.iter(|| {
+                let _msg: Message = init.parse().expect("Parse Failed");
+            });
+        }
+    }
+
+    /// Benchmark performance of `&str`s being parsed into `Message`s and having
+    ///     IRC Tag values extracted.
+    #[bench]
+    fn bench_samples_3tags(b: &mut Bencher) {
+        for init in SAMPLES {
+            b.iter(|| {
+                let msg: Message = init.parse().expect("Parse Failed");
+                msg.get_tag("bits");
+                msg.get_tag("badges");
+                msg.get_tag("badge-info");
+            });
+        }
+    }
+
+    /// Benchmark performance of `&str`s being parsed into `Message`s and back.
+    #[bench]
+    fn bench_samples_pingpong(b: &mut Bencher) {
+        for init in SAMPLES {
+            b.iter(|| init.parse::<Message>().expect("Parse Failed").to_string());
         }
     }
 }
