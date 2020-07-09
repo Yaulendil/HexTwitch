@@ -103,28 +103,28 @@ static SUBS: &[(usize, char)] = &[
 
 fn get_badge(class: &str, rank: &str) -> char {
     match class {
-        "broadcaster"   /**/ => '🜲',
-        "staff"         /**/ => '🜨',
-        "admin"         /**/ => '🜶',
+        "broadcaster"       /**/ => '🜲',
+        "staff"             /**/ => '🜨',
+        "admin"             /**/ => '🜶',
 
-        "moderator"     /**/ => '🗡',  // ⛨?
-        "subscriber"    /**/ => highest(rank.parse().unwrap_or(0), &SUBS),
-        "vip"           /**/ => '⚑',
-        "founder"       /**/ => 'ⲷ',
+        "moderator"         /**/ => '🗡',  // ⛨?
+        "subscriber"        /**/ => highest(rank.parse().unwrap_or(0), &SUBS),
+        "vip"               /**/ => '⚑',
+        "founder"           /**/ => 'ⲷ',
 
         "sub-gift-leader" => '⁘',
-        // "sub-gifter"    /**/ => highest(rank.parse().unwrap_or(0), &GIFTS),
-        "sub-gifter"    /**/ => ':',
-        "bits-charity"  /**/ => '🝔',
-        "bits-leader"   /**/ => '❖',
-        "bits"          /**/ => highest(rank.parse().unwrap_or(0), &BITS),
-        "hype-train"    /**/ => '.',
+        // "sub-gifter"        /**/ => highest(rank.parse().unwrap_or(0), &GIFTS),
+        "sub-gifter"        /**/ => ':',
+        "bits-charity"      /**/ => '🝔',
+        "bits-leader"       /**/ => '❖',
+        "bits"              /**/ => highest(rank.parse().unwrap_or(0), &BITS),
+        "hype-train"        /**/ => '.',
 
-        "partner"       /**/ => '✓',
-        "turbo"         /**/ => '+',
-        "premium"       /**/ => '±',
+        "partner"           /**/ => '✓',
+        "turbo"             /**/ => '+',
+        "premium"           /**/ => '±',
 
-        "glhf-pledge"   /**/ => '~',
+        "glhf-pledge"       /**/ => '~',
         "twitchconAmsterdam2020" => 'c',
         _ => '?',
     }
@@ -160,7 +160,7 @@ impl Badges {
     ///     will be stored.
     ///
     /// Input: `&str`, `&str`
-    /// Return: `Result<Badges, ()>`
+    /// Return: `Badges`
     pub fn from_str(input: &str, info: &str) -> Self {
         let mut output: String = String::with_capacity(16);
 
@@ -170,10 +170,8 @@ impl Badges {
 
                 if class == "subscriber" && !info.is_empty() {
                     for pair_info in info.split::<&str>(",") {
-                        if pair_info.starts_with("subscriber") {
-                            output.push(
-                                get_badge(class, split_at_first(pair_info, "/").1)
-                            );
+                        if pair_info.starts_with("subscriber/") {
+                            output.push(get_badge(class, &pair_info[11..]));
                             break;
                         }
                     }
@@ -183,7 +181,7 @@ impl Badges {
             }
 
             if !output.is_empty() { output.push(' '); }
-            output.shrink_to_fit();
+            // output.shrink_to_fit();
         }
         Self { input: input.into(), output }
     }
