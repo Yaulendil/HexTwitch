@@ -12,9 +12,26 @@ There are various IRC clients built specifically for Twitch, such as [Chatty](ht
 
 One problem, however, stands in the way: The HexChat Plugin interface does not provide Callbacks with the IRC Tags. Therefore we must modify HexChat to add this functionality, using the Patch File mentioned above (This could be submitted as a Pull Request, but currently, my C sucks and I would rather not waste their time).
 
-## Installation
+## Patching HexChat
 
-With [Cargo](https://github.com/rust-lang/cargo) installed, run the following command in the Directory where you unpacked this Repository:
+With [Git](https://git-scm.com) and [GNU Patch](https://savannah.gnu.org/projects/patch) installed, the following commands should download and patch the latest HexChat source code:
+
+```
+git clone https://github.com/hexchat/hexchat.git build/hexchat
+patch -p0 -d build/hexchat -i ../../hex.patch
+```
+
+When the patch is applied, you can then [build and install HexChat as normal](https://hexchat.readthedocs.io/en/latest/building.html) from its directory at `build/hexchat/`.
+
+## Building the Plugin
+
+You will need to have [Cargo](https://github.com/rust-lang/cargo) installed, as well as the `nightly` Toolchain. To install `nightly` with [RustUp](https://rustup.rs/):
+
+```
+rustup toolchain install nightly
+```
+
+When this is done, run the following command in the Directory where you unpacked this Repository:
 
 ```
 cargo +nightly build --release
