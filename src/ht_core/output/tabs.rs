@@ -1,12 +1,7 @@
 use std::collections::HashMap;
 
-use hexchat::{ChannelRef, get_channel_name, get_focused_channel, send_command};
+use hexchat::{get_channel_name, get_current_channel, get_focused_channel, send_command};
 use parking_lot::RwLock;
-
-
-fn is_focused(channel: ChannelRef) -> bool {
-    Some(channel) == get_focused_channel()
-}
 
 
 /// Tabs: A mapping of HexChat Channel names to their current colors. Provides
@@ -17,13 +12,13 @@ pub struct Tabs(HashMap<String, u8>);
 impl Tabs {
     fn new() -> Self { Self(HashMap::new()) }
 
-    /// Check the provided `ChannelRef` in the Map of colors. If the Channel is
+    /// Check for the current Channel in the Map of colors. If the Channel is
     ///     not focused AND the provided new color is higher than the current
     ///     one, the Map is updated and the `GUI COLOR` Command is run.
     ///
-    /// Input: `ChannelRef`, `u8`
-    pub fn color(&mut self, channel: ChannelRef, color_new: u8) {
-        if !is_focused(channel) {
+    /// Input: `u8`
+    pub fn color(&mut self, color_new: u8) {
+        if !get_focused_channel().contains(&get_current_channel()) {
             let name = get_channel_name();
 
             match self.0.get_mut(&name) {

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use hexchat::{get_current_channel, print_event_to_channel, PrintEvent};
+use hexchat::{print_event, PrintEvent};
 use parking_lot::RwLock;
 
 use super::{
@@ -24,11 +24,10 @@ pub const EVENT_REWARD: PrintEvent = PrintEvent::WHOIS_AUTHENTICATED;
 /// Echo: Print an event to HexChat in the current Channel, and color the tab.
 ///
 /// Input: `PrintEvent`, `&[impl AsRef<str>]`, `u8`
+#[inline]
 pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: u8) {
-    let channel = get_current_channel();
-
-    print_event_to_channel(&channel, event, args);
-    TABCOLORS.write().color(channel, tab_color);
+    print_event(event, args);
+    TABCOLORS.write().color(tab_color);
 }
 
 
