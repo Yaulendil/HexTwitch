@@ -131,28 +131,17 @@ impl std::str::FromStr for Prefix {
     ///
     /// Input: `&str`
     /// Return: `Result<Prefix, ()>`
-    fn from_str(mut s: &str) -> Result<Self, Self::Err> {
-        let has_at = s.contains('@');
-
-        if s.contains('.') && !has_at {
-            Ok(Prefix::ServerName(String::from(s)))
+    fn from_str(s0: &str) -> Result<Self, Self::Err> {
+        if s0.contains('.') && !s0.contains('@') {
+            Ok(Prefix::ServerName(String::from(s0)))
         } else {
-            let user: Option<String>;
-            let host: Option<String>;
+            let (s1, h1) = split_at_char(s0, '@');
+            let host = if !h1.is_empty() { Some(String::from(h1)) } else { None };
 
-            if has_at {
-                let (a, b) = split_at_char(s, '@');
-                s = a;
-                host = Some(String::from(b));
-            } else { host = None; }
+            let (s2, h2) = split_at_char(s1, '!');
+            let user = if !h2.is_empty() { Some(String::from(h2)) } else { None };
 
-            if s.contains('!') {
-                let (a, b) = split_at_char(s, '!');
-                s = a;
-                user = Some(String::from(b));
-            } else { user = None; }
-
-            Ok(Prefix::User { nick: String::from(s), user, host })
+            Ok(Prefix::User { nick: String::from(s2), user, host })
         }
     }
 }
