@@ -4,7 +4,7 @@ use hexchat::{print_event, PrintEvent};
 use parking_lot::RwLock;
 
 use super::{
-    super::irc::split_at_first,
+    super::irc::split_at_char,
     tabs::TABCOLORS,
 };
 
@@ -111,7 +111,7 @@ fn get_badge(class: &str, rank: &str) -> char {
         "vip"               /**/ => '⚑',
         "founder"           /**/ => 'ⲷ',
 
-        "sub-gift-leader" => '⁘',
+        "sub-gift-leader"   /**/ => '⁘',
         // "sub-gifter"        /**/ => highest(rank.parse().unwrap_or(0), &GIFTS),
         "sub-gifter"        /**/ => ':',
         "bits-charity"      /**/ => '🝔',
@@ -164,11 +164,11 @@ impl Badges {
         let mut output: String = String::with_capacity(16);
 
         if !input.is_empty() {
-            for pair in input.split::<&str>(",") {
-                let (class, rank) = split_at_first(pair, "/");
+            for pair in input.split(',') {
+                let (class, rank) = split_at_char(pair, '/');
 
                 if class == "subscriber" && !info.is_empty() {
-                    for pair_info in info.split::<&str>(",") {
+                    for pair_info in info.split(',') {
                         if pair_info.starts_with("subscriber/") {
                             output.push(get_badge(class, &pair_info[11..]));
                             break;
@@ -212,10 +212,10 @@ impl States {
     ///     given here, the input is NOT evaluated again.
     /// Returns `true` if the Badges were changed, `false` otherwise.
     ///
-    /// Input: `String`, `&str`, `&str`
+    /// Input: `&str`, `&str`, `&str`
     /// Output: `bool`
-    pub fn set(&mut self, channel: String, new: &str, info: &str) -> bool {
-        match self.0.get_mut(&channel) {
+    pub fn set(&mut self, channel: &str, new: &str, info: &str) -> bool {
+        match self.0.get_mut(channel) {
             Some(old) if new == old.input => false,  // Channel is in Map, with the same Badges.
             guard => {
                 let badges: Badges = Badges::from_str(new, info);
@@ -223,7 +223,7 @@ impl States {
                 if let Some(b) = guard {
                     *b = badges;
                 } else {
-                    self.0.insert(channel, badges);
+                    self.0.insert(channel.to_owned(), badges);
                 }
                 true
             }

@@ -64,8 +64,17 @@ pub fn unescape(line: &str) -> String {
 }
 
 
-/// Split a `str` at the first occurrence of another delimiting `str`.
-pub fn split_at_first<'a>(line: &'a str, delim: &str) -> (&'a str, &'a str) {
+/// Split a `&str` at the first occurrence of a delimiting `char`.
+pub fn split_at_char(line: &str, delim: char) -> (&str, &str) {
+    match line.find(delim) {
+        Some(idx) => (&line[..idx], &line[idx + 1..]),
+        None => (line, ""),
+    }
+}
+
+
+/// Split a `&str` at the first occurrence of another delimiting `&str`.
+fn split_at_str<'a>(line: &'a str, delim: &str) -> (&'a str, &'a str) {
     match line.find(delim) {
         Some(idx) => (&line[..idx], &line[idx + delim.len()..]),
         None => (line, ""),
@@ -123,20 +132,22 @@ impl std::str::FromStr for Prefix {
     /// Input: `&str`
     /// Return: `Result<Prefix, ()>`
     fn from_str(mut s: &str) -> Result<Self, Self::Err> {
-        if s.contains('.') && !s.contains('@') {
+        let has_at = s.contains('@');
+
+        if s.contains('.') && !has_at {
             Ok(Prefix::ServerName(String::from(s)))
         } else {
             let user: Option<String>;
             let host: Option<String>;
 
-            if s.contains('@') {
-                let (a, b) = split_at_first(s, "@");
+            if has_at {
+                let (a, b) = split_at_char(s, '@');
                 s = a;
                 host = Some(String::from(b));
             } else { host = None; }
 
             if s.contains('!') {
-                let (a, b) = split_at_first(s, "!");
+                let (a, b) = split_at_char(s, '!');
                 s = a;
                 user = Some(String::from(b));
             } else { user = None; }
@@ -176,7 +187,7 @@ impl Message {
     pub fn get_signature(&self) -> String {
         format!(
             "{}:{}",
-            self.args.get(0).unwrap_or(&String::new()),
+            self.args.get(0).and_then(|s| Some(s.as_str())).unwrap_or(""),
             self.author(),
         )
     }
@@ -214,7 +225,7 @@ impl fmt::Display for Message {
 
         write!(f, ":{} {}", self.prefix, self.command)?;
         for arg in &self.args { write!(f, " {}", arg)?; }
-        if &self.trail != "" { write!(f, " :{}", self.trail)?; }
+        if !self.trail.is_empty() { write!(f, " :{}", self.trail)?; }
 
         Ok(())
     }
@@ -237,7 +248,7 @@ impl std::str::FromStr for Message {
             //  The Tags String is the first half of the original message
             //      received by IRC. The "regular" message begins after the
             //      first space.
-            let (tag_str, main_str) = split_at_first(&full_str, " ");
+            let (tag_str, main_str) = split_at_char(&full_str, ' ');
             full_message = main_str;
 
             let mut tagmap = HashMap::with_capacity(tag_str.matches(';').count() + 1);
@@ -248,7 +259,7 @@ impl std::str::FromStr for Message {
             //  Loop through the Spliterator of pair strings, and break each one
             //      the rest of the way down. Add values to the HashMap.
             for kvp in tags_str_iter {
-                let (key, val) = split_at_first(kvp, "=");
+                let (key, val) = split_at_char(kvp, '=');
                 if !key.is_empty() { tagmap.insert(String::from(key), String::from(val)); }
             }
             tags = Some(tagmap);
@@ -267,7 +278,7 @@ impl std::str::FromStr for Message {
         if full_message.starts_with(':') {
             //  This Message has a Prefix. The Prefix is most likely
             //      hostname and/or server info. It ends at the first space.
-            let (p, m) = split_at_first(&full_message[1..], " ");
+            let (p, m) = split_at_char(&full_message[1..], ' ');
             prefix = p;
             message = m;
         } else {
@@ -279,12 +290,12 @@ impl std::str::FromStr for Message {
 
         //  The trailing data is found after a space and a colon. Everything up
         //      to that point is the IRC Command and any Arguments passed to it.
-        let (cmd_and_args, trail) = split_at_first(message, " :");
+        let (cmd_and_args, trail) = split_at_str(message, " :");
         //  "PRIVMSG #zxcv arg2"
         //  "this is a message"
 
         //  The Command is the first word before any Arguments.
-        let (command, args_str) = split_at_first(cmd_and_args, " ");
+        let (command, args_str) = split_at_char(cmd_and_args, ' ');
         //  "PRIVMSG"
         //  "#zxcv arg2"
 

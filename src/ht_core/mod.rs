@@ -8,8 +8,8 @@ use std::mem::drop;
 use chrono::{DateTime, Utc};
 use hexchat::{
     ChannelRef,
-    EatMode,
     delete_pref,
+    EatMode,
     get_channel_name,
     get_network_name,
     get_pref_string,
@@ -35,6 +35,7 @@ use output::{
 };
 
 
+#[derive(Default)]
 struct Sponge {
     signature: Option<String>,
     value: Option<Message>,
@@ -65,7 +66,7 @@ impl Sponge {
 
 
 safe_static! {
-    static lazy CURRENT: Mutex<Sponge> = Mutex::new(Sponge { signature: None, value: None });
+    static lazy CURRENT: Mutex<Sponge> = Mutex::new(Sponge::default());
 }
 
 
@@ -106,9 +107,10 @@ pub(crate) fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
 
 
 pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
-    let channel = get_channel_name();
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
+            let channel = get_channel_name();
+
             if let Some(msg) = check_message(&channel, &word[0]) {
                 //  Message comes from Server. IRC Representation available.
                 print_with_irc(&channel, etype, word, msg)
@@ -146,7 +148,7 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
                     let mut state = USERSTATE.write();
 
                     if state.set(
-                        ch.to_owned(),
+                        &ch,
                         &msg.get_tag("badges").unwrap_or_default(),
                         &msg.get_tag("badge-info").unwrap_or_default(),
                     ) {

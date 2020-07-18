@@ -202,51 +202,42 @@ pub fn ensure_tab(name: &str) -> ChannelRef {
 
 
 pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
-    /*
-    let user: &str = &msg.author();
-    let channel: ChannelRef = ensure_tab(user);
-
     let etype: PrintEvent;
-    let text: &str;
-
-    if msg.trail.starts_with("/me ") {
-        etype = PrintEvent::PRIVATE_ACTION_TO_DIALOG;
-        text = &msg.trail[4..];
-    } else {
-        etype = PrintEvent::PRIVATE_MESSAGE_TO_DIALOG;
-        text = &msg.trail;
-    }
-
-    print_event_to_channel(&channel, etype, &[user, text, ""]);
-    */
-
-    let user = String::from(msg.author());
+    let user = msg.prefix.name();
 
     //  Swap out fields of the Message to reshape it into one that HexChat can
     //      nicely handle for us.
     msg.command = String::from("PRIVMSG");
+    //  TODO: FIND OUT: Does the compiler make this static, instead of doing an
+    //      allocation every call? If not, consider: .clear(); .push_str(...);
+
+    //  Change the first Argument to be the name of the author.
     msg.args[0] = user.to_owned();
 
-    let etype: PrintEvent;
-    let text: String;
-
+    //  Action Messages have a different format than simply a `/me` command. For
+    //      example, the command "/me does something" would have to be changed
+    //      to "\x01ACTION does something\x01".
     if msg.trail.starts_with("/me ") {
         etype = PrintEvent::PRIVATE_ACTION;
-        text = msg.trail[4..].to_owned();
+        let text: &str = &msg.trail[4..]; // Slice off the `/me `.
 
-        //  Action Messages have a different format than simply a `/me` command.
-        msg.trail = format!("ACTION {}", &text);
+        //  If the Whisper Tab is not focused, also post it here.
+        if get_channel_name() != user {
+            echo(etype, &[user, text], 2);
+        }
+
+        //  Format the sliced text into an Action Message and replace the Trail.
+        msg.trail = format!("\x01ACTION {}\x01", &text);
     } else {
         etype = PrintEvent::PRIVATE_MESSAGE;
-        text = msg.trail.to_owned();
-    }
 
-    if get_channel_name() != user {
-        echo(etype, &[user, text], 2);
+        //  If the Whisper Tab is not focused, also post it here.
+        if get_channel_name() != user {
+            echo(etype, &[user, &msg.trail], 2);
+        }
     }
 
     send_command(&format!("RECV {}", msg));
-
     Some(EatMode::All)
 }
 
