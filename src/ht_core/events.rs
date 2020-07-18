@@ -201,15 +201,24 @@ pub fn ensure_tab(name: &str) -> ChannelRef {
 }
 
 
+/// Receive an IRC Message as a Twitch Whisper. The Message will be edited
+///     somewhat, so that HexChat parses it in the right way.
+///
+/// NOTE: If this Function is given a Message whose Command field value is less
+///     than 7 bytes, that `String` will reallocate.
+///
+/// Input: `Message`
+/// Return: `Option<EatMode>`
 pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
     let etype: PrintEvent;
     let user = msg.prefix.name();
 
     //  Swap out fields of the Message to reshape it into one that HexChat can
     //      nicely handle for us.
-    msg.command = String::from("PRIVMSG");
-    //  TODO: FIND OUT: Does the compiler make this static, instead of doing an
-    //      allocation every call? If not, consider: .clear(); .push_str(...);
+    //  The Command is (fragilely) guaranteed to have previously been "WHISPER",
+    //      which is the same length as "PRIVMSG", so we can probably avoid an
+    //      allocation by overwriting it.
+    "PRIVMSG".clone_into(&mut msg.command);
 
     //  Change the first Argument to be the name of the author.
     msg.args[0] = user.to_owned();
