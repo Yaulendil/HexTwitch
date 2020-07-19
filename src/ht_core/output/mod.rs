@@ -5,7 +5,6 @@ mod tabs;
 use hexchat::{EatMode, PrintEvent, send_command};
 
 pub use printing::{
-    Badges,
     echo,
     EVENT_ALERT,
     EVENT_CHANNEL,
@@ -53,18 +52,16 @@ pub fn print_with_irc(
         | PrintEvent::CHANNEL_MSG_HILIGHT
         | PrintEvent::CHANNEL_ACTION_HILIGHT
         => {
-            let badges: Badges = Badges::from_str(
+            let badges = printing::Badges::from_str(
                 &msg.get_tag("badges").unwrap_or_default(),
                 &msg.get_tag("badge-info").unwrap_or_default(),
             );
             echo(
                 etype,
                 &[&*word[0], &*word[1], "", &*badges.output],
-                {
-                    if etype == PrintEvent::CHANNEL_MSG_HILIGHT
-                        || etype == PrintEvent::CHANNEL_ACTION_HILIGHT
-                    { 3 } else { 2 }
-                },
+                if etype == PrintEvent::CHANNEL_MSG_HILIGHT
+                    || etype == PrintEvent::CHANNEL_ACTION_HILIGHT
+                { 3 } else { 2 },
             );
 
             send_command(&format!(
@@ -83,7 +80,8 @@ pub fn print_with_irc(
 /// No IRC Representation available for Message.
 pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> EatMode {
     if word[1].starts_with(".w ")
-        || (!channel.starts_with("#") && !channel.starts_with("&")) {
+        || (!channel.starts_with("#") && !channel.starts_with("&"))
+    {
         //  User has spoken inside a Whisper Tab, or executed `.w` elsewhere.
         //      We must take the message typed, and forward it to the Whisper
         //      Handler.
