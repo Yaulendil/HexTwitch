@@ -39,6 +39,7 @@ use ht_core::{
     cmd_title,
     cmd_tjoin,
     cmd_whisper,
+    cmd_whisper_here,
 };
 
 
@@ -70,12 +71,13 @@ impl Plugin for HexTwitch {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
     fn new() -> Self {
-        let mut hooks: Vec<Hook> = Vec::new();
+        let mut hooks: Vec<Hook> = Vec::with_capacity(14);
 
         //  Register Plugin Commands, with helptext.
         hooks.push(Hook::CommandHook(register_command(
             "REWARD",
-            "Set the Name of a Custom Reward.\n\nUsage: REWARD <UUID> [<NAME>]",
+            "Set the Name of a Custom Reward.\n\n\
+                Usage: REWARD <UUID> [<NAME>]",
             Priority::NORMAL,
             cmd_reward,
         )));
@@ -93,9 +95,16 @@ impl Plugin for HexTwitch {
         )));
         hooks.push(Hook::CommandHook(register_command(
             "W",
-            "Open a Whisper with a Twitch User.\n\nUsage: W <username> [<message>]",
+            "Open a Whisper with a Twitch User.\n\n\
+                Usage: W <username> [<message>]",
             Priority::NORMAL,
             cmd_whisper,
+        )));
+        hooks.push(Hook::CommandHook(register_command(
+            "WHISPERHERE",
+            "Toggle whether Twitch Whispers should be duplicated in the current Tab.",
+            Priority::NORMAL,
+            cmd_whisper_here,
         )));
 
         //  Hook for User Joins.

@@ -3,8 +3,6 @@ mod irc;
 mod output;
 
 
-use std::mem::drop;
-
 use chrono::{DateTime, Utc};
 use hexchat::{
     ChannelRef,
@@ -12,16 +10,17 @@ use hexchat::{
     EatMode,
     get_channel_name,
     get_network_name,
+    get_pref_int,
     get_pref_string,
     get_prefs,
     PrintEvent,
     send_command,
+    set_pref_int,
     set_pref_string,
     strip_formatting,
 };
 use parking_lot::Mutex;
 
-pub use events::ensure_tab;
 use irc::Message;
 use output::{
     echo,
@@ -77,11 +76,7 @@ fn check_message(channel: &str, author: &str) -> Option<Message> {
         strip_formatting(author).unwrap_or_default(),
     );
 
-    let mut guard = CURRENT.lock();
-    let msg_maybe = guard.pop(sig);
-    drop(guard);
-
-    msg_maybe
+    CURRENT.lock().pop(sig)
 }
 
 
@@ -94,8 +89,7 @@ pub(crate) fn cb_focus(_channel: ChannelRef) -> EatMode {
 
 /// Hide a Join Event if it is fake.
 pub(crate) fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
-    if get_network_name()
-        .unwrap_or_default()
+    if get_network_name().unwrap_or_default()
         .eq_ignore_ascii_case("twitch")
         && !word[2].contains("tmi.twitch.tv")
     {
@@ -114,7 +108,8 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
             if let Some(msg) = check_message(&channel, &word[0]) {
                 //  Message comes from Server. IRC Representation available.
                 print_with_irc(&channel, etype, word, msg)
-            } else if let PrintEvent::YOUR_MESSAGE | PrintEvent::YOUR_ACTION = etype {
+            } else if etype == PrintEvent::YOUR_MESSAGE
+                || etype == PrintEvent::YOUR_ACTION {
                 //  No IRC Representation available for Message.
                 print_without_irc(&channel, etype, word)
             } else {
@@ -134,10 +129,7 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
             let opt_eat: Option<EatMode> = match &*msg.command {
                 //  Chat Messages.
                 "PRIVMSG" => {
-                    let mut guard = CURRENT.lock();
-                    guard.put(msg);
-                    drop(guard);
-
+                    CURRENT.lock().put(msg);
                     Some(EatMode::None)
                 }
                 "WHISPER" => events::whisper_recv(msg),
@@ -188,7 +180,7 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
 pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
     let mut arg: Vec<&str> = Vec::new();
     for a in argslice.iter().skip(1) {
-        if !a.is_empty() { arg.push(&*a); }
+        if !a.is_empty() { arg.push(&*a); } else { break; }
     }
     let len = arg.len();
 
@@ -196,7 +188,7 @@ pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
         //  Print the current Reward Names.
         echo(EVENT_NORMAL, &["REWARD EVENTS:"], 0);
         for pref in get_prefs() {
-            if !pref.is_empty() {
+            if !pref.is_empty() && !pref.starts_with("PREF") {
                 echo(
                     EVENT_NORMAL,
                     &[format!(
@@ -209,23 +201,22 @@ pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
                 );
             }
         }
-    } else {
-        if let Ok(_) = {
-            if len < 2 {
-                //  Unset a Reward.
-                delete_pref(&arg[0].to_lowercase())
-            } else {
-                //  Set a Reward.
-                set_pref_string(
-                    &arg[0].to_lowercase(),
-                    &arg[1..].join(" ").trim(),
-                )
-            }
-        } {
-            echo(EVENT_NORMAL, &["Preference set."], 0);
+    } else if !arg[0].starts_with("PREF")
+        && {
+        if len < 2 {
+            //  Unset a Reward.
+            delete_pref(&arg[0].to_lowercase())
         } else {
-            echo(EVENT_ERR, &["FAILED to set Preference."], 0);
+            //  Set a Reward.
+            set_pref_string(
+                &arg[0].to_lowercase(),
+                &arg[1..].join(" ").trim(),
+            )
         }
+    }.is_ok() {
+        echo(EVENT_NORMAL, &["Preference set."], 0);
+    } else {
+        echo(EVENT_ERR, &["FAILED to set Preference."], 0);
     }
 
     EatMode::All
@@ -255,15 +246,14 @@ pub(crate) fn cmd_tjoin(arg: &[String]) -> EatMode {
 
 pub(crate) fn cmd_whisper(arg: &[String]) -> EatMode {
     if arg.len() > 1
-        // && get_network_name()
-        // .unwrap_or_default()
-        // .eq_ignore_ascii_case("twitch")
+        && get_network_name().unwrap_or_default()
+        .eq_ignore_ascii_case("twitch")
     {
         let targ: &str = &arg[1];
 
         //  Two stage assignment to prevent Temporary Value.
-        let _m: String = arg[2..].join(" ");
-        let msg: &str = _m.trim();
+        let tmp: String = arg[2..].join(" ");
+        let msg: &str = tmp.trim();
 
         //  Check for trailing Arguments.
         if msg.is_empty() {
@@ -273,9 +263,23 @@ pub(crate) fn cmd_whisper(arg: &[String]) -> EatMode {
             //  Some: Send through Whisper.
             send_command(&format!("SAY .w {} {}", targ, msg));
         }
-    //     EatMode::All
-    // } else {
-    //     EatMode::None
     }
+    EatMode::All
+}
+
+
+pub(crate) fn cmd_whisper_here(_arg: &[String]) -> EatMode {
+    let new: bool = get_pref_int("PREF_whispers_in_current").unwrap_or(0) == 0;
+
+    if set_pref_int("PREF_whispers_in_current", new.into()).is_ok() {
+        if new {
+            echo(EVENT_NORMAL, &["Twitch Whispers will also show in the current Tab."], 0);
+        } else {
+            echo(EVENT_NORMAL, &["Twitch Whispers will ONLY be shown in their own Tabs."], 0);
+        }
+    } else {
+        echo(EVENT_ERR, &["FAILED to set Preference."], 0);
+    }
+
     EatMode::All
 }

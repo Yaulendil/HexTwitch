@@ -5,6 +5,7 @@ use hexchat::{
     EatMode,
     get_channel,
     get_channel_name,
+    get_pref_int,
     get_pref_string,
     print_event_to_channel,
     PrintEvent,
@@ -231,7 +232,9 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         let text: &str = &msg.trail[4..]; // Slice off the `/me `.
 
         //  If the Whisper Tab is not focused, also post it here.
-        if get_channel_name() != user {
+        if get_pref_int("PREF_whispers_in_current").unwrap_or(0) != 0
+            && get_channel_name() != user
+        {
             echo(etype, &[user, text], 2);
         }
 
@@ -241,7 +244,9 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         etype = PrintEvent::PRIVATE_MESSAGE;
 
         //  If the Whisper Tab is not focused, also post it here.
-        if get_channel_name() != user {
+        if get_pref_int("PREF_whispers_in_current").unwrap_or(0) != 0
+            && get_channel_name() != user
+        {
             echo(etype, &[user, &msg.trail], 2);
         }
     }
