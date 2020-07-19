@@ -189,17 +189,18 @@ impl Badges {
 
 /// States: Effectively a Box for a HashMap. Stores the Badges for the User in
 ///     each Channel.
-pub struct States(HashMap<String, Badges>);
+#[derive(Default)]
+pub struct States { inner: HashMap<String, Badges> }
 
 impl States {
-    fn new() -> Self { Self(HashMap::new()) }
+    fn new() -> Self { Self::default() }
 
     /// Get the Badges for the User in a given Channel.
     ///
     /// Input: `&str`
     /// Return: `&str`
     pub fn get(&self, channel: &str) -> &str {
-        match self.0.get(channel) {
+        match self.inner.get(channel) {
             Some(badges) => &badges.output,
             None => BADGE_NONE,
         }
@@ -215,7 +216,7 @@ impl States {
     /// Input: `&str`, `&str`, `&str`
     /// Output: `bool`
     pub fn set(&mut self, channel: &str, new: &str, info: &str) -> bool {
-        match self.0.get_mut(channel) {
+        match self.inner.get_mut(channel) {
             Some(old) if new == old.input => false,  // Channel is in Map, with the same Badges.
             guard => {
                 let badges: Badges = Badges::from_str(new, info);
@@ -223,7 +224,7 @@ impl States {
                 if let Some(b) = guard {
                     *b = badges;
                 } else {
-                    self.0.insert(channel.to_owned(), badges);
+                    self.inner.insert(channel.to_owned(), badges);
                 }
                 true
             }

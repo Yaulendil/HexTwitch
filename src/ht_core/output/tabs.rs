@@ -7,10 +7,11 @@ use parking_lot::RwLock;
 /// Tabs: A mapping of HexChat Channel names to their current colors. Provides
 ///     an interface to change the colors, while also minimizing unnecessary
 ///     calls to HexChat Commands.
-pub struct Tabs(HashMap<String, u8>);
+#[derive(Default)]
+pub struct Tabs { inner: HashMap<String, u8> }
 
 impl Tabs {
-    fn new() -> Self { Self(HashMap::new()) }
+    fn new() -> Self { Self::default() }
 
     /// Check for the current Channel in the Map of colors. If the Channel is
     ///     not focused AND the provided new color is higher than the current
@@ -21,7 +22,7 @@ impl Tabs {
         if !get_focused_channel().contains(&get_current_channel()) {
             let name = get_channel_name();
 
-            match self.0.get_mut(&name) {
+            match self.inner.get_mut(&name) {
                 Some(color_old) if &color_new <= color_old => {}  // No change.
                 Some(color_old) => {
                     // New color is greater than old color. Replace.
@@ -30,7 +31,7 @@ impl Tabs {
                 }
                 None => {
                     // No old color. Insert new color.
-                    self.0.insert(name, color_new);
+                    self.inner.insert(name, color_new);
                     send_command(&format!("GUI COLOR {}", color_new));
                 }
             }
@@ -42,9 +43,9 @@ impl Tabs {
     pub fn reset(&mut self) {
         let name = get_channel_name();
 
-        match self.0.get_mut(&name) {
+        match self.inner.get_mut(&name) {
             Some(color) => { *color = 0; }
-            None => { self.0.insert(name, 0); }
+            None => { self.inner.insert(name, 0); }
         }
 
         send_command("GUI COLOR 0");
