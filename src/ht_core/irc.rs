@@ -102,10 +102,9 @@ impl Prefix {
     ///
     /// Return: `&str`
     pub fn name(&self) -> &str {
-        #[allow(unused_variables)]
         match self {
             Prefix::ServerName(server) => { &server }
-            Prefix::User { nick, user, host } => { &nick }
+            Prefix::User { nick, user: _, host: _ } => { &nick }
         }
     }
 }
@@ -188,7 +187,7 @@ impl Message {
     pub fn get_tag(&self, key: &str) -> Option<String> {
         //  NOTE: Benchmarking seems to show that it is faster to unescape Tag
         //      values on demand, here, rather than ahead of time.
-        self.tags.as_ref().and_then(|tags| Some(unescape(tags.get(key)?)))
+        Some(unescape(self.tags.as_ref()?.get(key)?))
     }
 }
 
@@ -199,14 +198,15 @@ impl fmt::Display for Message {
     /// Return: `fmt::Result`
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(tags) = &self.tags {
-            let mut tagseq = tags.iter().map(
-                |(key, val)|
-                    if val.is_empty() {
-                        key.to_owned()
-                    } else {
-                        format!("{}={}", key, val)
-                    }
-            ).collect::<Vec<String>>();
+            let mut tagseq: Vec<String> = tags.iter()
+                .map(
+                    |(key, val)|
+                        if val.is_empty() {
+                            key.to_owned()
+                        } else {
+                            format!("{}={}", key, val)
+                        }
+                ).collect();
 
             tagseq.sort_unstable();
             write!(f, "@{} ", tagseq.join(";"))?;
@@ -249,7 +249,10 @@ impl std::str::FromStr for Message {
             //      the rest of the way down. Add values to the HashMap.
             for kvp in tags_str_iter {
                 let (key, val) = split_at_char(kvp, '=');
-                if !key.is_empty() { tagmap.insert(String::from(key), String::from(val)); }
+
+                if !key.is_empty() {
+                    tagmap.insert(String::from(key), String::from(val));
+                }
             }
             tags = Some(tagmap);
         } else {
