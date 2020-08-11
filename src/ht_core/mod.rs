@@ -56,8 +56,8 @@ impl Sponge {
     /// Input: `&str`
     /// Return: `Option<Message>`
     fn pop(&mut self, signature: &str) -> Option<Message> {
-        match (&self.signature, &mut self.value) {
-            (Some(sig), msg) if sig == signature => msg.take(),
+        match &self.signature {
+            Some(sig) if sig == signature => self.value.take(),
             _ => None,
         }
     }
@@ -178,10 +178,10 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
 
 
 pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
-    let mut arg: Vec<&str> = Vec::new();
-    for a in argslice.iter().skip(1) {
-        if !a.is_empty() { arg.push(&*a); } else { break; }
-    }
+    let arg: Vec<&str> = argslice[1..].iter()
+        .take_while(|s| !s.is_empty())
+        .map(String::as_str)
+        .collect();
     let len = arg.len();
 
     if len < 1 {
@@ -201,19 +201,21 @@ pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
                 );
             }
         }
-    } else if !arg[0].starts_with("PREF")
-        && {
-        if len < 2 {
-            //  Unset a Reward.
-            delete_pref(&arg[0].to_lowercase())
-        } else {
-            //  Set a Reward.
-            set_pref_string(
-                &arg[0].to_lowercase(),
-                &arg[1..].join(" ").trim(),
-            )
-        }
-    }.is_ok() {
+    } else if {
+        !arg[0].starts_with("PREF")
+            && {
+            if len < 2 {
+                //  Unset a Reward.
+                delete_pref(&arg[0].to_lowercase())
+            } else {
+                //  Set a Reward.
+                set_pref_string(
+                    &arg[0].to_lowercase(),
+                    &arg[1..].join(" ").trim(),
+                )
+            }
+        }.is_ok()
+    } {
         echo(EVENT_NORMAL, &["Preference set."], 0);
     } else {
         echo(EVENT_ERR, &["FAILED to set Preference."], 0);

@@ -167,6 +167,11 @@ impl Badges {
             for pair in input.split(',') {
                 let (class, rank) = split_at_char(pair, '/');
 
+                //  Twitch now provides the number of months attached to a Sub
+                //      Badge separately, in the `badge-info` Tag. The number
+                //      attached directly to the Badge itself will only reflect
+                //      the correct number of months if the channel has a custom
+                //      icon set for the tier.
                 if class == "subscriber" && !info.is_empty() {
                     for pair_info in info.split(',') {
                         if pair_info.starts_with("subscriber/") {
@@ -182,7 +187,7 @@ impl Badges {
             if !output.is_empty() { output.push(' '); }
             // output.shrink_to_fit();
         }
-        Self { input: input.into(), output }
+        Self { input: input.to_owned(), output }
     }
 }
 
@@ -216,16 +221,13 @@ impl States {
     /// Input: `&str`, `&str`, `&str`
     /// Output: `bool`
     pub fn set(&mut self, channel: &str, new: &str, info: &str) -> bool {
-        match self.inner.get_mut(channel) {
+        match self.inner.get(channel) {
             Some(old) if new == old.input => false,  // Channel is in Map, with the same Badges.
-            guard => {
-                let badges: Badges = Badges::from_str(new, info);
-
-                if let Some(b) = guard {
-                    *b = badges;
-                } else {
-                    self.inner.insert(channel.to_owned(), badges);
-                }
+            _ => {
+                self.inner.insert(
+                    String::from(channel),
+                    Badges::from_str(new, info),
+                );
                 true
             }
         }
