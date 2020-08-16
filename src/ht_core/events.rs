@@ -93,7 +93,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
 
             if let Some(plan) = msg.get_tag("msg-param-sub-plan") {
                 match plan.as_str() {
-                    "Prime" => { line.push_str(" with Twitch Prime") }
+                    "Prime" => { line.push_str(" with Prime") }
                     // "1000" => { line.push_str(" at Tier 1 ($5)") }
                     "2000" => { line.push_str(" at Tier 2 ($10)") }
                     "3000" => { line.push_str(" at Tier 3 ($25)") }
@@ -160,7 +160,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
         }
         "primepaidupgrade" => {
             echo(EVENT_ALERT, &["UPGRADE", &format!(
-                "<{}> upgrades a Twitch Prime subscription",
+                "<{}> upgrades a Prime subscription",
                 msg.get_tag("login")?,
             )], 2);
         }
