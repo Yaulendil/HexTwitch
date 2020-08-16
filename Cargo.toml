@@ -1,7 +1,7 @@
 [package]
 name = "HexTwitchR"
 description = "HexChat plugin for Twitch integration over IRC"
-version = "1.5.0"
+version = "1.6.0"
 authors = ["Yaulendil"]
 repository = "https://github.com/yaulendil/hextwitchr"
 edition = "2018"
@@ -12,7 +12,7 @@ license = "GPL-3.0"
 [dependencies]
 chrono = "0.4"
 hexchat = { git = "https://github.com/Yaulendil/hexchat-rs" }
-parking_lot = { version = "0.7.1", features = ["nightly"] }
+parking_lot = { version = "0.11.0", features = ["nightly"] }
 
 [lib]
 name = "hextwitchr"
