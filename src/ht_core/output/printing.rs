@@ -124,7 +124,10 @@ fn get_badge(class: &str, rank: &str) -> char {
         "premium"           /**/ => '±',
 
         "glhf-pledge"       /**/ => '~',
-        "twitchconAmsterdam2020" => 'c',
+
+        // "twitchconAmsterdam2020" => 'c',
+        // "twitchconNA2019"   /**/ => 'c',
+        s if s.starts_with("twitchcon") => 'c',
         _ => '?',
     }
 }
