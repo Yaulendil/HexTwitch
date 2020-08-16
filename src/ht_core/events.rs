@@ -145,8 +145,7 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
             let num = msg.get_tag("msg-param-mass-gift-count")?;
             echo(EVENT_ALERT, &["SUBSCRIPTION", &format!(
                 "<{}> gives out ({}) random gift subscription{}",
-                msg.get_tag("login")?,
-                num,
+                msg.get_tag("login")?, num,
                 if &num == "1" { "" } else { "s" },
             )], 2);
         }
@@ -173,11 +172,16 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
         }
 
         _ => {
-            echo(EVENT_NORMAL, &[format!(
-                "Unknown SType '{}': {}",
-                stype,
-                msg.get_tag("system-msg").unwrap_or_else(|| msg.to_string()),
-            )], 1);
+            if get_pref_int("PREF_htdebug").unwrap_or(0) != 0 {
+                echo(EVENT_ERR, &[format!(
+                    "Unknown SType '{}': {}",
+                    stype, msg.to_string(),
+                )], 1);
+            }
+
+            if let Some(sysmsg) = msg.get_tag("system-msg") {
+                echo(EVENT_ALERT, &["UNKNOWN", &sysmsg], 1);
+            }
         }
     }
     Some(EatMode::Hexchat)
@@ -306,7 +310,8 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
     let stype = msg.get_tag("msg-id")?;
     match stype.as_str() {
         "raid" => raid(&msg),
-        "bitsbadgetier" | "charity" | "rewardgift" | "ritual" => special(&msg, &stype),
+        "bitsbadgetier" | "charity"
+        | "rewardgift" | "ritual" => special(&msg, &stype),
         _ => subscription(&msg, &stype),
     }
 }

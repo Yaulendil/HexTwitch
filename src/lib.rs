@@ -35,6 +35,7 @@ use ht_core::{
     cb_join,
     cb_print,
     cb_server,
+    cmd_ht_debug,
     cmd_reward,
     cmd_title,
     cmd_tjoin,
@@ -71,9 +72,15 @@ impl Plugin for HexTwitch {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
     fn new() -> Self {
-        let mut hooks: Vec<Hook> = Vec::with_capacity(14);
+        let mut hooks: Vec<Hook> = Vec::with_capacity(15);
 
         //  Register Plugin Commands, with helptext.
+        hooks.push(Hook::CommandHook(register_command(
+            "HTDEBUG",
+            "Toggle whether unknown UserNotices should show the full plain IRC.",
+            Priority::NORMAL,
+            cmd_ht_debug,
+        )));
         hooks.push(Hook::CommandHook(register_command(
             "REWARD",
             "Set the Name of a Custom Reward.\n\n\

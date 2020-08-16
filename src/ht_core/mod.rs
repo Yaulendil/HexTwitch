@@ -177,6 +177,27 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
 }
 
 
+pub(crate) fn cmd_ht_debug(_arg: &[String]) -> EatMode {
+    let new: bool = get_pref_int("PREF_htdebug").unwrap_or(0) == 0;
+
+    if set_pref_int("PREF_htdebug", new.into()).is_ok() {
+        if new {
+            echo(EVENT_NORMAL, &[
+                "Unrecognized UserNotices will now show the full Message.",
+            ], 0);
+        } else {
+            echo(EVENT_NORMAL, &[
+                "Unrecognized UserNotices will NOT show the full Message.",
+            ], 0);
+        }
+    } else {
+        echo(EVENT_ERR, &["FAILED to set Preference."], 0);
+    }
+
+    EatMode::All
+}
+
+
 pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
     let arg: Vec<&str> = argslice[1..].iter()
         .take_while(|s| !s.is_empty())
