@@ -84,7 +84,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
         }
 
         "sub" | "resub" => {
-            // Maximum possible usage should be 369 bytes; 384=256+128
+            // Maximum possible usage should be 362 bytes; 384=256+128
             let mut line = String::with_capacity(384);
             write!(&mut line, "<{}> {}scribes", msg.get_tag("login")?, stype).ok()?;
 
@@ -145,6 +145,22 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
                 msg.get_tag("login")?, num,
                 if &num == "1" { "" } else { "s" },
             )], 2);
+        }
+        "standardpayforward" => {
+            if let Some(prior) = msg.get_tag("msg-param-prior-gifter-user-name") {
+                echo(EVENT_NORMAL, &[format!(
+                    "<{}> pays forward a gift subscription from <{}> to <{}>.",
+                    msg.get_tag("login")?,
+                    prior,
+                    msg.get_tag("msg-param-recipient-user-name")?,
+                )], 1);
+            } else {
+                echo(EVENT_NORMAL, &[format!(
+                    "<{}> pays forward an anonymous gift subscription to <{}>.",
+                    msg.get_tag("login")?,
+                    msg.get_tag("msg-param-recipient-user-name")?,
+                )], 1);
+            }
         }
 
         "giftpaidupgrade" => {
