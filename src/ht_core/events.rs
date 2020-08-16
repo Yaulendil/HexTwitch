@@ -78,7 +78,7 @@ fn raid(msg: &Message) -> Option<EatMode> {
 }
 
 
-fn special(msg: &Message, _stype: &str) -> Option<EatMode> {
+fn special(msg: &Message) -> Option<EatMode> {
     echo(EVENT_NORMAL, &[msg.get_tag("system-msg")?], 1);
     Some(EatMode::Hexchat)
 }
@@ -311,7 +311,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
     match stype.as_str() {
         "raid" => raid(&msg),
         "bitsbadgetier" | "charity"
-        | "rewardgift" | "ritual" => special(&msg, &stype),
+        | "rewardgift" | "ritual" => special(&msg),
         _ => subscription(&msg, &stype),
     }
 }
