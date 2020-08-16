@@ -68,24 +68,21 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
 }
 
 
-fn raid(msg: &Message) -> Option<EatMode> {
-    echo(EVENT_NORMAL, &[format!(
-        "A raid of {} arrives from #{}",
-        msg.get_tag("msg-param-viewerCount")?,
-        msg.get_tag("msg-param-displayName")?.to_lowercase(),
-    )], 1);
-    Some(EatMode::Hexchat)
-}
+pub fn usernotice(msg: Message) -> Option<EatMode> {
+    let stype = msg.get_tag("msg-id")?;
 
+    match stype.as_str() {
+        "raid" => {
+            echo(EVENT_NORMAL, &[format!(
+                "A raid of {} arrives from #{}",
+                msg.get_tag("msg-param-viewerCount")?,
+                msg.get_tag("msg-param-displayName")?.to_lowercase(),
+            )], 1);
+        }
+        "bitsbadgetier" | "charity" | "rewardgift" | "ritual" => {
+            echo(EVENT_NORMAL, &[msg.get_tag("system-msg")?], 1);
+        }
 
-fn special(msg: &Message) -> Option<EatMode> {
-    echo(EVENT_NORMAL, &[msg.get_tag("system-msg")?], 1);
-    Some(EatMode::Hexchat)
-}
-
-
-fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
-    match stype {
         "sub" | "resub" => {
             // Maximum possible usage should be 369 bytes; 384=256+128
             let mut line = String::with_capacity(384);
@@ -164,18 +161,18 @@ fn subscription(msg: &Message, stype: &str) -> Option<EatMode> {
             )], 2);
         }
 
-        "bitsbadgetier" => {
-            echo(EVENT_ALERT, &["BITS BADGE", &format!(
-                "<{}> earns a new tier of Bits Badge",
-                msg.get_tag("login")?,
-            )], 1);
-        }
+        // "bitsbadgetier" => {
+        //     echo(EVENT_ALERT, &["BITS BADGE", &format!(
+        //         "<{}> earns a new tier of Bits Badge",
+        //         msg.get_tag("login")?,
+        //     )], 1);
+        // }
 
         _ => {
             if get_pref_int("PREF_htdebug").unwrap_or(0) != 0 {
                 echo(EVENT_ERR, &[format!(
                     "Unknown SType '{}': {}",
-                    stype, msg.to_string(),
+                    stype, msg,
                 )], 1);
             }
 
@@ -302,17 +299,6 @@ pub fn whisper_send(etype: PrintEvent, channel: &str, word: &[String]) {
         } else {
             send_command(&format!("SAY .w {} {}", &channel, text));
         }
-    }
-}
-
-
-pub fn usernotice(msg: Message) -> Option<EatMode> {
-    let stype = msg.get_tag("msg-id")?;
-    match stype.as_str() {
-        "raid" => raid(&msg),
-        "bitsbadgetier" | "charity"
-        | "rewardgift" | "ritual" => special(&msg),
-        _ => subscription(&msg, &stype),
     }
 }
 
