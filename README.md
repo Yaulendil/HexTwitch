@@ -25,16 +25,16 @@ When the patch is applied, you can then [build and install HexChat as normal](ht
 
 ## Building the Plugin
 
-You will need to have [Cargo](https://github.com/rust-lang/cargo) installed, as well as a specific version of the `nightly` Toolchain, because one of the dependencies (Parking Lot) does not compile on the latest. To install the correct `nightly` with [RustUp](https://rustup.rs/):
+You will need to have [Cargo](https://github.com/rust-lang/cargo) installed, as well as the `nightly` Toolchain. To install `nightly` with [RustUp](https://rustup.rs/):
 
 ```
-rustup toolchain install nightly-2020-05-01
+rustup toolchain install nightly
 ```
 
 When this is done, run the following command in the Directory where you unpacked this Repository:
 
 ```
-cargo +nightly-2020-05-01 build --release
+cargo +nightly build --release
 ```
 
 After Cargo compiles the plugin, its Binary should be in `target/release/`, and should be named something like `libhextwitchr.so` or, on Windows, `libhextwitchr`. Move this File into the `addons` Directory in your HexChat config Directory; On Linux this should be at `$XDG_CONFIG_HOME/hexchat/addons/`.
