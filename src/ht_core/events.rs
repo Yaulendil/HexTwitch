@@ -149,14 +149,14 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
         "standardpayforward" => {
             if let Some(prior) = msg.get_tag("msg-param-prior-gifter-user-name") {
                 echo(EVENT_NORMAL, &[format!(
-                    "<{}> pays forward a gift subscription from <{}> to <{}>.",
+                    "<{}> pays forward a gift subscription from <{}> to <{}>",
                     msg.get_tag("login")?,
                     prior,
                     msg.get_tag("msg-param-recipient-user-name")?,
                 )], 1);
             } else {
                 echo(EVENT_NORMAL, &[format!(
-                    "<{}> pays forward an anonymous gift subscription to <{}>.",
+                    "<{}> pays forward an anonymous gift subscription to <{}>",
                     msg.get_tag("login")?,
                     msg.get_tag("msg-param-recipient-user-name")?,
                 )], 1);
@@ -168,6 +168,12 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
                 "<{}> upgrades a gift subscription from <{}>",
                 msg.get_tag("login")?,
                 msg.get_tag("msg-param-sender-login")?,
+            )], 2);
+        }
+        "anongiftpaidupgrade" => {
+            echo(EVENT_ALERT, &["UPGRADE", &format!(
+                "<{}> upgrades an anonymous gift subscription",
+                msg.get_tag("login")?,
             )], 2);
         }
         "primepaidupgrade" => {
