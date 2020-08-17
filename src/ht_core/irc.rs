@@ -192,14 +192,18 @@ impl Message {
     }
 
     /// Set a Tag on the `Message`. If the Tag was already present, its old
-    ///     value is returned.
+    ///     value is returned. If the `Message` has `None` for its Tags field,
+    ///     `Err(())` is returned.
     ///
     /// Input: `&str`, `&str`
-    /// Return: `Option<String>`
-    pub fn set_tag(&mut self, key: &str, value: &str) -> Option<String> {
-        self.tags.as_mut().and_then(|tags| {
-            tags.insert(String::from(key), escape(value))
-        })
+    /// Return: `Result<Option<String>, ()>`
+    pub fn set_tag(&mut self, key: &str, value: &str) -> Result<Option<String>, ()> {
+        match self.tags.as_mut() {
+            Some(tags) => {
+                Ok(tags.insert(String::from(key), escape(value)))
+            },
+            None => Err(()),
+        }
     }
 }
 
@@ -328,7 +332,9 @@ mod tests_irc {
     use test::Bencher;
 
 
+    const MSG_WITHOUT_TAGS: &str = r":asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv WHISPER thyself :asdf";
     const SAMPLES: &[&str] = &[
+        MSG_WITHOUT_TAGS,
         r"@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message",
         r"@badges=subscriber/24,bits/1;emote-sets=0,2652,15749,19194,230961,320370,1228598;user-type= :tmi.twitch.tv USERSTATE #asdfqwert",
         r"@login=somejerk;room-id=;target-msg-id=15604c60-4d3b-8c1c-8e7a-c9ec2fb6c0cf;tmi-sent-ts=-6745368778951 :tmi.twitch.tv CLEARMSG #coolchannel :get a real job noob",
@@ -367,49 +373,69 @@ mod tests_irc {
     ///     across conversions between Message and text.
     #[test]
     fn test_set_tag() {
+        let mut tagless: Message = MSG_WITHOUT_TAGS.parse()
+            .expect("Failed to parse tagless sample.");
+        assert_eq!(
+            None,
+            tagless.get_tag(TEST_KEY),
+            "'Tagless' Message returns value for test key.",
+        );
+        assert_eq!(
+            Err(()),
+            tagless.set_tag(TEST_KEY, TEST_VAL_1),
+            "Insertion of Tag does not fail on Message without Tags.",
+        );
+
         for init in SAMPLES {
-            let mut to_irc: Message = init.parse().expect("Failed to parse initial string.");
+            let mut to_irc: Message = init.parse()
+                .expect("Failed to parse initial string.");
 
-            assert_eq!(
-                None,
-                to_irc.get_tag(TEST_KEY),
-                "Initial Message already has the test key.",
-            );
-            assert_eq!(
-                None,
-                to_irc.set_tag(TEST_KEY, TEST_VAL_1),
-                "Insertion of new key does not return None.",
-            );
-            assert_eq!(
-                Some(String::from(TEST_VAL_1)),
-                to_irc.set_tag(TEST_KEY, TEST_VAL_2),
-                "Insertion of extant key does not return previous value.",
-            );
-            assert_eq!(
-                Some(String::from(TEST_VAL_2)),
-                to_irc.get_tag(TEST_KEY),
-                "Test key cannot be correctly retrieved after insertion.",
-            );
+            if to_irc.tags.is_some() {
+                assert_eq!(
+                    None,
+                    to_irc.get_tag(TEST_KEY),
+                    "Initial Message already has the test key.",
+                );
+                assert_eq!(
+                    Ok(None),
+                    to_irc.set_tag(TEST_KEY, TEST_VAL_1),
+                    "Insertion of new key does not return None.",
+                );
+                assert_eq!(
+                    Ok(Some(String::from(TEST_VAL_1))),
+                    to_irc.set_tag(TEST_KEY, TEST_VAL_2),
+                    "Insertion of extant key does not return previous value.",
+                );
+                assert_eq!(
+                    Some(String::from(TEST_VAL_2)),
+                    to_irc.get_tag(TEST_KEY),
+                    "Test key cannot be correctly retrieved after insertion.",
+                );
 
-            let from_irc: String = to_irc.to_string();
-            let back_to_irc: Message = from_irc.parse().expect("Failed to re-parse second string.");
-            let back_from_irc: String = back_to_irc.to_string();
+                let from_irc: String = to_irc.to_string();
+                let back_to_irc: Message = from_irc.parse()
+                    .expect("Failed to re-parse second string.");
+                let back_from_irc: String = back_to_irc.to_string();
 
-            assert_eq!(
-                Some(String::from(TEST_VAL_2)),
-                back_to_irc.get_tag(TEST_KEY),
-                "Test key cannot be correctly retrieved after conversion and re-parsing.",
-            );
-            assert_eq!(
-                to_irc,
-                back_to_irc,
-                "After tag manipulation, Message produces a String which in turn DOES NOT produce an identical Message.",
-            );
-            assert_eq!(
-                from_irc,
-                back_from_irc,
-                "Strings from Messages are not consistent after tag manipulation.",
-            );
+                assert_eq!(
+                    Some(String::from(TEST_VAL_2)),
+                    back_to_irc.get_tag(TEST_KEY),
+                    "Test key cannot be correctly retrieved after conversion \
+                    and re-parsing.",
+                );
+                assert_eq!(
+                    to_irc,
+                    back_to_irc,
+                    "After tag manipulation, Message produces a String which \
+                    in turn DOES NOT produce an identical Message.",
+                );
+                assert_eq!(
+                    from_irc,
+                    back_from_irc,
+                    "Strings from Messages are not consistent after tag \
+                    manipulation.",
+                );
+            }
         }
     }
 
