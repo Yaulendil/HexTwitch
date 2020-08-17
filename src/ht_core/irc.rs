@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 
-/*/// Given a string which may contain characters which are not allowed in an IRC
+/// Given a string which may contain characters which are not allowed in an IRC
 ///     Tag String, replace all such characters with escaped substitutions.
 ///
 /// Allocates a new String.
@@ -28,7 +28,7 @@ pub fn escape(line: &str) -> String {
     }
 
     out
-}*/
+}
 
 
 /// Given a string which has had characters in it replaced with sanitized
@@ -104,7 +104,7 @@ impl Prefix {
     pub fn name(&self) -> &str {
         match self {
             Prefix::ServerName(server) => { &server }
-            Prefix::User { nick, user: _, host: _ } => { &nick }
+            Prefix::User { nick, .. } => { &nick }
         }
     }
 }
@@ -163,6 +163,7 @@ pub struct Message {
     pub tags: Option<HashMap<String, String>>,
 }
 
+#[allow(dead_code)]
 impl Message {
     /// Author: Return the name, put simply, of the source of this Message.
     ///
@@ -188,6 +189,17 @@ impl Message {
         //  NOTE: Benchmarking seems to show that it is faster to unescape Tag
         //      values on demand, here, rather than ahead of time.
         Some(unescape(self.tags.as_ref()?.get(key)?))
+    }
+
+    /// Set a Tag on the `Message`. If the Tag was already present, its old
+    ///     value is returned.
+    ///
+    /// Input: `&str`, `&str`
+    /// Return: `Option<String>`
+    pub fn set_tag(&mut self, key: &str, value: &str) -> Option<String> {
+        self.tags.as_mut().and_then(|tags| {
+            tags.insert(String::from(key), escape(value))
+        })
     }
 }
 
@@ -323,6 +335,9 @@ mod tests_irc {
         r"@room-id=;target-user-id=8675309;tmi-sent-ts=1582958744397 :tmi.twitch.tv CLEARCHAT #coolchannel :somejerk",
         r"@badges=;color=#DABEEF;display-name=Asdf\sQwert;emotes=;message-id=2;thread-id=1337-9001;turbo=0;user-id=123456789;user-type= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv WHISPER thyself :asdf"
     ];
+    const TEST_KEY: &str = "asdf";
+    const TEST_VAL_1: &str = "qwert";
+    const TEST_VAL_2: &str = "z x : c v";
 
 
     /// Test to confirm that converting back and forth between Message and text
@@ -344,6 +359,56 @@ mod tests_irc {
                 from_irc,
                 back_from_irc,
                 "Strings from Messages are not consistent.",
+            );
+        }
+    }
+
+    /// Test to confirm that manipulation of tags is working, and is preserved
+    ///     across conversions between Message and text.
+    #[test]
+    fn test_set_tag() {
+        for init in SAMPLES {
+            let mut to_irc: Message = init.parse().expect("Failed to parse initial string.");
+
+            assert_eq!(
+                None,
+                to_irc.get_tag(TEST_KEY),
+                "Initial Message already has the test key.",
+            );
+            assert_eq!(
+                None,
+                to_irc.set_tag(TEST_KEY, TEST_VAL_1),
+                "Insertion of new key does not return None.",
+            );
+            assert_eq!(
+                Some(String::from(TEST_VAL_1)),
+                to_irc.set_tag(TEST_KEY, TEST_VAL_2),
+                "Insertion of extant key does not return previous value.",
+            );
+            assert_eq!(
+                Some(String::from(TEST_VAL_2)),
+                to_irc.get_tag(TEST_KEY),
+                "Test key cannot be correctly retrieved after insertion.",
+            );
+
+            let from_irc: String = to_irc.to_string();
+            let back_to_irc: Message = from_irc.parse().expect("Failed to re-parse second string.");
+            let back_from_irc: String = back_to_irc.to_string();
+
+            assert_eq!(
+                Some(String::from(TEST_VAL_2)),
+                back_to_irc.get_tag(TEST_KEY),
+                "Test key cannot be correctly retrieved after conversion and re-parsing.",
+            );
+            assert_eq!(
+                to_irc,
+                back_to_irc,
+                "After tag manipulation, Message produces a String which in turn DOES NOT produce an identical Message.",
+            );
+            assert_eq!(
+                from_irc,
+                back_from_irc,
+                "Strings from Messages are not consistent after tag manipulation.",
             );
         }
     }
