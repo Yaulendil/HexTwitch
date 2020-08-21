@@ -162,6 +162,20 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
                 )], 1);
             }
         }
+        "communitypayforward" => {
+            if let Some(prior) = msg.get_tag("msg-param-prior-gifter-user-name") {
+                echo(EVENT_NORMAL, &[format!(
+                    "<{}> pays forward a gift subscription from <{}> to the community",
+                    msg.get_tag("login")?,
+                    prior,
+                )], 1);
+            } else {
+                echo(EVENT_NORMAL, &[format!(
+                    "<{}> pays forward an anonymous gift subscription to the community",
+                    msg.get_tag("login")?,
+                )], 1);
+            }
+        }
 
         "giftpaidupgrade" => {
             echo(EVENT_ALERT, &["UPGRADE", &format!(
