@@ -21,6 +21,7 @@ use super::{
         EVENT_ERR,
         EVENT_NORMAL,
         EVENT_REWARD,
+        USERSTATE,
     },
 };
 
@@ -218,6 +219,26 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
         }
     }
     Some(EatMode::Hexchat)
+}
+
+
+pub fn userstate(msg: Message) -> Option<EatMode> {
+    let ch = get_channel_name();
+    let mut state = USERSTATE.write();
+
+    if state.set(
+        &ch,
+        &msg.get_tag("badges").unwrap_or_default(),
+        &msg.get_tag("badge-info").unwrap_or_default(),
+    ) {
+        echo(EVENT_REWARD, &[
+            "BADGES",
+            "New Badges received:",
+            state.get(&ch),
+        ], 0);
+    }
+
+    Some(EatMode::All)
 }
 
 

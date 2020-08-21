@@ -26,11 +26,9 @@ use output::{
     echo,
     EVENT_ERR,
     EVENT_NORMAL,
-    EVENT_REWARD,
     print_with_irc,
     print_without_irc,
     TABCOLORS,
-    USERSTATE,
 };
 
 
@@ -134,43 +132,28 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
                 }
                 "WHISPER" => events::whisper_recv(msg),
 
-                "ROOMSTATE" => Some(EatMode::Hexchat),
-                "USERSTATE" => {
-                    let ch = get_channel_name();
-                    let mut state = USERSTATE.write();
-
-                    if state.set(
-                        &ch,
-                        &msg.get_tag("badges").unwrap_or_default(),
-                        &msg.get_tag("badge-info").unwrap_or_default(),
-                    ) {
-                        echo(EVENT_REWARD, &[
-                            "BADGES",
-                            "New Badges received:",
-                            state.get(&ch),
-                        ], 0);
-                    }
-
-                    Some(EatMode::All)
-                }
-
-                "USERNOTICE" => events::usernotice(msg),
+                //  Status updates.
                 "HOSTTARGET" => events::hosttarget(&word[3][1..]),
+                "ROOMSTATE" => Some(EatMode::Hexchat),
+                "USERNOTICE" => events::usernotice(msg),
+                "USERSTATE" => events::userstate(msg),
 
                 //  Moderator Actions.
                 "CLEARMSG" => events::clearmsg(msg),
                 "CLEARCHAT" => events::clearchat(msg),
+
+                //  Other.
                 _ => Some(EatMode::None),
             };
 
-            if let Some(eat) = opt_eat { eat } else {
+            opt_eat.unwrap_or_else(|| {
                 echo(
                     EVENT_ERR,
                     &[&raw],
                     1,
                 );
                 EatMode::None
-            }
+            })
         }
         _ => EatMode::None,
     }
