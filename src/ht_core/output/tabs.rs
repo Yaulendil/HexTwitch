@@ -22,18 +22,10 @@ impl Tabs {
         if !get_focused_channel().contains(&get_current_channel()) {
             let name = get_channel_name();
 
-            match self.inner.get_mut(&name) {
-                Some(color_old) if &color_new <= color_old => {}  // No change.
-                Some(color_old) => {
-                    // New color is greater than old color. Replace.
-                    *color_old = color_new;
-                    send_command(&format!("GUI COLOR {}", color_new));
-                }
-                None => {
-                    // No old color. Insert new color.
-                    self.inner.insert(name, color_new);
-                    send_command(&format!("GUI COLOR {}", color_new));
-                }
+            if &color_new > self.inner.get(&name).unwrap_or(&0) {
+                // New color is greater than old color. Replace.
+                self.inner.insert(name, color_new);
+                send_command(&format!("GUI COLOR {}", color_new));
             }
         }
     }
@@ -41,13 +33,7 @@ impl Tabs {
     /// Set the color of the current Channel to 0. Done when a Channel becomes
     ///     focused, so that its unread status is cleared.
     pub fn reset(&mut self) {
-        let name = get_channel_name();
-
-        match self.inner.get_mut(&name) {
-            Some(color) => { *color = 0; }
-            None => { self.inner.insert(name, 0); }
-        }
-
+        self.inner.insert(get_channel_name(), 0);
         send_command("GUI COLOR 0");
     }
 }
