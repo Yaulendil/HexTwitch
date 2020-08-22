@@ -8,6 +8,7 @@ use hexchat::{
     get_pref_int,
     get_pref_string,
     print_event_to_channel,
+    print_plain,
     PrintEvent,
     send_command,
 };
@@ -66,6 +67,63 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
 
         Some(EatMode::All)
     } else { None }
+}
+
+
+pub fn roomstate(msg: Message) -> Option<EatMode> {
+    let tags = msg.tags.as_ref()?;
+
+    //  Only report this Message if it seems to be an On-Join update.
+    if tags.len() <= 2 { return Some(EatMode::Hexchat); }
+
+    let mut tags_vec: Vec<(&String, &String)> = tags.iter().collect();
+    tags_vec.sort();
+
+    for (k, v) in tags_vec {
+        if k == "rituals" || k == "room-id" { continue; }
+
+        match k.as_str() {
+            "emote-only" => {
+                if v != "0" { print_plain("Emotes Only mode enabled."); }
+            }
+            "r9k" => {
+                if v != "0" { print_plain("R9K mode enabled."); }
+            }
+            "subs-only" => {
+                if v != "0" { print_plain("Subscribers Only mode enabled."); }
+            }
+            "slow" => {
+                let secs: isize = v.parse().unwrap_or(0);
+
+                if secs > 0 {
+                    print_plain(&format!("Slow mode ({}s) enabled.", secs));
+                }
+            }
+            "followers-only" => {
+                // -1: No follow requirement.
+                //  0: Must follow to talk.
+                //  N: Must follow for N minutes before talking.
+                let mins: isize = v.parse().unwrap_or(-1);
+
+                if mins > 0 {
+                    print_plain(&format!(
+                        "{}-minute Followers Only mode enabled.",
+                        mins,
+                    ));
+                } else if mins == 0 {
+                    print_plain("Followers Only mode enabled.");
+                }
+            }
+            key => {
+                print_plain(&format!(
+                    "Unknown RoomState {:?} has value {:?}.",
+                    key, v,
+                ));
+            }
+        }
+    }
+
+    Some(EatMode::Hexchat)
 }
 
 

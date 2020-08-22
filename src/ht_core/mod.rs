@@ -134,7 +134,7 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
 
                 //  Status updates.
                 "HOSTTARGET" => events::hosttarget(&word[3][1..]),
-                "ROOMSTATE" => Some(EatMode::Hexchat),
+                "ROOMSTATE" => events::roomstate(msg),
                 "USERNOTICE" => events::usernotice(msg),
                 "USERSTATE" => events::userstate(msg),
 
