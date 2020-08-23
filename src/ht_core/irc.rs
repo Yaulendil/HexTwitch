@@ -199,9 +199,7 @@ impl Message {
     /// Return: `Result<Option<String>, ()>`
     pub fn set_tag(&mut self, key: &str, value: &str) -> Result<Option<String>, ()> {
         match self.tags.as_mut() {
-            Some(tags) => {
-                Ok(tags.insert(String::from(key), escape(value)))
-            },
+            Some(tags) => Ok(tags.insert(String::from(key), escape(value))),
             None => Err(()),
         }
     }
@@ -214,15 +212,15 @@ impl fmt::Display for Message {
     /// Return: `fmt::Result`
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(tags) = &self.tags {
-            let mut tagseq: Vec<String> = tags.iter()
-                .map(
-                    |(key, val)|
-                        if val.is_empty() {
-                            key.to_owned()
-                        } else {
-                            format!("{}={}", key, val)
-                        }
-                ).collect();
+            let mut tagseq: Vec<String> = tags
+                .iter()
+                .map(|(key, val)|
+                    if val.is_empty() {
+                        key.to_owned()
+                    } else {
+                        format!("{}={}", key, val)
+                    })
+                .collect();
 
             tagseq.sort_unstable();
             write!(f, "@{} ", tagseq.join(";"))?;
@@ -255,22 +253,16 @@ impl std::str::FromStr for Message {
             //      first space.
             let (tag_str, main_str) = split_at_char(&full_str, ' ');
             full_message = main_str;
+            tags = Some(tag_str[1..]
+                .split(';')
+                .filter_map(|kvp| {
+                    let (key, val) = split_at_char(kvp, '=');
 
-            let mut tagmap = HashMap::with_capacity(tag_str.matches(';').count() + 1);
-
-            //  Break the tagstr into a Split Iterator. Spliterator?
-            let tags_str_iter = tag_str[1..].split(';');
-
-            //  Loop through the Spliterator of pair strings, and break each one
-            //      the rest of the way down. Add values to the HashMap.
-            for kvp in tags_str_iter {
-                let (key, val) = split_at_char(kvp, '=');
-
-                if !key.is_empty() {
-                    tagmap.insert(String::from(key), String::from(val));
-                }
-            }
-            tags = Some(tagmap);
+                    if !key.is_empty() {
+                        Some((String::from(key), String::from(val)))
+                    } else { None }
+                })
+                .collect::<HashMap<String, String>>());
         } else {
             tags = None;
             full_message = full_str;
