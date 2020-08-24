@@ -174,6 +174,56 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
             echo(EVENT_ALERT, &["SUBSCRIPTION", &line], 2);
         }
 
+        "extendsub" => {
+            // Maximum possible usage should be 384 bytes.
+            let mut line = String::with_capacity(384);
+            write!(&mut line, "<{}> extends a sub", msg.get_tag("login")?).ok()?;
+
+            if let Some(plan) = msg.get_tag("msg-param-sub-plan") {
+                match plan.as_str() {
+                    "Prime" => { line.push_str(" with Prime") }
+                    "1000" => { /*line.push_str(" at Tier 1 ($5)")*/ }
+                    "2000" => { line.push_str(" at Tier 2 ($10)") }
+                    "3000" => { line.push_str(" at Tier 3 ($25)") }
+                    plan => { write!(&mut line, " with plan {:?}", plan).ok()? }
+                };
+            }
+
+            if let Some(streak) = msg.get_tag("msg-param-streak-months") {
+                if streak.parse().unwrap_or(0) > 1 {
+                    write!(&mut line, " for ({}) months in a row", streak).ok()?;
+                }
+            }
+
+            if let Some(cumul) = msg.get_tag("msg-param-cumulative-months") {
+                if cumul.parse().unwrap_or(0) > 1 {
+                    write!(&mut line, ", with ({}) months in total", cumul).ok()?;
+                }
+            }
+
+            if let Some(month) = msg.get_tag("msg-param-sub-benefit-end-month") {
+                write!(&mut line, ", through {}", match month.as_str() {
+                    "1" => "January",
+                    "2" => "February",
+                    "3" => "March",
+                    "4" => "April",
+                    "5" => "May",
+                    "6" => "June",
+                    "7" => "July",
+                    "8" => "August",
+                    "9" => "September",
+                    "10" => "October",
+                    "11" => "November",
+                    "12" => "December",
+                    other => other,
+                }).ok()?;
+            }
+
+            if !msg.trail.is_empty() { write!(&mut line, ": {}", msg.trail).ok()?; }
+
+            echo(EVENT_ALERT, &["SUBSCRIPTION", &line], 2);
+        }
+
         "subgift" => {
             let mut line = String::with_capacity(137);
             write!(
