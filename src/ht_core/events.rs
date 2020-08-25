@@ -142,6 +142,8 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
             echo(EVENT_NORMAL, &[msg.get_tag("system-msg")?], 1);
         }
 
+        "unraid" => { echo(EVENT_NORMAL, &["A raid has been canceled"], 1); }
+
         "sub" | "resub" => {
             // Maximum possible usage should be 362 bytes; 384=256+128
             let mut line = String::with_capacity(384);
