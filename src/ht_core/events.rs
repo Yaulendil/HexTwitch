@@ -428,18 +428,15 @@ pub fn whisper_send(etype: PrintEvent, channel: &str, word: &[String]) {
     //  "asdf qwert" normal -> exec SAY ".w asdf qwert"
     //  ".w asdf qwert" -> emit "asdf qwert" as private
 
-    let mut text: &str = &word[1];
+    let text: &str = &word[1];
 
     if text.starts_with(".w ") {
         //  Normal Message, begins with ".w". The Whisper has been sent. Print
         //      the message in the Tab.
-        let v: Vec<&str> = text.trim().splitn(3, " ").collect();
+        let mut iter = text[3..].trim().splitn(2, " ");
+        let user: &str = iter.next().unwrap();
 
-        if v.len() > 2 {
-            //  Args :: .w | <user> | <the rest of the text>
-            let user: &str = v[1];
-            text = v[2];
-
+        if let Some(mut text) = iter.next() {
             if user != channel {
                 echo(PrintEvent::MESSAGE_SEND, &[&user, &text], 2);
             }
@@ -474,7 +471,7 @@ pub fn hosttarget(target: &str) -> Option<EatMode> {
     if target != "-" {
         echo(
             EVENT_CHANNEL,
-            &[format!("#{}", target), format!("https://www.twitch.tv/{}", target)],
+            &[target, &format!("https://twitch.tv/{}", &target[1..])],
             1,
         );
     }
@@ -497,13 +494,13 @@ pub fn clearmsg(msg: Message) -> Option<EatMode> {
 pub fn clearchat(msg: Message) -> Option<EatMode> {
     let mut text = String::with_capacity(128);
     match msg.get_tag("ban-duration") {
-        Some(t) => { write!(&mut text, "{} is timed out for {}s.", &msg.trail, t).ok()?; }
-        None => { write!(&mut text, "{} is banned permanently.", &msg.trail).ok()?; }
+        Some(t) => { write!(&mut text, "{} is timed out for {}s", &msg.trail, t).ok()?; }
+        None => { write!(&mut text, "{} is banned permanently", &msg.trail).ok()?; }
     };
 
     if let Some(reason) = msg.get_tag("ban-reason") {
         if !reason.is_empty() {
-            write!(&mut text, " Reason: {}", reason).ok()?;
+            write!(&mut text, ". Reason: {}", reason).ok()?;
         }
     }
 

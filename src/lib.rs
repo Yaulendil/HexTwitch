@@ -64,7 +64,7 @@ macro_rules! hook_print {
 
 
 #[derive(Default)]
-struct HexTwitch(Vec<Hook>);
+struct HexTwitch { hooks: Vec<Hook> }
 
 impl Plugin for HexTwitch {
     const NAME: &'static str = env!("CARGO_PKG_NAME");
@@ -142,13 +142,13 @@ impl Plugin for HexTwitch {
         //  Report loadedness.
         print_plain(&format!("{} {} loaded", Self::NAME, Self::VERSION));
 
-        Self(hooks)
+        Self { hooks }
     }
 }
 
 impl Drop for HexTwitch {
     fn drop(&mut self) {
-        for hopt in self.0.drain(..) {
+        for hopt in self.hooks.drain(..) {
             match hopt {
                 Hook::CommandHook(handle) => { deregister_command(handle) }
                 Hook::PrintHook(handle) => { remove_print_event_listener(handle) }

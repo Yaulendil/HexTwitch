@@ -79,9 +79,7 @@ pub fn print_with_irc(
 
 /// No IRC Representation available for Message.
 pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> EatMode {
-    if word[1].starts_with(".w ")
-        || (!channel.starts_with("#") && !channel.starts_with("&"))
-    {
+    if word[1].starts_with(".w ") || !channel.starts_with::<&[char]>(&['#', '&']) {
         //  User has spoken inside a Whisper Tab, or executed `.w` elsewhere.
         //      We must take the message typed, and forward it to the Whisper
         //      Handler.

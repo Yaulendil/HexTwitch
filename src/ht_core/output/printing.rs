@@ -125,8 +125,6 @@ fn get_badge(class: &str, rank: &str) -> char {
 
         "glhf-pledge"       /**/ => '~',
 
-        // "twitchconAmsterdam2020" => 'c',
-        // "twitchconNA2019"   /**/ => 'c',
         s if s.starts_with("twitchcon") => 'c',
         _ => '?',
     }
@@ -136,9 +134,9 @@ fn get_badge(class: &str, rank: &str) -> char {
 fn highest(max: usize, seq: &[(usize, char)]) -> char {
     let mut out: char = '¿';
 
-    for &(rank, icon) in seq {
-        if rank <= max {
-            out = icon;
+    for pair in seq {
+        if pair.0 <= max {
+            out = pair.1;
         } else {
             break;
         }
@@ -201,8 +199,6 @@ impl Badges {
 pub struct States { inner: HashMap<String, Badges> }
 
 impl States {
-    fn new() -> Self { Self::default() }
-
     /// Get the Badges for the User in a given Channel.
     ///
     /// Input: `&str`
@@ -238,5 +234,5 @@ impl States {
 }
 
 safe_static! {
-    pub static lazy USERSTATE: RwLock<States> = RwLock::new(States::new());
+    pub static lazy USERSTATE: RwLock<States> = RwLock::<States>::default();
 }

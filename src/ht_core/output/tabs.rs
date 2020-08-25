@@ -11,8 +11,6 @@ use parking_lot::RwLock;
 pub struct Tabs { inner: HashMap<String, u8> }
 
 impl Tabs {
-    fn new() -> Self { Self::default() }
-
     /// Check for the current Channel in the Map of colors. If the Channel is
     ///     not focused AND the provided new color is higher than the current
     ///     one, the Map is updated and the `GUI COLOR` Command is run.
@@ -40,5 +38,5 @@ impl Tabs {
 
 
 safe_static! {
-    pub static lazy TABCOLORS: RwLock<Tabs> = RwLock::new(Tabs::new());
+    pub static lazy TABCOLORS: RwLock<Tabs> = RwLock::<Tabs>::default();
 }
