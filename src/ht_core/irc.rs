@@ -242,50 +242,43 @@ impl std::str::FromStr for Message {
     /// Input: `&str`
     /// Return: `Result<Message, ()>`
     fn from_str(full_str: &str) -> Result<Self, Self::Err> {
-        let tags: Option<HashMap<String, String>>;
-        let full_message: &str;
-        //  "@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message"
+        //  "@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@twitch.tv PRIVMSG #zxcv arg2 :this is a message"
 
         //  Break the line down.
-        if full_str.starts_with('@') {
-            //  The Tags String is the first half of the original message
-            //      received by IRC. The "regular" message begins after the
-            //      first space.
-            let (tag_str, main_str) = split_at_char(&full_str, ' ');
-            full_message = main_str;
-            tags = Some(tag_str[1..]
-                .split(';')
-                .filter_map(|kvp| {
-                    let (key, val) = split_at_char(kvp, '=');
+        let (full_message, tags): (&str, Option<HashMap<String, String>>) = {
+            if full_str.starts_with('@') {
+                //  The Tags String is the first half of the original message
+                //      received by IRC. The "regular" message begins after the
+                //      first space.
+                let (tag_str, main_str) = split_at_char(&full_str, ' ');
 
-                    if !key.is_empty() {
-                        Some((String::from(key), String::from(val)))
-                    } else { None }
-                })
-                .collect::<HashMap<String, String>>());
-        } else {
-            tags = None;
-            full_message = full_str;
-        }
+                (main_str, Some(
+                    tag_str[1..]
+                        .split(';')
+                        .map(|kvp| {
+                            let (key, val) = split_at_char(kvp, '=');
+
+                            (key.to_owned(), val.to_owned())
+                        })
+                        .collect::<HashMap<String, String>>()
+                ))
+            } else {
+                (full_str, None)
+            }
+        };
         //  { badges: "bits/100", display-name: "AsdfQwert", emotes: "" }
-        //  ":asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message"
+        //  ":asdfqwert!asdfqwert@twitch.tv PRIVMSG #zxcv arg2 :this is a message"
 
         //  Now, parse the message itself.
         //  This format is specified in Section 2.3.1 of RFC 1459.
-        let prefix: &str;
-        let message: &str;
-
-        if full_message.starts_with(':') {
-            //  This Message has a Prefix. The Prefix is most likely
-            //      hostname and/or server info. It ends at the first space.
-            let (p, m) = split_at_char(&full_message[1..], ' ');
-            prefix = p;
-            message = m;
+        let (prefix, message) = if full_message.starts_with(':') {
+            //  This Message has a Prefix. The Prefix is most likely hostname
+            //      and/or server info. It ends at the first space.
+            split_at_char(&full_message[1..], ' ')
         } else {
-            prefix = "";
-            message = full_message;
-        }
-        //  "asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv"
+            ("", full_message)
+        };
+        //  "asdfqwert!asdfqwert@twitch.tv"
         //  "PRIVMSG #zxcv arg2 :this is a message"
 
         //  The trailing data is found after a space and a colon. Everything up
@@ -302,12 +295,12 @@ impl std::str::FromStr for Message {
         //  The Arguments should be split apart into a Vector of `String`s.
         let args: Vec<String> = args_str.split_ascii_whitespace()
             .map(String::from)
-            .collect::<Vec<String>>();
+            .collect();
         //  ["#zxcv", "arg2"]
 
         //  Compile everything into a Message Struct, and send it back up.
         Ok(Self {
-            prefix: prefix.parse().unwrap(),  // "asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv"
+            prefix: prefix.parse().unwrap(),  // "asdfqwert!asdfqwert@twitch.tv"
             command: String::from(command),  // "PRIVMSG"
             args,  // ["#zxcv", "arg2"]
             trail: String::from(trail),  // "this is a message"
