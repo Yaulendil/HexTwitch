@@ -166,7 +166,6 @@ pub struct Message {
     pub tags: Option<HashMap<String, String>>,
 }
 
-#[allow(dead_code)]
 impl Message {
     /// Author: Return the name, put simply, of the source of this Message.
     ///
@@ -179,7 +178,7 @@ impl Message {
     pub fn get_signature(&self) -> String {
         format!(
             "{}:{}",
-            self.args.get(0).and_then(|s| Some(s.as_str())).unwrap_or(""),
+            self.args.get(0).map(String::as_str).unwrap_or(""),
             self.author(),
         )
     }
