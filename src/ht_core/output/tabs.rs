@@ -38,5 +38,5 @@ impl Tabs {
 
 
 safe_static! {
-    pub static lazy TABCOLORS: RwLock<Tabs> = RwLock::<Tabs>::default();
+    pub static lazy TABCOLORS: RwLock<Tabs> = Default::default();
 }

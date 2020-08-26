@@ -63,7 +63,7 @@ impl Sponge {
 
 
 safe_static! {
-    static lazy CURRENT: Mutex<Sponge> = Mutex::new(Sponge::default());
+    static lazy CURRENT: Mutex<Sponge> = Default::default();
 }
 
 

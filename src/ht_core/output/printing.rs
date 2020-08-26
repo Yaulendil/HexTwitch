@@ -234,5 +234,5 @@ impl States {
 }
 
 safe_static! {
-    pub static lazy USERSTATE: RwLock<States> = RwLock::<States>::default();
+    pub static lazy USERSTATE: RwLock<States> = Default::default();
 }
