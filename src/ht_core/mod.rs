@@ -80,15 +80,16 @@ fn check_message(channel: &str, author: &str) -> Option<Message> {
 
 /// Reset the Color of a newly-focused Tab.
 pub(crate) fn cb_focus(_channel: ChannelRef) -> EatMode {
-    TABCOLORS.write().reset();
+    if get_network_name().unwrap_or_default().eq_ignore_ascii_case("twitch") {
+        TABCOLORS.write().reset();
+    }
     EatMode::None
 }
 
 
 /// Hide a Join Event if it is fake.
 pub(crate) fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
-    if get_network_name().unwrap_or_default()
-        .eq_ignore_ascii_case("twitch")
+    if get_network_name().unwrap_or_default().eq_ignore_ascii_case("twitch")
         && !word[2].contains("tmi.twitch.tv")
     {
         EatMode::All
