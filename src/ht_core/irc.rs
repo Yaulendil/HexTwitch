@@ -2,8 +2,11 @@
  * Module for the splitting of IRCv3 strings into a more usable format.
  */
 
-use std::collections::HashMap;
-use std::fmt;
+use std::{
+    fmt,
+    collections::HashMap,
+    ops::Try,
+};
 
 
 /// Given a string which may contain characters which are not allowed in an IRC
@@ -198,10 +201,10 @@ impl Message {
     /// Input: `&str`, `&str`
     /// Return: `Result<Option<String>, ()>`
     pub fn set_tag(&mut self, key: &str, value: &str) -> Result<Option<String>, ()> {
-        match self.tags.as_mut() {
-            Some(tags) => Ok(tags.insert(String::from(key), escape(value))),
-            None => Err(()),
-        }
+        self.tags.as_mut()
+            .into_result()
+            .map_err(|_| ())
+            .and_then(|tags| Ok(tags.insert(String::from(key), escape(value))))
     }
 }
 
@@ -453,6 +456,19 @@ mod tests_irc {
     fn bench_samples_pingpong(b: &mut Bencher) {
         for init in SAMPLES {
             b.iter(|| init.parse::<Message>().expect("Parse Failed").to_string());
+        }
+    }
+
+    /// Benchmark performance of a `Message` having its tags set by method.
+    #[bench]
+    fn bench_samples_set_tag(b: &mut Bencher) {
+        for init in SAMPLES {
+            b.iter(|| {
+                let mut msg: Message = init.parse().expect("Parse Failed");
+                msg.set_tag("bits", "asdf").ok();
+                msg.set_tag("badges", "asdf").ok();
+                msg.set_tag("badge-info", "asdf").ok();
+            });
         }
     }
 }
