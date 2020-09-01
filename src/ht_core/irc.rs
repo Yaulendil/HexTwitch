@@ -183,6 +183,12 @@ impl Message {
         )
     }
 
+    /// Check whether this `Message` includes IRC Tags.
+    ///
+    /// Return: `bool`
+    #[inline]
+    pub fn has_tags(&self) -> bool { self.tags.is_some() }
+
     /// Retrieve a Tag from the `Message`.
     ///
     /// Input: `&str`
@@ -318,7 +324,6 @@ mod tests_irc {
     use super::*;
     use test::Bencher;
 
-
     const MSG_WITHOUT_TAGS: &str = r":asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv WHISPER thyself :asdf";
     const SAMPLES: &[&str] = &[
         MSG_WITHOUT_TAGS,
@@ -331,7 +336,6 @@ mod tests_irc {
     const TEST_KEY: &str = "asdf";
     const TEST_VAL_1: &str = "qwert";
     const TEST_VAL_2: &str = "z x : c v";
-
 
     /// Test to confirm that converting back and forth between Message and text
     ///     will always produce the same results.
@@ -377,21 +381,26 @@ mod tests_irc {
             let mut to_irc: Message = init.parse()
                 .expect("Failed to parse initial string.");
 
-            if to_irc.tags.is_some() {
+            if to_irc.has_tags() {
                 assert_eq!(
                     None,
                     to_irc.get_tag(TEST_KEY),
                     "Initial Message already has the test key.",
                 );
                 assert_eq!(
-                    Ok(None),
-                    to_irc.set_tag(TEST_KEY, TEST_VAL_1),
+                    None,
+                    to_irc.set_tag(TEST_KEY, TEST_VAL_1)
+                        .expect("Insertion of new key returns Err"),
                     "Insertion of new key does not return None.",
                 );
                 assert_eq!(
-                    Ok(Some(String::from(TEST_VAL_1))),
-                    to_irc.set_tag(TEST_KEY, TEST_VAL_2),
-                    "Insertion of extant key does not return previous value.",
+                    TEST_VAL_1,
+                    to_irc.set_tag(TEST_KEY, TEST_VAL_2)
+                        .expect("Insertion of extant key returns Err")
+                        .expect("Insertion of extant key does not return a \
+                            previous value.")
+                        .as_str(),
+                    "Insertion of extant key returns incorrect value.",
                 );
                 assert_eq!(
                     Some(String::from(TEST_VAL_2)),
