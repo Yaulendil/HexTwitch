@@ -162,26 +162,25 @@ impl Badges {
     /// Input: `&str`, `&str`
     /// Return: `Badges`
     pub fn from_str(input: &str, info: &str) -> Self {
-        let input = String::from(input);
+        let input: String = String::from(input);
         let mut output: String = String::with_capacity(16);
 
         if !input.is_empty() {
             for pair in input.split(',') {
-                let (class, rank) = split_at_char(pair, '/');
-
                 //  Twitch now provides the number of months attached to a Sub
                 //      Badge separately, in the `badge-info` Tag. The number
                 //      attached directly to the Badge itself will only reflect
                 //      the correct number of months if the channel has a custom
                 //      icon set for the tier.
-                if class == "subscriber" && !info.is_empty() {
+                if pair.starts_with("subscriber/") && !info.is_empty() {
                     for pair_info in info.split(',') {
                         if pair_info.starts_with("subscriber/") {
-                            output.push(get_badge(class, &pair_info[11..]));
+                            output.push(get_badge("subscriber", &pair_info[11..]));
                             break;
                         }
                     }
                 } else {
+                    let (class, rank) = split_at_char(pair, '/');
                     output.push(get_badge(class, rank));
                 }
             }
@@ -237,4 +236,34 @@ impl States {
 
 safe_static! {
     pub static lazy USERSTATE: RwLock<States> = Default::default();
+}
+
+
+#[cfg(test)]
+mod tests_badge {
+    extern crate test;
+
+    use crate::ht_core::irc::{
+        Message,
+        tests_irc::SAMPLES,
+    };
+    use super::*;
+    use test::Bencher;
+
+    /// Benchmark performance of reading `Badges` from `Message`s.
+    #[bench]
+    fn bench_badges(b: &mut Bencher) {
+        for raw in SAMPLES {
+            let msg: Message = raw.parse().expect("Parse Failed");
+
+            if msg.has_tags() {
+                b.iter(|| {
+                    let _b = Badges::from_str(
+                        &msg.get_tag("badges").unwrap_or_default(),
+                        &msg.get_tag("badge-info").unwrap_or_default(),
+                    );
+                });
+            }
+        }
+    }
 }

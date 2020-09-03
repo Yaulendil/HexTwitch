@@ -316,17 +316,17 @@ impl std::str::FromStr for Message {
 }
 
 #[cfg(test)]
-mod tests_irc {
+pub mod tests_irc {
     extern crate test;
 
     use super::*;
     use test::Bencher;
 
-    const MSG_WITHOUT_TAGS: &str = r":asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv WHISPER thyself :asdf";
-    const SAMPLES: &[&str] = &[
+    pub const MSG_WITHOUT_TAGS: &str = r":asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv WHISPER thyself :asdf";
+    pub const SAMPLES: &[&str] = &[
         MSG_WITHOUT_TAGS,
         r"@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv PRIVMSG #zxcv arg2 :this is a message",
-        r"@badges=subscriber/24,bits/1;emote-sets=0,2652,15749,19194,230961,320370,1228598;user-type= :tmi.twitch.tv USERSTATE #asdfqwert",
+        r"@badges=subscriber/24,badge-info=subscriber/25,bits/1;emote-sets=0,2652,15749,19194,230961,320370,1228598;user-type= :tmi.twitch.tv USERSTATE #asdfqwert",
         r"@login=somejerk;room-id=;target-msg-id=15604c60-4d3b-8c1c-8e7a-c9ec2fb6c0cf;tmi-sent-ts=-6745368778951 :tmi.twitch.tv CLEARMSG #coolchannel :get a real job noob",
         r"@room-id=;target-user-id=8675309;tmi-sent-ts=1582958744397 :tmi.twitch.tv CLEARCHAT #coolchannel :somejerk",
         r"@badges=;color=#DABEEF;display-name=Asdf\sQwert;emotes=;message-id=2;thread-id=1337-9001;turbo=0;user-id=123456789;user-type= :asdfqwert!asdfqwert@asdfqwert.tmi.twitch.tv WHISPER thyself :asdf"
@@ -433,7 +433,7 @@ mod tests_irc {
         }
     }
 
-    /// Benchmark performance of `&str`s being parsed into `Message`s..
+    /// Benchmark performance of `&str`s being parsed into `Message`s.
     #[bench]
     fn bench_samples_0tags(b: &mut Bencher) {
         for init in SAMPLES {
