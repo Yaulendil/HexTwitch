@@ -467,14 +467,34 @@ pub fn whisper_send(etype: PrintEvent, channel: &str, word: &[String]) {
 }
 
 
+fn host_notif(viewers: &str) -> String {
+    match viewers.parse::<usize>() {
+        Ok(v) if v == 1 => String::from("Channel is hosted, with 1 viewer, by"),
+        Ok(v) => format!("Channel is hosted, with {} viewers, by", v),
+        _ => String::from("Channel is hosted by"),
+    }
+}
+
+
 pub fn hosttarget(msg: Message) -> Option<EatMode> {
-    let (target, _viewers) = split_at_char(&msg.trail, ' ');
+    let (target, viewers) = split_at_char(&msg.trail, ' ');
+
     if target != "-" {
+        let hashtarg = format!("#{}", target);
+
         echo(
             EVENT_CHANNEL,
-            &[format!("#{}", target), format!("https://twitch.tv/{}", target)],
+            &[&hashtarg, &format!("https://twitch.tv/{}", target)],
             1,
         );
+
+        if let Some(channel) = get_channel("Twitch", &hashtarg) {
+            print_event_to_channel(&channel, EVENT_REWARD, &[
+                "HOST",
+                &host_notif(viewers),
+                &msg.args[0],
+            ]);
+        }
     }
 
     Some(EatMode::Hexchat)
