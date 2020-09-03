@@ -165,23 +165,25 @@ impl Badges {
         let input = String::from(input);
         let mut output: String = String::with_capacity(16);
 
-        for pair in input.split(',') {
-            let (class, rank) = split_at_char(pair, '/');
+        if !input.is_empty() {
+            for pair in input.split(',') {
+                let (class, rank) = split_at_char(pair, '/');
 
-            //  Twitch now provides the number of months attached to a Sub
-            //      Badge separately, in the `badge-info` Tag. The number
-            //      attached directly to the Badge itself will only reflect
-            //      the correct number of months if the channel has a custom
-            //      icon set for the tier.
-            if class == "subscriber" && !info.is_empty() {
-                for pair_info in info.split(',') {
-                    if pair_info.starts_with("subscriber/") {
-                        output.push(get_badge(class, &pair_info[11..]));
-                        break;
+                //  Twitch now provides the number of months attached to a Sub
+                //      Badge separately, in the `badge-info` Tag. The number
+                //      attached directly to the Badge itself will only reflect
+                //      the correct number of months if the channel has a custom
+                //      icon set for the tier.
+                if class == "subscriber" && !info.is_empty() {
+                    for pair_info in info.split(',') {
+                        if pair_info.starts_with("subscriber/") {
+                            output.push(get_badge(class, &pair_info[11..]));
+                            break;
+                        }
                     }
+                } else {
+                    output.push(get_badge(class, rank));
                 }
-            } else {
-                output.push(get_badge(class, rank));
             }
         }
 
