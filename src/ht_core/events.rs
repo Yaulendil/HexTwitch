@@ -14,7 +14,7 @@ use hexchat::{
 };
 
 use super::{
-    irc::Message,
+    irc::{Message, split_at_char},
     output::{
         echo,
         EVENT_ALERT,
@@ -467,11 +467,12 @@ pub fn whisper_send(etype: PrintEvent, channel: &str, word: &[String]) {
 }
 
 
-pub fn hosttarget(target: &str) -> Option<EatMode> {
+pub fn hosttarget(msg: Message) -> Option<EatMode> {
+    let (target, _viewers) = split_at_char(&msg.trail, ' ');
     if target != "-" {
         echo(
             EVENT_CHANNEL,
-            &[target, &format!("https://twitch.tv/{}", &target[1..])],
+            &[format!("#{}", target), format!("https://twitch.tv/{}", target)],
             1,
         );
     }

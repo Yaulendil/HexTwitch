@@ -121,7 +121,7 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
 
 
 /// Handle a Server Message, received by the Hook for "RAW LINE".
-pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
+pub(crate) fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
             let msg: Message = raw.parse().expect("Failed to parse IRC Message");
@@ -134,7 +134,7 @@ pub(crate) fn cb_server(word: &[String], _dt: DateTime<Utc>, raw: String) -> Eat
                 "WHISPER" => events::whisper_recv(msg),
 
                 //  Status updates.
-                "HOSTTARGET" => events::hosttarget(&word[3]),
+                "HOSTTARGET" => events::hosttarget(msg),
                 "ROOMSTATE" => events::roomstate(msg),
                 "USERNOTICE" => events::usernotice(msg),
                 "USERSTATE" => events::userstate(msg),
