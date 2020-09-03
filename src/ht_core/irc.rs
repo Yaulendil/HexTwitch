@@ -1,10 +1,8 @@
-/*
- * Module for the splitting of IRCv3 strings into a more usable format.
- */
+//! Module for the splitting of IRCv3 strings into a more usable format.
 
 use std::{
-    fmt,
     collections::HashMap,
+    fmt,
     ops::Try,
 };
 
@@ -17,7 +15,7 @@ use std::{
 /// Input: `&str`
 /// Return: `String`
 pub fn escape(line: &str) -> String {
-    let mut out = String::with_capacity(line.len());
+    let mut out = String::with_capacity(line.len() + 20);
 
     for each in line.chars() {
         match each {
