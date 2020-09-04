@@ -1,4 +1,7 @@
-use std::fmt::Write;
+use std::{
+    collections::HashMap,
+    fmt::Write,
+};
 
 use hexchat::{
     ChannelRef,
@@ -71,7 +74,7 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
 
 
 pub fn roomstate(msg: Message) -> Option<EatMode> {
-    let tags = msg.tags.as_ref()?;
+    let tags: &HashMap<String, String> = msg.tags.as_ref()?;
 
     //  Only report this Message if it seems to be an On-Join update.
     if tags.len() <= 2 { return Some(EatMode::Hexchat); }
@@ -128,7 +131,7 @@ pub fn roomstate(msg: Message) -> Option<EatMode> {
 
 
 pub fn usernotice(msg: Message) -> Option<EatMode> {
-    let stype = msg.get_tag("msg-id")?;
+    let stype: String = msg.get_tag("msg-id")?;
 
     match stype.as_str() {
         "raid" => {
@@ -146,7 +149,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 
         "sub" | "resub" => {
             // Maximum possible usage should be 362 bytes; 384=256+128
-            let mut line = String::with_capacity(384);
+            let mut line: String = String::with_capacity(384);
             write!(&mut line, "<{}> {}scribes", msg.get_tag("login")?, stype).ok()?;
 
             if let Some(plan) = msg.get_tag("msg-param-sub-plan") {
@@ -178,7 +181,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 
         "extendsub" => {
             // Maximum possible usage should be 384 bytes.
-            let mut line = String::with_capacity(384);
+            let mut line: String = String::with_capacity(384);
             write!(&mut line, "<{}> extends a sub", msg.get_tag("login")?).ok()?;
 
             if let Some(plan) = msg.get_tag("msg-param-sub-plan") {
@@ -227,7 +230,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
         }
 
         "subgift" => {
-            let mut line = String::with_capacity(137);
+            let mut line: String = String::with_capacity(137);
             write!(
                 &mut line,
                 "<{}> is gifted a subscription by <{}>",
@@ -250,7 +253,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
             echo(EVENT_ALERT, &["SUBSCRIPTION", &line], 2);
         }
         "submysterygift" => {
-            let num = msg.get_tag("msg-param-mass-gift-count")?;
+            let num: String = msg.get_tag("msg-param-mass-gift-count")?;
             echo(EVENT_ALERT, &["SUBSCRIPTION", &format!(
                 "<{}> gives out ({}) random gift subscription{}",
                 msg.get_tag("login")?, num,
@@ -328,12 +331,13 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
             }
         }
     }
+
     Some(EatMode::Hexchat)
 }
 
 
 pub fn userstate(msg: Message) -> Option<EatMode> {
-    let ch = get_channel_name();
+    let ch: String = get_channel_name();
     let mut state = USERSTATE.write();
 
     if state.set(
@@ -379,8 +383,7 @@ pub fn ensure_tab(name: &str) -> ChannelRef {
 /// Input: `Message`
 /// Return: `Option<EatMode>`
 pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
-    let etype: PrintEvent;
-    let user = msg.prefix.name();
+    let user: &str = msg.prefix.name();
 
     //  Swap out fields of the Message to reshape it into one that HexChat can
     //      nicely handle for us.
@@ -396,26 +399,23 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
     //      example, the command "/me does something" would have to be changed
     //      to "\x01ACTION does something\x01".
     if msg.trail.starts_with("/me ") {
-        etype = PrintEvent::PRIVATE_ACTION;
         let text: &str = &msg.trail[4..]; // Slice off the `/me `.
 
         //  If the Whisper Tab is not focused, also post it here.
         if get_pref_int("PREF_whispers_in_current").unwrap_or(0) != 0
             && get_channel_name() != user
         {
-            echo(etype, &[user, text], 2);
+            echo(PrintEvent::PRIVATE_ACTION, &[user, text], 2);
         }
 
         //  Format the sliced text into an Action Message and replace the Trail.
         msg.trail = format!("\x01ACTION {}\x01", &text);
     } else {
-        etype = PrintEvent::PRIVATE_MESSAGE;
-
         //  If the Whisper Tab is not focused, also post it here.
         if get_pref_int("PREF_whispers_in_current").unwrap_or(0) != 0
             && get_channel_name() != user
         {
-            echo(etype, &[user, &msg.trail], 2);
+            echo(PrintEvent::PRIVATE_MESSAGE, &[user, &msg.trail], 2);
         }
     }
 
@@ -480,13 +480,11 @@ pub fn hosttarget(msg: Message) -> Option<EatMode> {
     let (target, viewers) = split_at_char(&msg.trail, ' ');
 
     if target != "-" {
-        let hashtarg = format!("#{}", target);
+        let hashtarg: String = format!("#{}", target);
 
-        echo(
-            EVENT_CHANNEL,
-            &[&hashtarg, &format!("https://twitch.tv/{}", target)],
-            1,
-        );
+        echo(EVENT_CHANNEL, &[
+            &hashtarg, &format!("https://twitch.tv/{}", target),
+        ], 1);
 
         if let Some(channel) = get_channel("Twitch", &hashtarg) {
             print_event_to_channel(&channel, EVENT_REWARD, &[
@@ -502,18 +500,17 @@ pub fn hosttarget(msg: Message) -> Option<EatMode> {
 
 
 pub fn clearmsg(msg: Message) -> Option<EatMode> {
-    echo(
-        EVENT_ERR,
-        &[format!("A message by <{}> is deleted: {}",
-                  msg.get_tag("login")?, &msg.trail)],
-        1,
-    );
+    echo(EVENT_ERR, &[format!(
+        "A message by <{}> is deleted: {}",
+        msg.get_tag("login")?, &msg.trail,
+    )], 1);
     Some(EatMode::Hexchat)
 }
 
 
 pub fn clearchat(msg: Message) -> Option<EatMode> {
-    let mut text = String::with_capacity(128);
+    let mut text: String = String::with_capacity(128);
+
     match msg.get_tag("ban-duration") {
         Some(t) => { write!(&mut text, "{} is timed out for {}s", &msg.trail, t).ok()?; }
         None => { write!(&mut text, "{} is banned permanently", &msg.trail).ok()?; }

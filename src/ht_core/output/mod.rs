@@ -5,6 +5,7 @@ mod tabs;
 use hexchat::{EatMode, PrintEvent, send_command};
 
 pub use printing::{
+    Badges,
     echo,
     EVENT_ALERT,
     EVENT_CHANNEL,
@@ -52,7 +53,7 @@ pub fn print_with_irc(
         | PrintEvent::CHANNEL_MSG_HILIGHT
         | PrintEvent::CHANNEL_ACTION_HILIGHT
         => {
-            let badges = printing::Badges::from_str(
+            let badges: Badges = Badges::from_str(
                 &msg.get_tag("badges").unwrap_or_default(),
                 &msg.get_tag("badge-info").unwrap_or_default(),
             );

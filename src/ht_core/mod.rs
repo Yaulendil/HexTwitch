@@ -148,11 +148,7 @@ pub(crate) fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> Ea
             };
 
             opt_eat.unwrap_or_else(|| {
-                echo(
-                    EVENT_ERR,
-                    &[&raw],
-                    1,
-                );
+                echo(EVENT_ERR, &[&raw], 1);
                 EatMode::None
             })
         }
@@ -194,16 +190,12 @@ pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
         echo(EVENT_NORMAL, &["REWARD EVENTS:"], 0);
         for pref in get_prefs() {
             if !pref.is_empty() && !pref.starts_with("PREF") {
-                echo(
-                    EVENT_NORMAL,
-                    &[format!(
-                        "{}: '{}'",
-                        pref,
-                        get_pref_string(&pref)
-                            .unwrap_or_default(),
-                    )],
-                    0,
-                );
+                echo(EVENT_NORMAL, &[format!(
+                    "{}: '{}'",
+                    pref,
+                    get_pref_string(&pref)
+                        .unwrap_or_default(),
+                )], 0);
             }
         }
     } else if {
@@ -256,8 +248,6 @@ pub(crate) fn cmd_whisper(arg: &[String]) -> EatMode {
         && get_network_name().unwrap_or_default()
         .eq_ignore_ascii_case("twitch")
     {
-        let targ: &str = &arg[1];
-
         //  Two stage assignment to prevent Temporary Value.
         let tmp: String = arg[2..].join(" ");
         let msg: &str = tmp.trim();
@@ -265,10 +255,10 @@ pub(crate) fn cmd_whisper(arg: &[String]) -> EatMode {
         //  Check for trailing Arguments.
         if msg.is_empty() {
             //  None: Switch to Whisper Tab.
-            send_command(&format!("QUERY {}", targ));
+            send_command(&format!("QUERY {}", arg[1]));
         } else {
             //  Some: Send through Whisper.
-            send_command(&format!("SAY .w {} {}", targ, msg));
+            send_command(&format!("SAY .w {} {}", arg[1], msg));
         }
     }
     EatMode::All
