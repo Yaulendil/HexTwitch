@@ -125,7 +125,7 @@ pub(crate) fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> Ea
     match get_network_name() {
         Some(network) if network.eq_ignore_ascii_case("twitch") => {
             let msg: Message = raw.parse().expect("Failed to parse IRC Message");
-            let opt_eat: Option<EatMode> = match &*msg.command {
+            let opt_eat: Option<EatMode> = match msg.command.as_str() {
                 //  Chat Messages.
                 "PRIVMSG" => {
                     CURRENT.lock().put(msg);
@@ -147,8 +147,15 @@ pub(crate) fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> Ea
                 _ => Some(EatMode::None),
             };
 
+            //  Print the Message if the handler fails to return an EatMode.
             opt_eat.unwrap_or_else(|| {
-                echo(EVENT_ERR, &[&raw], 1);
+                //  Do not check for HTDEBUG setting here, because a failure in
+                //      a handler, for a known type, is a bigger deal than just
+                //      not having a handler for an unknown one. This needs to
+                //      be noticed and fixed.
+                echo(EVENT_ERR, &[format!(
+                    "Handler for IRC Command failed: {}", raw,
+                )], 1);
                 EatMode::None
             })
         }
