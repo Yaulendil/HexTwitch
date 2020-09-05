@@ -141,8 +141,30 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
                 msg.get_tag("msg-param-displayName")?.to_lowercase(),
             )], 1);
         }
-        "bitsbadgetier" | "charity" | "rewardgift" | "ritual" => {
+        "charity" | "rewardgift" | "ritual" => {
             echo(EVENT_NORMAL, &[msg.get_tag("system-msg")?], 1);
+        }
+
+        "bitsbadgetier" => {
+            let mut notif: String = match msg
+                .get_tag("msg-param-threshold")
+                .and_then(|t| t.parse::<usize>().ok())
+            {
+                Some(bits) => format!(
+                    "<{}> earns a new tier of Bits Badge for cheering {} Bits \
+                        (${:.2}) total",
+                    msg.get_tag("login")?, bits,
+                    bits as f64 / 100.0,
+                ),
+                None => format!(
+                    "<{}> earns a new tier of Bits Badge",
+                    msg.get_tag("login")?,
+                ),
+            };
+
+            if !msg.trail.is_empty() { write!(&mut notif, ": {}", msg.trail).ok()?; }
+
+            echo(EVENT_ALERT, &["BADGE", &notif], 1);
         }
 
         "unraid" => { echo(EVENT_NORMAL, &["A raid has been canceled"], 1); }
@@ -310,13 +332,6 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
                 msg.get_tag("login")?,
             )], 2);
         }
-
-        // "bitsbadgetier" => {
-        //     echo(EVENT_ALERT, &["BITS BADGE", &format!(
-        //         "<{}> earns a new tier of Bits Badge",
-        //         msg.get_tag("login")?,
-        //     )], 1);
-        // }
 
         _ => {
             if get_pref_int("PREF_htdebug").unwrap_or(0) != 0 {
