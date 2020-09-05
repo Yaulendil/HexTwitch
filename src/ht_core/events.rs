@@ -16,6 +16,7 @@ use hexchat::{
     send_command,
 };
 
+use crate::NETWORK;
 use super::{
     irc::{Message, split_at_char},
     output::{
@@ -379,13 +380,10 @@ pub fn userstate(msg: Message) -> Option<EatMode> {
 /// Return: `ChannelRef`
 /// Panics: If the Channel is not found after `QUERY` is executed.
 pub fn ensure_tab(name: &str) -> ChannelRef {
-    match get_channel("Twitch", &name) {
-        Some(check) => { check }
-        None => {
-            send_command(&format!("QUERY {}", &name));
-            get_channel("Twitch", &name).expect("Failed to ensure Whisper Tab.")
-        }
-    }
+    get_channel(NETWORK, &name).unwrap_or_else(|| {
+        send_command(&format!("QUERY {}", &name));
+        get_channel(NETWORK, &name).expect("Failed to ensure Whisper Tab.")
+    })
 }
 
 
@@ -501,7 +499,7 @@ pub fn hosttarget(msg: Message) -> Option<EatMode> {
             &hashtarg, &format!("https://twitch.tv/{}", target),
         ], 1);
 
-        if let Some(channel) = get_channel("Twitch", &hashtarg) {
+        if let Some(channel) = get_channel(NETWORK, &hashtarg) {
             print_event_to_channel(&channel, EVENT_REWARD, &[
                 "HOST",
                 &host_notif(viewers),

@@ -21,6 +21,7 @@ use hexchat::{
 };
 use parking_lot::Mutex;
 
+use crate::NETWORK;
 use irc::Message;
 use output::{
     echo,
@@ -80,7 +81,7 @@ fn check_message(channel: &str, author: &str) -> Option<Message> {
 
 /// Reset the Color of a newly-focused Tab.
 pub(crate) fn cb_focus(_channel: ChannelRef) -> EatMode {
-    if get_network_name().unwrap_or_default().eq_ignore_ascii_case("twitch") {
+    if get_network_name().unwrap_or_default() == NETWORK {
         TABCOLORS.write().reset();
     }
     EatMode::None
@@ -89,7 +90,7 @@ pub(crate) fn cb_focus(_channel: ChannelRef) -> EatMode {
 
 /// Hide a Join Event if it is fake.
 pub(crate) fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
-    if get_network_name().unwrap_or_default().eq_ignore_ascii_case("twitch")
+    if get_network_name().unwrap_or_default() == NETWORK
         && !word[2].contains("tmi.twitch.tv")
     {
         EatMode::All
@@ -100,66 +101,64 @@ pub(crate) fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
 
 
 pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
-    match get_network_name() {
-        Some(network) if network.eq_ignore_ascii_case("twitch") => {
-            let channel = get_channel_name();
+    if get_network_name().unwrap_or_default() == NETWORK {
+        let channel = get_channel_name();
 
-            if let Some(msg) = check_message(&channel, &word[0]) {
-                //  Message comes from Server. IRC Representation available.
-                print_with_irc(&channel, etype, word, msg)
-            } else if etype == PrintEvent::YOUR_MESSAGE
-                || etype == PrintEvent::YOUR_ACTION {
-                //  No IRC Representation available for Message.
-                print_without_irc(&channel, etype, word)
-            } else {
-                EatMode::None
-            }
+        if let Some(msg) = check_message(&channel, &word[0]) {
+            //  Message comes from Server. IRC Representation available.
+            print_with_irc(&channel, etype, word, msg)
+        } else if etype == PrintEvent::YOUR_MESSAGE
+            || etype == PrintEvent::YOUR_ACTION {
+            //  No IRC Representation available for Message.
+            print_without_irc(&channel, etype, word)
+        } else {
+            EatMode::None
         }
-        _ => EatMode::None
+    } else {
+        EatMode::None
     }
 }
 
 
 /// Handle a Server Message, received by the Hook for "RAW LINE".
 pub(crate) fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
-    match get_network_name() {
-        Some(network) if network.eq_ignore_ascii_case("twitch") => {
-            let msg: Message = raw.parse().expect("Failed to parse IRC Message");
-            let opt_eat: Option<EatMode> = match msg.command.as_str() {
-                //  Chat Messages.
-                "PRIVMSG" => {
-                    CURRENT.lock().put(msg);
-                    Some(EatMode::None)
-                }
-                "WHISPER" => events::whisper_recv(msg),
+    if get_network_name().unwrap_or_default() == NETWORK {
+        let msg: Message = raw.parse().expect("Failed to parse IRC Message");
+        let opt_eat: Option<EatMode> = match msg.command.as_str() {
+            //  Chat Messages.
+            "PRIVMSG" => {
+                CURRENT.lock().put(msg);
+                Some(EatMode::None)
+            }
+            "WHISPER" => events::whisper_recv(msg),
 
-                //  Status updates.
-                "HOSTTARGET" => events::hosttarget(msg),
-                "ROOMSTATE" => events::roomstate(msg),
-                "USERNOTICE" => events::usernotice(msg),
-                "USERSTATE" => events::userstate(msg),
+            //  Status updates.
+            "HOSTTARGET" => events::hosttarget(msg),
+            "ROOMSTATE" => events::roomstate(msg),
+            "USERNOTICE" => events::usernotice(msg),
+            "USERSTATE" => events::userstate(msg),
 
-                //  Moderator Actions.
-                "CLEARMSG" => events::clearmsg(msg),
-                "CLEARCHAT" => events::clearchat(msg),
+            //  Moderator Actions.
+            "CLEARMSG" => events::clearmsg(msg),
+            "CLEARCHAT" => events::clearchat(msg),
 
-                //  Other.
-                _ => Some(EatMode::None),
-            };
+            //  Other.
+            _ => Some(EatMode::None),
+        };
 
-            //  Print the Message if the handler fails to return an EatMode.
-            opt_eat.unwrap_or_else(|| {
-                //  Do not check for HTDEBUG setting here, because a failure in
-                //      a handler, for a known type, is a bigger deal than just
-                //      not having a handler for an unknown one. This needs to
-                //      be noticed and fixed.
-                echo(EVENT_ERR, &[format!(
-                    "Handler for IRC Command failed: {}", raw,
-                )], 1);
-                EatMode::None
-            })
-        }
-        _ => EatMode::None,
+        //  Print the Message if the handler fails to return an EatMode.
+        opt_eat.unwrap_or_else(|| {
+            //  Do not check for HTDEBUG setting here, because a failure in a
+            //      handler, for a known type, is a bigger deal than just not
+            //      having a handler for an unknown one. This needs to be
+            //      noticed and fixed.
+            echo(EVENT_ERR, &[format!(
+                "Handler for IRC Command failed: {}", raw,
+            )], 1);
+            EatMode::None
+        })
+    } else {
+        EatMode::None
     }
 }
 
@@ -205,21 +204,19 @@ pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
                 )], 0);
             }
         }
-    } else if {
-        !arg[0].starts_with("PREF")
-            && {
-            if len < 2 {
-                //  Unset a Reward.
-                delete_pref(&arg[0].to_lowercase())
-            } else {
-                //  Set a Reward.
-                set_pref_string(
-                    &arg[0].to_lowercase(),
-                    &arg[1..].join(" ").trim(),
-                )
-            }
-        }.is_ok()
-    } {
+    } else if !arg[0].starts_with("PREF")
+        && {
+        if len < 2 {
+            //  Unset a Reward.
+            delete_pref(&arg[0].to_lowercase())
+        } else {
+            //  Set a Reward.
+            set_pref_string(
+                &arg[0].to_lowercase(),
+                &arg[1..].join(" ").trim(),
+            )
+        }
+    }.is_ok() {
         echo(EVENT_NORMAL, &["Preference set."], 0);
     } else {
         echo(EVENT_ERR, &["FAILED to set Preference."], 0);
@@ -251,10 +248,7 @@ pub(crate) fn cmd_tjoin(arg: &[String]) -> EatMode {
 
 
 pub(crate) fn cmd_whisper(arg: &[String]) -> EatMode {
-    if arg.len() > 1
-        && get_network_name().unwrap_or_default()
-        .eq_ignore_ascii_case("twitch")
-    {
+    if arg.len() > 1 && get_network_name().unwrap_or_default() == NETWORK {
         //  Two stage assignment to prevent Temporary Value.
         let tmp: String = arg[2..].join(" ");
         let msg: &str = tmp.trim();

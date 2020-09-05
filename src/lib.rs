@@ -44,6 +44,9 @@ use ht_core::{
 };
 
 
+const NETWORK: &str = "Twitch";
+
+
 enum Hook {
     CommandHook(Command),
     PrintHook(PrintEventListener),
