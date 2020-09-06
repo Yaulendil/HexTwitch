@@ -253,13 +253,19 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
         }
 
         "subgift" => {
-            let mut line: String = String::with_capacity(137);
+            let mut line: String = String::with_capacity(152);
             write!(
                 &mut line,
                 "<{}> is gifted a subscription by <{}>",
                 msg.get_tag("msg-param-recipient-user-name")?,
                 msg.get_tag("login")?,
             ).ok()?;
+
+            if let Some(gifts) = msg.get_tag("msg-param-sender-count") {
+                if gifts.parse().unwrap_or(0) > 0 {
+                    write!(&mut line, " (Gifts: {})", gifts).ok()?;
+                }
+            }
 
             if let Some(streak) = msg.get_tag("msg-param-months") {
                 if streak.parse().unwrap_or(0) > 1 {
