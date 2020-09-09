@@ -66,7 +66,7 @@ pub fn print_with_irc(
             );
 
             send_command(&format!(
-                "RECV :{0}!{0}@twitch.tv/{0} JOIN {1}",
+                "RECV :{0}@twitch.tv/{0} JOIN {1}",
                 msg.author().to_ascii_lowercase(),
                 channel,
             ));
