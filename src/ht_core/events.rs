@@ -290,33 +290,31 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
             )], 2);
         }
         "standardpayforward" => {
-            if let Some(prior) = msg.get_tag("msg-param-prior-gifter-user-name") {
-                echo(EVENT_NORMAL, &[format!(
+            match msg.get_tag("msg-param-prior-gifter-user-name") {
+                Some(prior) => echo(EVENT_NORMAL, &[format!(
                     "<{}> pays forward a gift subscription from <{}> to <{}>",
                     msg.get_tag("login")?,
                     prior,
                     msg.get_tag("msg-param-recipient-user-name")?,
-                )], 1);
-            } else {
-                echo(EVENT_NORMAL, &[format!(
+                )], 1),
+                None => echo(EVENT_NORMAL, &[format!(
                     "<{}> pays forward an anonymous gift subscription to <{}>",
                     msg.get_tag("login")?,
                     msg.get_tag("msg-param-recipient-user-name")?,
-                )], 1);
+                )], 1),
             }
         }
         "communitypayforward" => {
-            if let Some(prior) = msg.get_tag("msg-param-prior-gifter-user-name") {
-                echo(EVENT_NORMAL, &[format!(
+            match msg.get_tag("msg-param-prior-gifter-user-name") {
+                Some(prior) => echo(EVENT_NORMAL, &[format!(
                     "<{}> pays forward a gift subscription from <{}> to the community",
                     msg.get_tag("login")?,
                     prior,
-                )], 1);
-            } else {
-                echo(EVENT_NORMAL, &[format!(
+                )], 1),
+                None => echo(EVENT_NORMAL, &[format!(
                     "<{}> pays forward an anonymous gift subscription to the community",
                     msg.get_tag("login")?,
-                )], 1);
+                )], 1),
             }
         }
 
