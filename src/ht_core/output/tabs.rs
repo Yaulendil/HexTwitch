@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use hexchat::{get_channel_name, get_current_channel, get_focused_channel, send_command};
-use parking_lot::RwLock;
+use parking_lot::Mutex;
 
 
 /// Tabs: A mapping of HexChat Channel names to their current colors. Provides
@@ -38,5 +38,5 @@ impl Tabs {
 
 
 safe_static! {
-    pub static lazy TABCOLORS: RwLock<Tabs> = Default::default();
+    pub static lazy TABCOLORS: Mutex<Tabs> = Default::default();
 }

@@ -82,7 +82,7 @@ fn check_message(channel: &str, author: &str) -> Option<Message> {
 /// Reset the Color of a newly-focused Tab.
 pub(crate) fn cb_focus(_channel: ChannelRef) -> EatMode {
     if get_network_name().unwrap_or_default() == NETWORK {
-        TABCOLORS.write().reset();
+        TABCOLORS.lock().reset();
     }
     EatMode::None
 }

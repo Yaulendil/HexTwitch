@@ -27,7 +27,7 @@ pub const EVENT_REWARD: PrintEvent = PrintEvent::WHOIS_AUTHENTICATED;
 #[inline]
 pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: u8) {
     print_event(event, args);
-    TABCOLORS.write().color(tab_color);
+    TABCOLORS.lock().color(tab_color);
 }
 
 
