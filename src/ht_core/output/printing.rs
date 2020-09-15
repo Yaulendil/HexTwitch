@@ -126,6 +126,7 @@ fn get_badge(class: &str, rank: &str) -> char {
         "glhf-pledge"       /**/ => '~',
 
         s if s.starts_with("twitchcon") => 'c',
+        s if s.starts_with("overwatch-league-insider") => 'w',
         _ => '?',
     }
 }
