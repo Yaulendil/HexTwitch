@@ -4,6 +4,7 @@ use std::{
     collections::HashMap,
     fmt,
     ops::Try,
+    option::NoneError,
 };
 
 
@@ -104,8 +105,8 @@ impl Prefix {
     /// Return: `&str`
     pub fn name(&self) -> &str {
         match self {
-            Prefix::ServerName(server) => { &server }
-            Prefix::User { nick, .. } => { &nick }
+            Prefix::ServerName(server) => server,
+            Prefix::User { nick, .. } => nick,
         }
     }
 }
@@ -113,13 +114,18 @@ impl Prefix {
 impl fmt::Display for Prefix {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Prefix::ServerName(server) => { write!(f, "{}", server) }
-            Prefix::User { nick, user, host } => {
-                write!(f, "{}", nick)?;
-                if let Some(u) = user { write!(f, "!{}", u)?; }
-                if let Some(h) = host { write!(f, "@{}", h)?; }
-                Ok(())
-            }
+            Prefix::ServerName(server) => write!(f, "{}", server),
+
+            Prefix::User { nick, user: Some(u), host: Some(h) } =>
+                write!(f, "{}!{}@{}", nick, u, h),
+
+            Prefix::User { nick, user: Some(u), .. } =>
+                write!(f, "{}!{}", nick, u),
+
+            Prefix::User { nick, host: Some(h), .. } =>
+                write!(f, "{}@{}", nick, h),
+
+            Prefix::User { nick, .. } => write!(f, "{}", nick),
         }
     }
 }
@@ -203,11 +209,11 @@ impl Message {
     ///
     /// Input: `&str`, `&str`
     /// Return: `Result<Option<String>, ()>`
-    pub fn set_tag(&mut self, key: &str, value: &str) -> Result<Option<String>, ()> {
-        self.tags.as_mut()
-            .into_result()
-            .map_err(|_| ())
-            .and_then(|tags| Ok(tags.insert(String::from(key), escape(value))))
+    pub fn set_tag(&mut self, key: &str, value: &str)
+                   -> Result<Option<String>, NoneError>
+    {
+        self.tags.as_mut().into_result()
+            .map(|tags| tags.insert(String::from(key), escape(value)))
     }
 }
 
@@ -370,7 +376,7 @@ pub mod tests_irc {
             "'Tagless' Message returns value for test key.",
         );
         assert_eq!(
-            Err(()),
+            Err(NoneError),
             tagless.set_tag(TEST_KEY, TEST_VAL_1),
             "Insertion of Tag does not fail on Message without Tags.",
         );

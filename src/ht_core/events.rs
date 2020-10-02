@@ -45,21 +45,17 @@ pub fn cheer(name: &str, number: usize) {
 pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
     if let Some(custom) = msg.get_tag("custom-reward-id") {
         //  This Message is a Custom Reward.
-        if let Some(notif) = get_pref_string(&custom) {
-            //  We know what it should be called.
-            echo(EVENT_REWARD, &[
+        match get_pref_string(&custom) {
+            Some(notif) => echo(EVENT_REWARD, &[
                 &notif,
                 &format!("{}:", msg.author()),
                 &word[1],
-            ], 2);
-        } else {
-            //  We do NOT know what it should be called. Use a generic "CUSTOM"
-            //      label, and also print the ID.
-            echo(EVENT_REWARD, &[
+            ], 2),
+            None => echo(EVENT_REWARD, &[
                 "CUSTOM",
                 &format!("({}) {}:", custom, msg.author()),
                 &word[1],
-            ], 2);
+            ], 2),
         }
 
         Some(EatMode::All)
@@ -87,14 +83,14 @@ pub fn roomstate(msg: Message) -> Option<EatMode> {
         if k == "rituals" || k == "room-id" { continue; }
 
         match k.as_str() {
-            "emote-only" => {
-                if v != "0" { print_plain("Emotes Only mode enabled."); }
+            "emote-only" => if v != "0" {
+                print_plain("Emotes Only mode enabled.");
             }
-            "r9k" => {
-                if v != "0" { print_plain("R9K mode enabled."); }
+            "r9k" => if v != "0" {
+                print_plain("R9K mode enabled.");
             }
-            "subs-only" => {
-                if v != "0" { print_plain("Subscribers Only mode enabled."); }
+            "subs-only" => if v != "0" {
+                print_plain("Subscribers Only mode enabled.");
             }
             "slow" => {
                 let secs: isize = v.parse().unwrap_or(0);
@@ -118,12 +114,10 @@ pub fn roomstate(msg: Message) -> Option<EatMode> {
                     print_plain("Followers Only mode enabled.");
                 }
             }
-            key => {
-                print_plain(&format!(
-                    "Unknown RoomState {:?} has value {:?}.",
-                    key, v,
-                ));
-            }
+            key => print_plain(&format!(
+                "Unknown RoomState {:?} has value {:?}.",
+                key, v,
+            )),
         }
     }
 
@@ -168,7 +162,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
             echo(EVENT_ALERT, &["BADGE", &notif], 1);
         }
 
-        "unraid" => { echo(EVENT_NORMAL, &["A raid has been canceled"], 1); }
+        "unraid" => echo(EVENT_NORMAL, &["A raid has been canceled"], 1),
 
         "sub" | "resub" => {
             // Maximum possible usage should be 362 bytes; 384=256+128
@@ -177,11 +171,11 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 
             if let Some(plan) = msg.get_tag("msg-param-sub-plan") {
                 match plan.as_str() {
-                    "Prime" => { line.push_str(" with Prime") }
+                    "Prime" => line.push_str(" with Prime"),
                     "1000" => { /*line.push_str(" at Tier 1 ($5)")*/ }
-                    "2000" => { line.push_str(" at Tier 2 ($10)") }
-                    "3000" => { line.push_str(" at Tier 3 ($25)") }
-                    plan => { write!(&mut line, " with plan {:?}", plan).ok()? }
+                    "2000" => line.push_str(" at Tier 2 ($10)"),
+                    "3000" => line.push_str(" at Tier 3 ($25)"),
+                    plan => write!(&mut line, " with plan {:?}", plan).ok()?,
                 };
             }
 
@@ -209,11 +203,11 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 
             if let Some(plan) = msg.get_tag("msg-param-sub-plan") {
                 match plan.as_str() {
-                    "Prime" => { line.push_str(" with Prime") }
+                    "Prime" => line.push_str(" with Prime"),
                     "1000" => { /*line.push_str(" at Tier 1 ($5)")*/ }
-                    "2000" => { line.push_str(" at Tier 2 ($10)") }
-                    "3000" => { line.push_str(" at Tier 3 ($25)") }
-                    plan => { write!(&mut line, " with plan {:?}", plan).ok()? }
+                    "2000" => line.push_str(" at Tier 2 ($10)"),
+                    "3000" => line.push_str(" at Tier 3 ($25)"),
+                    plan => write!(&mut line, " with plan {:?}", plan).ok()?,
                 };
             }
 
@@ -304,39 +298,31 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
                 )], 1),
             }
         }
-        "communitypayforward" => {
-            match msg.get_tag("msg-param-prior-gifter-user-name") {
-                Some(prior) => echo(EVENT_NORMAL, &[format!(
-                    "<{}> pays forward a gift subscription from <{}> to the community",
-                    msg.get_tag("login")?,
-                    prior,
-                )], 1),
-                None => echo(EVENT_NORMAL, &[format!(
-                    "<{}> pays forward an anonymous gift subscription to the community",
-                    msg.get_tag("login")?,
-                )], 1),
-            }
+        "communitypayforward" => match msg.get_tag("msg-param-prior-gifter-user-name") {
+            Some(prior) => echo(EVENT_NORMAL, &[format!(
+                "<{}> pays forward a gift subscription from <{}> to the community",
+                msg.get_tag("login")?,
+                prior,
+            )], 1),
+            None => echo(EVENT_NORMAL, &[format!(
+                "<{}> pays forward an anonymous gift subscription to the community",
+                msg.get_tag("login")?,
+            )], 1),
         }
 
-        "giftpaidupgrade" => {
-            echo(EVENT_ALERT, &["UPGRADE", &format!(
-                "<{}> upgrades a gift subscription from <{}>",
-                msg.get_tag("login")?,
-                msg.get_tag("msg-param-sender-login")?,
-            )], 2);
-        }
-        "anongiftpaidupgrade" => {
-            echo(EVENT_ALERT, &["UPGRADE", &format!(
-                "<{}> upgrades an anonymous gift subscription",
-                msg.get_tag("login")?,
-            )], 2);
-        }
-        "primepaidupgrade" => {
-            echo(EVENT_ALERT, &["UPGRADE", &format!(
-                "<{}> upgrades a Prime subscription",
-                msg.get_tag("login")?,
-            )], 2);
-        }
+        "giftpaidupgrade" => echo(EVENT_ALERT, &["UPGRADE", &format!(
+            "<{}> upgrades a gift subscription from <{}>",
+            msg.get_tag("login")?,
+            msg.get_tag("msg-param-sender-login")?,
+        )], 2),
+        "anongiftpaidupgrade" => echo(EVENT_ALERT, &["UPGRADE", &format!(
+            "<{}> upgrades an anonymous gift subscription",
+            msg.get_tag("login")?,
+        )], 2),
+        "primepaidupgrade" => echo(EVENT_ALERT, &["UPGRADE", &format!(
+            "<{}> upgrades a Prime subscription",
+            msg.get_tag("login")?,
+        )], 2),
 
         _ => {
             if get_pref_int("PREF_htdebug").unwrap_or(0) != 0 {
@@ -486,7 +472,7 @@ pub fn whisper_send(etype: PrintEvent, channel: &str, word: &[String]) {
 
 fn host_notif(viewers: &str) -> String {
     match viewers.parse::<usize>() {
-        Ok(v) if v == 1 => String::from("Channel is hosted, with 1 viewer, by"),
+        Ok(1) => String::from("Channel is hosted, with 1 viewer, by"),
         Ok(v) => format!("Channel is hosted, with {} viewers, by", v),
         _ => String::from("Channel is hosted by"),
     }
@@ -529,8 +515,8 @@ pub fn clearchat(msg: Message) -> Option<EatMode> {
     let mut text: String = String::with_capacity(128);
 
     match msg.get_tag("ban-duration") {
-        Some(t) => { write!(&mut text, "{} is timed out for {}s", &msg.trail, t).ok()?; }
-        None => { write!(&mut text, "{} is banned permanently", &msg.trail).ok()?; }
+        Some(t) => write!(&mut text, "{} is timed out for {}s", &msg.trail, t).ok()?,
+        None => write!(&mut text, "{} is banned permanently", &msg.trail).ok()?,
     };
 
     if let Some(reason) = msg.get_tag("ban-reason") {
