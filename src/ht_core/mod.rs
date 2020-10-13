@@ -80,7 +80,7 @@ fn check_message(channel: &str, author: &str) -> Option<Message> {
 
 
 /// Reset the Color of a newly-focused Tab.
-pub(crate) fn cb_focus(_channel: ChannelRef) -> EatMode {
+pub fn cb_focus(_channel: ChannelRef) -> EatMode {
     if get_network_name().unwrap_or_default() == NETWORK {
         TABCOLORS.lock().reset();
     }
@@ -89,7 +89,7 @@ pub(crate) fn cb_focus(_channel: ChannelRef) -> EatMode {
 
 
 /// Hide a Join Event if it is fake.
-pub(crate) fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
+pub fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
     if get_network_name().unwrap_or_default() == NETWORK
         && !word[2].contains("tmi.twitch.tv")
     {
@@ -100,7 +100,7 @@ pub(crate) fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
 }
 
 
-pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
+pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
     if get_network_name().unwrap_or_default() == NETWORK {
         let channel = get_channel_name();
 
@@ -121,7 +121,7 @@ pub(crate) fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
 
 
 /// Handle a Server Message, received by the Hook for "RAW LINE".
-pub(crate) fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
+pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
     if get_network_name().unwrap_or_default() == NETWORK {
         let msg: Message = raw.parse().expect("Failed to parse IRC Message");
         let opt_eat: Option<EatMode> = match msg.command.as_str() {
@@ -141,6 +141,17 @@ pub(crate) fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> Ea
             //  Moderator Actions.
             "CLEARMSG" => events::clearmsg(msg),
             "CLEARCHAT" => events::clearchat(msg),
+
+            //  Suppress Hexchat spamming complaints that Twitch does not
+            //      implement WHO and WHOIS Commands.
+            //  TODO: If there is a way to prevent Hexchat from sending a WHO to
+            //      every channel after connecting, that would be preferable to
+            //      doing this.
+            "421" if msg.trail == "Unknown command" =>
+                match msg.args.get(1).map(String::as_str) {
+                    Some("WHO") | Some("WHOIS") => Some(EatMode::Hexchat),
+                    _ => Some(EatMode::None),
+                }
 
             //  Other.
             _ => Some(EatMode::None),
@@ -163,7 +174,7 @@ pub(crate) fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> Ea
 }
 
 
-pub(crate) fn cmd_ht_debug(_arg: &[String]) -> EatMode {
+pub fn cmd_ht_debug(_arg: &[String]) -> EatMode {
     let new: bool = get_pref_int("PREF_htdebug").unwrap_or(0) == 0;
 
     if set_pref_int("PREF_htdebug", new.into()).is_ok() {
@@ -184,7 +195,7 @@ pub(crate) fn cmd_ht_debug(_arg: &[String]) -> EatMode {
 }
 
 
-pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
+pub fn cmd_reward(argslice: &[String]) -> EatMode {
     let arg: Vec<&str> = argslice[1..].iter()
         .take_while(|s| !s.is_empty())
         .map(String::as_str)
@@ -226,7 +237,7 @@ pub(crate) fn cmd_reward(argslice: &[String]) -> EatMode {
 }
 
 
-pub(crate) fn cmd_title(arg: &[String]) -> EatMode {
+pub fn cmd_title(arg: &[String]) -> EatMode {
     send_command(&format!(
         "RECV :Twitch@twitch.tv TOPIC #{} :{}",
         &arg[1].to_ascii_lowercase(),
@@ -237,7 +248,7 @@ pub(crate) fn cmd_title(arg: &[String]) -> EatMode {
 }
 
 
-pub(crate) fn cmd_tjoin(arg: &[String]) -> EatMode {
+pub fn cmd_tjoin(arg: &[String]) -> EatMode {
     send_command(&format!(
         "JOIN {}",
         &arg[1..].join(" ").trim(),
@@ -247,7 +258,7 @@ pub(crate) fn cmd_tjoin(arg: &[String]) -> EatMode {
 }
 
 
-pub(crate) fn cmd_whisper(arg: &[String]) -> EatMode {
+pub fn cmd_whisper(arg: &[String]) -> EatMode {
     if arg.len() > 1 && get_network_name().unwrap_or_default() == NETWORK {
         //  Two stage assignment to prevent Temporary Value.
         let tmp: String = arg[2..].join(" ");
@@ -266,7 +277,7 @@ pub(crate) fn cmd_whisper(arg: &[String]) -> EatMode {
 }
 
 
-pub(crate) fn cmd_whisper_here(_arg: &[String]) -> EatMode {
+pub fn cmd_whisper_here(_arg: &[String]) -> EatMode {
     let new: bool = get_pref_int("PREF_whispers_in_current").unwrap_or(0) == 0;
 
     if set_pref_int("PREF_whispers_in_current", new.into()).is_ok() {
