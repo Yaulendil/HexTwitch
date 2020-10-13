@@ -1,6 +1,4 @@
-/*
- * Core package for the HexTwitch Rust Plugin.
- */
+//! Core package for the HexTwitch Rust Plugin.
 
 #![feature(option_result_contains, test, toowned_clone_into, try_trait)]
 
@@ -8,7 +6,6 @@
 extern crate hexchat;
 
 mod ht_core;
-
 
 use hexchat::{
     add_print_event_listener,
@@ -29,7 +26,6 @@ use hexchat::{
     WindowEvent,
     WindowEventListener,
 };
-
 use ht_core::{
     cb_focus,
     cb_join,
@@ -48,18 +44,28 @@ const NETWORK: &str = "Twitch";
 
 
 enum Hook {
-    CommandHook(Command),
-    PrintHook(PrintEventListener),
-    ServerHook(RawServerEventListener),
-    WindowHook(WindowEventListener),
+    Command(Command),
+    Print(PrintEventListener),
+    Server(RawServerEventListener),
+    Window(WindowEventListener),
+}
+
+impl Hook {
+    fn unhook(self) {
+        match self {
+            Self::Command(handle) => { deregister_command(handle) }
+            Self::Print(handle) => { remove_print_event_listener(handle) }
+            Self::Server(handle) => { remove_raw_server_event_listener(handle) }
+            Self::Window(handle) => { remove_window_event_listener(handle) }
+        }
+    }
 }
 
 
 macro_rules! hook_print {
     ($hvec:expr, $event:expr, $func:expr) => {
-        $hvec.push(Hook::PrintHook(add_print_event_listener(
-            $event,
-            Priority::HIGH,
+        $hvec.push(Hook::Print(add_print_event_listener(
+            $event, Priority::HIGH,
             |word, _dt| $func($event, word),
         )));
     }
@@ -78,39 +84,39 @@ impl Plugin for HexTwitch {
         let mut hooks: Vec<Hook> = Vec::with_capacity(15);
 
         //  Register Plugin Commands, with helptext.
-        hooks.push(Hook::CommandHook(register_command(
+        hooks.push(Hook::Command(register_command(
             "HTDEBUG",
             "Toggle whether unknown UserNotices should show the full plain IRC.",
             Priority::NORMAL,
             cmd_ht_debug,
         )));
-        hooks.push(Hook::CommandHook(register_command(
+        hooks.push(Hook::Command(register_command(
             "REWARD",
             "Set the Name of a Custom Reward.\n\n\
                 Usage: REWARD <UUID> [<NAME>]",
             Priority::NORMAL,
             cmd_reward,
         )));
-        hooks.push(Hook::CommandHook(register_command(
+        hooks.push(Hook::Command(register_command(
             "TITLE",
             "Set the Title of a Twitch Channel.",
             Priority::NORMAL,
             cmd_title,
         )));
-        hooks.push(Hook::CommandHook(register_command(
+        hooks.push(Hook::Command(register_command(
             "TWITCHJOIN",
             "Join a Channel, but only on the Twitch Network.",
             Priority::NORMAL,
             cmd_tjoin,
         )));
-        hooks.push(Hook::CommandHook(register_command(
+        hooks.push(Hook::Command(register_command(
             "W",
             "Open a Whisper with a Twitch User.\n\n\
                 Usage: W <username> [<message>]",
             Priority::NORMAL,
             cmd_whisper,
         )));
-        hooks.push(Hook::CommandHook(register_command(
+        hooks.push(Hook::Command(register_command(
             "WHISPERHERE",
             "Toggle whether Twitch Whispers should be duplicated in the current Tab.",
             Priority::NORMAL,
@@ -129,37 +135,28 @@ impl Plugin for HexTwitch {
         hook_print!(hooks, PrintEvent::YOUR_ACTION, cb_print);
 
         //  Hook RAW LINE Server Messages into the general Handler Callback.
-        hooks.push(Hook::ServerHook(add_raw_server_event_listener(
+        hooks.push(Hook::Server(add_raw_server_event_listener(
             "RAW LINE",
             Priority::NORMAL,
             cb_server,
         )));
 
         //  Hook Tab Focus events.
-        hooks.push(Hook::WindowHook(add_window_event_listener(
+        hooks.push(Hook::Window(add_window_event_listener(
             WindowEvent::FOCUS_TAB,
             Priority::NORMAL,
             cb_focus,
         )));
 
         //  Report loadedness.
-        print_plain(&format!("{} {} loaded", Self::NAME, Self::VERSION));
+        print_plain(&format!("{} {} loaded.", Self::NAME, Self::VERSION));
 
         Self { hooks }
     }
 }
 
 impl Drop for HexTwitch {
-    fn drop(&mut self) {
-        for hopt in self.hooks.drain(..) {
-            match hopt {
-                Hook::CommandHook(handle) => { deregister_command(handle) }
-                Hook::PrintHook(handle) => { remove_print_event_listener(handle) }
-                Hook::ServerHook(handle) => { remove_raw_server_event_listener(handle) }
-                Hook::WindowHook(handle) => { remove_window_event_listener(handle) }
-            }
-        }
-    }
+    fn drop(&mut self) { self.hooks.drain(..).for_each(Hook::unhook); }
 }
 
 
