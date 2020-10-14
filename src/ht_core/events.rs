@@ -18,11 +18,13 @@ use std::{
 use super::{
     irc::{Message, split_at_char},
     output::{
+        alert_basic,
+        alert_error,
+        alert_subscription,
+        alert_sub_upgrade,
         echo,
         EVENT_ALERT,
         EVENT_CHANNEL,
-        EVENT_ERR,
-        EVENT_NORMAL,
         EVENT_REWARD,
         USERSTATE,
     },
@@ -127,14 +129,14 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 
     match stype.as_str() {
         "raid" => {
-            echo(EVENT_NORMAL, &[format!(
+            alert_basic(&format!(
                 "A raid of {} arrives from #{}",
                 msg.get_tag("msg-param-viewerCount")?,
                 msg.get_tag("msg-param-displayName")?.to_lowercase(),
-            )], 1);
+            ));
         }
         "charity" | "rewardgift" | "ritual" => {
-            echo(EVENT_NORMAL, &[msg.get_tag("system-msg")?], 1);
+            alert_basic(&msg.get_tag("system-msg")?);
         }
 
         "bitsbadgetier" => {
@@ -159,7 +161,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
             echo(EVENT_ALERT, &["BADGE", &notif], 1);
         }
 
-        "unraid" => echo(EVENT_NORMAL, &["A raid has been canceled"], 1),
+        "unraid" => alert_basic("A raid has been canceled"),
 
         "sub" | "resub" => {
             // Maximum possible usage should be 362 bytes; 384=256+128
@@ -190,7 +192,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 
             if !msg.trail.is_empty() { write!(&mut line, ": {}", msg.trail).ok()?; }
 
-            echo(EVENT_ALERT, &["SUBSCRIPTION", &line], 2);
+            alert_subscription(&line);
         }
 
         "extendsub" => {
@@ -240,7 +242,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 
             if !msg.trail.is_empty() { write!(&mut line, ": {}", msg.trail).ok()?; }
 
-            echo(EVENT_ALERT, &["SUBSCRIPTION", &line], 2);
+            alert_subscription(&line);
         }
 
         "subgift" => {
@@ -270,63 +272,63 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
                 }
             }
 
-            echo(EVENT_ALERT, &["SUBSCRIPTION", &line], 2);
+            alert_subscription(&line);
         }
         "submysterygift" => {
             let num: String = msg.get_tag("msg-param-mass-gift-count")?;
-            echo(EVENT_ALERT, &["SUBSCRIPTION", &format!(
+            alert_subscription(&format!(
                 "<{}> gives out ({}) random gift subscription{}",
                 msg.get_tag("login")?, num,
                 if &num == "1" { "" } else { "s" },
-            )], 2);
+            ));
         }
         "standardpayforward" => {
             match msg.get_tag("msg-param-prior-gifter-user-name") {
-                Some(prior) => echo(EVENT_NORMAL, &[format!(
+                Some(prior) => alert_basic(&format!(
                     "<{}> pays forward a gift subscription from <{}> to <{}>",
                     msg.get_tag("login")?,
                     prior,
                     msg.get_tag("msg-param-recipient-user-name")?,
-                )], 1),
-                None => echo(EVENT_NORMAL, &[format!(
+                )),
+                None => alert_basic(&format!(
                     "<{}> pays forward an anonymous gift subscription to <{}>",
                     msg.get_tag("login")?,
                     msg.get_tag("msg-param-recipient-user-name")?,
-                )], 1),
+                )),
             }
         }
         "communitypayforward" => match msg.get_tag("msg-param-prior-gifter-user-name") {
-            Some(prior) => echo(EVENT_NORMAL, &[format!(
+            Some(prior) => alert_basic(&format!(
                 "<{}> pays forward a gift subscription from <{}> to the community",
                 msg.get_tag("login")?,
                 prior,
-            )], 1),
-            None => echo(EVENT_NORMAL, &[format!(
+            )),
+            None => alert_basic(&format!(
                 "<{}> pays forward an anonymous gift subscription to the community",
                 msg.get_tag("login")?,
-            )], 1),
+            )),
         }
 
-        "giftpaidupgrade" => echo(EVENT_ALERT, &["UPGRADE", &format!(
+        "giftpaidupgrade" => alert_sub_upgrade(&format!(
             "<{}> upgrades a gift subscription from <{}>",
             msg.get_tag("login")?,
             msg.get_tag("msg-param-sender-login")?,
-        )], 2),
-        "anongiftpaidupgrade" => echo(EVENT_ALERT, &["UPGRADE", &format!(
+        )),
+        "anongiftpaidupgrade" => alert_sub_upgrade(&format!(
             "<{}> upgrades an anonymous gift subscription",
             msg.get_tag("login")?,
-        )], 2),
-        "primepaidupgrade" => echo(EVENT_ALERT, &["UPGRADE", &format!(
+        )),
+        "primepaidupgrade" => alert_sub_upgrade(&format!(
             "<{}> upgrades a Prime subscription",
             msg.get_tag("login")?,
-        )], 2),
+        )),
 
         _ => {
             if get_pref_int("PREF_htdebug").unwrap_or(0) != 0 {
-                echo(EVENT_ERR, &[format!(
+                alert_error(&format!(
                     "Unknown SType '{}': {}",
                     stype, msg,
-                )], 1);
+                ));
             }
 
             if let Some(sysmsg) = msg.get_tag("system-msg") {
@@ -500,10 +502,10 @@ pub fn hosttarget(msg: Message) -> Option<EatMode> {
 
 
 pub fn clearmsg(msg: Message) -> Option<EatMode> {
-    echo(EVENT_ERR, &[format!(
+    alert_error(&format!(
         "A message by <{}> is deleted: {}",
         msg.get_tag("login")?, &msg.trail,
-    )], 1);
+    ));
     Some(EatMode::Hexchat)
 }
 
@@ -522,6 +524,6 @@ pub fn clearchat(msg: Message) -> Option<EatMode> {
         }
     }
 
-    echo(EVENT_ERR, &[text], 1);
+    alert_error(&text);
     Some(EatMode::Hexchat)
 }

@@ -29,6 +29,26 @@ pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: u8) {
 }
 
 
+pub fn alert_basic(message: &str) {
+    echo(EVENT_NORMAL, &[message], 1);
+}
+
+
+pub fn alert_error(message: &str) {
+    echo(EVENT_ERR, &[message], 1);
+}
+
+
+pub fn alert_subscription(message: &str) {
+    echo(EVENT_ALERT, &["SUBSCRIPTION", message], 2);
+}
+
+
+pub fn alert_sub_upgrade(message: &str) {
+    echo(EVENT_ALERT, &["UPGRADE", message], 2);
+}
+
+
 /// BITS: Badge characters for Bits. If a User has a Bits Badge, the User is
 ///     given the `char` corresponding to the last value found here which is
 ///     LESS THAN OR EQUAL TO the Rank of the Badge.

@@ -24,9 +24,8 @@ use parking_lot::Mutex;
 use crate::NETWORK;
 use irc::Message;
 use output::{
-    echo,
-    EVENT_ERR,
-    EVENT_NORMAL,
+    alert_basic,
+    alert_error,
     print_with_irc,
     print_without_irc,
     TABCOLORS,
@@ -163,9 +162,7 @@ pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
             //      handler, for a known type, is a bigger deal than just not
             //      having a handler for an unknown one. This needs to be
             //      noticed and fixed.
-            echo(EVENT_ERR, &[format!(
-                "Handler for IRC Command failed: {}", raw,
-            )], 1);
+            alert_error(&format!("Handler for IRC Command failed: {}", raw));
             EatMode::None
         })
     } else {
@@ -178,17 +175,15 @@ pub fn cmd_ht_debug(_arg: &[String]) -> EatMode {
     let new: bool = get_pref_int("PREF_htdebug").unwrap_or(0) == 0;
 
     if set_pref_int("PREF_htdebug", new.into()).is_ok() {
-        if new {
-            echo(EVENT_NORMAL, &[
-                "Unrecognized UserNotices will now show the full Message.",
-            ], 0);
-        } else {
-            echo(EVENT_NORMAL, &[
-                "Unrecognized UserNotices will NOT show the full Message.",
-            ], 0);
-        }
+        alert_basic({
+            if new {
+                "Unrecognized UserNotices will now show the full Message."
+            } else {
+                "Unrecognized UserNotices will NOT show the full Message."
+            }
+        });
     } else {
-        echo(EVENT_ERR, &["FAILED to set Preference."], 0);
+        alert_error("FAILED to set Preference.");
     }
 
     EatMode::All
@@ -204,15 +199,15 @@ pub fn cmd_reward(argslice: &[String]) -> EatMode {
 
     if len < 1 {
         //  Print the current Reward Names.
-        echo(EVENT_NORMAL, &["REWARD EVENTS:"], 0);
+        alert_basic("REWARD EVENTS:");
         for pref in get_prefs() {
             if !pref.is_empty() && !pref.starts_with("PREF") {
-                echo(EVENT_NORMAL, &[format!(
+                alert_basic(&format!(
                     "{}: '{}'",
                     pref,
                     get_pref_string(&pref)
                         .unwrap_or_default(),
-                )], 0);
+                ));
             }
         }
     } else if !arg[0].starts_with("PREF")
@@ -228,9 +223,9 @@ pub fn cmd_reward(argslice: &[String]) -> EatMode {
             )
         }
     }.is_ok() {
-        echo(EVENT_NORMAL, &["Preference set."], 0);
+        alert_basic("Preference set.");
     } else {
-        echo(EVENT_ERR, &["FAILED to set Preference."], 0);
+        alert_error("FAILED to set Preference.");
     }
 
     EatMode::All
@@ -239,7 +234,7 @@ pub fn cmd_reward(argslice: &[String]) -> EatMode {
 
 pub fn cmd_title(arg: &[String]) -> EatMode {
     send_command(&format!(
-        "RECV :Twitch@twitch.tv TOPIC #{} :{}",
+        "RECV :Twitch!twitch@twitch.tv TOPIC #{} :{}",
         &arg[1].to_ascii_lowercase(),
         &arg[2..].join(" ").trim(),
     ));
@@ -281,13 +276,15 @@ pub fn cmd_whisper_here(_arg: &[String]) -> EatMode {
     let new: bool = get_pref_int("PREF_whispers_in_current").unwrap_or(0) == 0;
 
     if set_pref_int("PREF_whispers_in_current", new.into()).is_ok() {
-        if new {
-            echo(EVENT_NORMAL, &["Twitch Whispers will also show in the current Tab."], 0);
-        } else {
-            echo(EVENT_NORMAL, &["Twitch Whispers will ONLY be shown in their own Tabs."], 0);
-        }
+        alert_basic({
+            if new {
+                "Twitch Whispers will also show in the current Tab."
+            } else {
+                "Twitch Whispers will ONLY be shown in their own Tabs."
+            }
+        });
     } else {
-        echo(EVENT_ERR, &["FAILED to set Preference."], 0);
+        alert_error("FAILED to set Preference.");
     }
 
     EatMode::All

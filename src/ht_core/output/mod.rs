@@ -1,10 +1,12 @@
 mod printing;
 mod tabs;
 
-
 use hexchat::{EatMode, PrintEvent, send_command};
-
 pub use printing::{
+    alert_basic,
+    alert_error,
+    alert_subscription,
+    alert_sub_upgrade,
     Badges,
     echo,
     EVENT_ALERT,
@@ -14,8 +16,8 @@ pub use printing::{
     EVENT_REWARD,
     USERSTATE,
 };
-pub use tabs::TABCOLORS;
 use super::{events, irc::Message};
+pub use tabs::TABCOLORS;
 
 
 /// Message comes from Server. IRC Representation available.
@@ -25,7 +27,7 @@ pub fn print_with_irc(
     word: &[String],
     msg: Message,
 ) -> EatMode {
-    if msg.tags.is_some() {
+    if msg.has_tags() {
         if let Some(bits) = msg.get_tag("bits") {
             if let Ok(n) = bits.parse::<usize>() {
                 events::cheer(msg.author(), n);
@@ -73,7 +75,7 @@ pub fn print_with_irc(
 
             EatMode::All
         }
-        _ => EatMode::None
+        _ => EatMode::None,
     }
 }
 
