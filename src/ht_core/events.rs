@@ -342,18 +342,15 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 
 
 pub fn userstate(msg: Message) -> Option<EatMode> {
-    let ch: String = get_channel_name();
-    let mut state = USERSTATE.write();
-
-    if state.set(
-        &ch,
+    if let Some(badges) = USERSTATE.write().set(
+        &get_channel_name(),
         &msg.get_tag("badges").unwrap_or_default(),
         &msg.get_tag("badge-info").unwrap_or_default(),
     ) {
         echo(EVENT_REWARD, &[
             "BADGES",
             "New Badges received:",
-            state.get(&ch),
+            &badges.output,
         ], 0);
     }
 

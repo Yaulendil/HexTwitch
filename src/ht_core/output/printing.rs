@@ -237,19 +237,21 @@ impl States {
     ///     but with one significant difference: If the current value for the
     ///     given Channel in the Map was created from the same input as has been
     ///     given here, the input is NOT evaluated again.
-    /// Returns `true` if the Badges were changed, `false` otherwise.
+    ///
+    /// Returns a Reference to the new `Badges` if there was a change, `None`
+    ///     otherwise.
     ///
     /// Input: `&str`, `&str`, `&str`
-    /// Output: `bool`
-    pub fn set(&mut self, channel: &str, new: &str, info: &str) -> bool {
+    /// Output: `Option<&Badges>`
+    pub fn set(&mut self, channel: &str, new: &str, info: &str) -> Option<&Badges> {
         match self.inner.get(channel) {
-            Some(old) if new == old.input => false,  // Channel is in Map, with the same Badges.
+            Some(old) if old.input == new => None,  // Channel is in Map, with the same Badges.
             _ => {
                 self.inner.insert(
                     String::from(channel),
                     Badges::from_str(new, info),
                 );
-                true
+                self.inner.get(channel)
             }
         }
     }
