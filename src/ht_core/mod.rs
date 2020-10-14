@@ -67,6 +67,19 @@ safe_static! {
 }
 
 
+/// Trim a slice of arguments from Hexchat into something workable. The initial
+///     slice likely has only a few arguments that are not empty, with the rest
+///     being placeholders left over from when the slice was first constructed
+///     in C.
+#[inline]
+fn arg_trim(args: &[String]) -> &[String] {
+    match args.iter().position(String::is_empty) {
+        Some(i) => &args[..i],
+        None => args,
+    }
+}
+
+
 fn check_message(channel: &str, author: &str) -> Option<Message> {
     let sig: &str = &format!(
         "{}:{}",
@@ -171,7 +184,7 @@ pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
 }
 
 
-pub fn cmd_ht_debug(_arg: &[String]) -> EatMode {
+pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
     let new: bool = get_pref_int("PREF_htdebug").unwrap_or(0) == 0;
 
     if set_pref_int("PREF_htdebug", new.into()).is_ok() {
@@ -190,12 +203,9 @@ pub fn cmd_ht_debug(_arg: &[String]) -> EatMode {
 }
 
 
-pub fn cmd_reward(argslice: &[String]) -> EatMode {
-    let arg: Vec<&str> = argslice[1..].iter()
-        .take_while(|s| !s.is_empty())
-        .map(String::as_str)
-        .collect();
-    let len = arg.len();
+pub fn cmd_reward(arg_full: &[String]) -> EatMode {
+    let arg: &[String] = arg_trim(&arg_full[1..]);
+    let len: usize = arg.len();
 
     if len < 1 {
         //  Print the current Reward Names.
@@ -211,18 +221,20 @@ pub fn cmd_reward(argslice: &[String]) -> EatMode {
             }
         }
     } else if !arg[0].starts_with("PREF")
-        && {
-        if len < 2 {
-            //  Unset a Reward.
-            delete_pref(&arg[0].to_lowercase())
-        } else {
-            //  Set a Reward.
-            set_pref_string(
-                &arg[0].to_lowercase(),
-                &arg[1..].join(" ").trim(),
-            )
-        }
-    }.is_ok() {
+        &&
+        {
+            if len < 2 {
+                //  Unset a Reward.
+                delete_pref(&arg[0].to_lowercase())
+            } else {
+                //  Set a Reward.
+                set_pref_string(
+                    &arg[0].to_lowercase(),
+                    &arg_trim(&arg[1..]).join(" "),
+                )
+            }
+        }.is_ok()
+    {
         alert_basic("Preference set.");
     } else {
         alert_error("FAILED to set Preference.");
@@ -232,34 +244,34 @@ pub fn cmd_reward(argslice: &[String]) -> EatMode {
 }
 
 
-pub fn cmd_title(arg: &[String]) -> EatMode {
+pub fn cmd_title(arg_full: &[String]) -> EatMode {
     send_command(&format!(
         "RECV :Twitch!twitch@twitch.tv TOPIC #{} :{}",
-        &arg[1].to_ascii_lowercase(),
-        &arg[2..].join(" ").trim(),
+        &arg_full[1].to_ascii_lowercase(),
+        arg_trim(&arg_full[2..]).join(" "),
     ));
 
     EatMode::All
 }
 
 
-pub fn cmd_tjoin(arg: &[String]) -> EatMode {
+pub fn cmd_tjoin(arg_full: &[String]) -> EatMode {
     send_command(&format!(
         "JOIN {}",
-        &arg[1..].join(" ").trim(),
+        arg_trim(&arg_full[1..]).join(" "),
     ));
 
     EatMode::All
 }
 
 
-pub fn cmd_whisper(arg: &[String]) -> EatMode {
-    if arg.len() > 1 && get_network_name().unwrap_or_default() == NETWORK {
-        //  Two stage assignment to prevent Temporary Value.
-        let tmp: String = arg[2..].join(" ");
-        let msg: &str = tmp.trim();
+pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
+    let arg: &[String] = arg_trim(arg_full);
 
-        //  Check for trailing Arguments.
+    if arg.len() > 1 && get_network_name().unwrap_or_default() == NETWORK {
+        let msg: String = arg[2..].join(" ");
+
+        //  Check for message.
         if msg.is_empty() {
             //  None: Switch to Whisper Tab.
             send_command(&format!("QUERY {}", arg[1]));
@@ -272,7 +284,7 @@ pub fn cmd_whisper(arg: &[String]) -> EatMode {
 }
 
 
-pub fn cmd_whisper_here(_arg: &[String]) -> EatMode {
+pub fn cmd_whisper_here(_arg_full: &[String]) -> EatMode {
     let new: bool = get_pref_int("PREF_whispers_in_current").unwrap_or(0) == 0;
 
     if set_pref_int("PREF_whispers_in_current", new.into()).is_ok() {
