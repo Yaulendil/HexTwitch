@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
 use hexchat::{print_event, PrintEvent};
 use parking_lot::RwLock;
-
+use std::collections::HashMap;
 use super::{
     super::irc::split_at_char,
     tabs::TABCOLORS,
@@ -31,9 +29,6 @@ pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: u8) {
 }
 
 
-/// BADGE_NONE: A placeholder Badge string for the User when a UserState has not
-///     been received.
-const BADGE_NONE: &str = "_ ";
 /// BITS: Badge characters for Bits. If a User has a Bits Badge, the User is
 ///     given the `char` corresponding to the last value found here which is
 ///     LESS THAN OR EQUAL TO the Rank of the Badge.
@@ -157,6 +152,10 @@ pub struct Badges {
 }
 
 impl Badges {
+    /// NONE: A placeholder Badge string for the User when a UserState has not
+    ///     been received.
+    pub const NONE: &'static str = "_ ";
+
     /// Break down a string to find the final set of characters. The original
     ///     will be stored.
     ///
@@ -185,9 +184,10 @@ impl Badges {
                     output.push(get_badge(class, rank));
                 }
             }
+
+            if !output.is_empty() { output.push(' '); }
         }
 
-        if !output.is_empty() { output.push(' '); }
         // output.shrink_to_fit();
 
         Self { input, output }
@@ -208,7 +208,7 @@ impl States {
     pub fn get(&self, channel: &str) -> &str {
         match self.inner.get(channel) {
             Some(badges) => &badges.output,
-            None => BADGE_NONE,
+            None => Badges::NONE,
         }
     }
 
