@@ -1,8 +1,4 @@
-use std::{
-    collections::HashMap,
-    fmt::Write,
-};
-
+use crate::NETWORK;
 use hexchat::{
     ChannelRef,
     EatMode,
@@ -15,8 +11,10 @@ use hexchat::{
     PrintEvent,
     send_command,
 };
-
-use crate::NETWORK;
+use std::{
+    collections::HashMap,
+    fmt::Write,
+};
 use super::{
     irc::{Message, split_at_char},
     output::{
@@ -74,50 +72,49 @@ pub fn roomstate(msg: Message) -> Option<EatMode> {
     let tags: &HashMap<String, String> = msg.tags.as_ref()?;
 
     //  Only report this Message if it seems to be an On-Join update.
-    if tags.len() <= 2 { return Some(EatMode::Hexchat); }
+    if tags.len() > 2 {
+        let mut tags_vec: Vec<(&String, &String)> = tags.iter().collect();
+        tags_vec.sort_unstable();
 
-    let mut tags_vec: Vec<(&String, &String)> = tags.iter().collect();
-    tags_vec.sort();
-
-    for (k, v) in tags_vec {
-        if k == "rituals" || k == "room-id" { continue; }
-
-        match k.as_str() {
-            "emote-only" => if v != "0" {
-                print_plain("Emotes Only mode enabled.");
-            }
-            "r9k" => if v != "0" {
-                print_plain("R9K mode enabled.");
-            }
-            "subs-only" => if v != "0" {
-                print_plain("Subscribers Only mode enabled.");
-            }
-            "slow" => {
-                let secs: isize = v.parse().unwrap_or(0);
-
-                if secs > 0 {
-                    print_plain(&format!("Slow mode ({}s) enabled.", secs));
+        for (k, v) in tags_vec {
+            match k.as_str() {
+                "emote-only" => if v != "0" {
+                    print_plain("Emotes Only mode enabled.");
                 }
-            }
-            "followers-only" => {
-                // -1: No follow requirement.
-                //  0: Must follow to talk.
-                //  N: Must follow for N minutes before talking.
-                let mins: isize = v.parse().unwrap_or(-1);
-
-                if mins > 0 {
-                    print_plain(&format!(
-                        "{}-minute Followers Only mode enabled.",
-                        mins,
-                    ));
-                } else if mins == 0 {
-                    print_plain("Followers Only mode enabled.");
+                "r9k" => if v != "0" {
+                    print_plain("R9K mode enabled.");
                 }
+                "subs-only" => if v != "0" {
+                    print_plain("Subscribers Only mode enabled.");
+                }
+                "slow" => {
+                    let secs: isize = v.parse().unwrap_or(0);
+
+                    if secs > 0 {
+                        print_plain(&format!("Slow mode ({}s) enabled.", secs));
+                    }
+                }
+                "followers-only" => {
+                    // -1: No follow requirement.
+                    //  0: Must follow to talk.
+                    //  N: Must follow for N minutes before talking.
+                    let mins: isize = v.parse().unwrap_or(-1);
+
+                    if mins > 0 {
+                        print_plain(&format!(
+                            "{}-minute Followers Only mode enabled.",
+                            mins,
+                        ));
+                    } else if mins == 0 {
+                        print_plain("Followers Only mode enabled.");
+                    }
+                }
+                "rituals" | "room-id" => { /* Ignore */ }
+                key => print_plain(&format!(
+                    "Unknown RoomState {:?} has value {:?}.",
+                    key, v,
+                )),
             }
-            key => print_plain(&format!(
-                "Unknown RoomState {:?} has value {:?}.",
-                key, v,
-            )),
         }
     }
 
