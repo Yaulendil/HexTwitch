@@ -343,9 +343,9 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 
 pub fn userstate(msg: Message) -> Option<EatMode> {
     if let Some(badges) = USERSTATE.write().set(
-        &get_channel_name(),
-        &msg.get_tag("badges").unwrap_or_default(),
-        &msg.get_tag("badge-info").unwrap_or_default(),
+        get_channel_name(),
+        msg.get_tag("badges").unwrap_or_default(),
+        msg.get_tag("badge-info").unwrap_or_default(),
     ) {
         echo(EVENT_REWARD, &[
             "BADGES",

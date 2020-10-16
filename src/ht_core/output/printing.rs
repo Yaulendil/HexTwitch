@@ -1,3 +1,4 @@
+use cached::proc_macro::cached;
 use hexchat::{print_event, PrintEvent};
 use parking_lot::RwLock;
 use std::collections::HashMap;
@@ -166,24 +167,23 @@ fn highest(max: usize, seq: &[(usize, char)]) -> char {
 /// Badges: A Struct storing the Input and Output of the process of breaking
 ///     down a badge value. This effectively serves the purpose of a Cached
 ///     Function.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Badges {
     input: String,
     pub output: String,
 }
 
 impl Badges {
-    /// NONE: A placeholder Badge string for the User when a UserState has not
-    ///     been received.
+    /// A placeholder Badge string for the User when a UserState has not been
+    ///     received.
     pub const NONE: &'static str = "_ ";
 
     /// Break down a string to find the final set of characters. The original
     ///     will be stored.
     ///
-    /// Input: `&str`, `&str`
+    /// Input: `String`, `String`
     /// Return: `Badges`
-    pub fn from_str(input: &str, info: &str) -> Self {
-        let input: String = String::from(input);
+    fn from_str(input: String, info: String) -> Self {
         let mut output: String = String::with_capacity(16);
 
         if !input.is_empty() {
@@ -216,6 +216,13 @@ impl Badges {
 }
 
 
+/// Passthrough function required for caching.
+#[cached(size=50)]
+pub fn badge_parse(input: String, info: String) -> Badges {
+    Badges::from_str(input, info)
+}
+
+
 /// States: Effectively a Box for a HashMap. Stores the Badges for the User in
 ///     each Channel.
 #[derive(Default)]
@@ -242,17 +249,17 @@ impl States {
     /// Returns a Reference to the new `Badges` if there was a change, `None`
     ///     otherwise.
     ///
-    /// Input: `&str`, `&str`, `&str`
+    /// Input: `String`, `String`, `String`
     /// Output: `Option<&Badges>`
-    pub fn set(&mut self, channel: &str, new: &str, info: &str) -> Option<&Badges> {
-        match self.inner.get(channel) {
+    pub fn set(&mut self, channel: String, new: String, info: String) -> Option<&Badges> {
+        match self.inner.get(&channel) {
             Some(old) if old.input == new => None,  // Channel is in Map, with the same Badges.
             _ => {
                 self.inner.insert(
-                    String::from(channel),
-                    Badges::from_str(new, info),
+                    channel.clone(),
+                    badge_parse(new, info),
                 );
-                self.inner.get(channel)
+                self.inner.get(&channel)
             }
         }
     }
@@ -282,9 +289,9 @@ mod tests_badge {
 
             if msg.has_tags() {
                 b.iter(|| {
-                    let _b = Badges::from_str(
-                        &msg.get_tag("badges").unwrap_or_default(),
-                        &msg.get_tag("badge-info").unwrap_or_default(),
+                    let _b = badge_parse(
+                        msg.get_tag("badges").unwrap_or_default(),
+                        msg.get_tag("badge-info").unwrap_or_default(),
                     );
                 });
             }

@@ -2,6 +2,7 @@
 
 #![feature(option_result_contains, test, toowned_clone_into, try_trait)]
 
+extern crate cached;
 #[macro_use]
 extern crate hexchat;
 

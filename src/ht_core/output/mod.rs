@@ -7,7 +7,7 @@ pub use printing::{
     alert_error,
     alert_subscription,
     alert_sub_upgrade,
-    Badges,
+    badge_parse,
     echo,
     EVENT_ALERT,
     EVENT_CHANNEL,
@@ -55,9 +55,9 @@ pub fn print_with_irc(
         | PrintEvent::CHANNEL_MSG_HILIGHT
         | PrintEvent::CHANNEL_ACTION_HILIGHT
         => {
-            let badges: Badges = Badges::from_str(
-                &msg.get_tag("badges").unwrap_or_default(),
-                &msg.get_tag("badge-info").unwrap_or_default(),
+            let badges = badge_parse(
+                msg.get_tag("badges").unwrap_or_default(),
+                msg.get_tag("badge-info").unwrap_or_default(),
             );
             echo(
                 etype,
