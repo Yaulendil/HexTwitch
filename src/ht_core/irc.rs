@@ -180,11 +180,7 @@ impl Message {
     ///
     /// Return: `String`
     pub fn get_signature(&self) -> String {
-        format!(
-            "{}:{}",
-            self.args.get(0).map(String::as_str).unwrap_or(""),
-            self.author(),
-        )
+        format!("{:?}:Ok({:?})", self.args.get(0), self.author())
     }
 
     /// Check whether this `Message` includes IRC Tags.

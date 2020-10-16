@@ -42,9 +42,7 @@ pub fn print_with_irc(
         | PrintEvent::YOUR_ACTION
         => {
             echo(etype, &[
-                &*word[0],
-                &*word[1],
-                "_",
+                &*word[0], &*word[1], "_",
                 USERSTATE.read().get(&channel),
             ], 2);
 
@@ -97,9 +95,7 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
         //  User has spoken in a normal Channel, but has no Badges.
         //      Add the Badges from the User State and re-emit.
         echo(etype, &[
-            &*word[0],
-            &*word[1],
-            "_",
+            &*word[0], &*word[1], "_",
             USERSTATE.read().get(&channel),
         ], 2);
 

@@ -49,12 +49,19 @@ impl Sponge {
     }
 
     /// Remove the Message from the Sponge, but only if the current Message has
-    ///     the Signature specified.
+    ///     the Signature specified. Valid Message Signatures are in roughly the
+    ///     following format:
+    ///         `Some("#channel"):Ok("author")`
+    ///
+    /// Signatures are calculated from as little data as possible, so that they
+    ///     can be derived from the minimal representation provided by Hexchat
+    ///     Print Hooks. This way, that minimal representation can be associated
+    ///     with the much fuller version received through a Server Hook.
     ///
     /// Input: `&str`
     /// Return: `Option<Message>`
     fn pop(&mut self, signature: &str) -> Option<Message> {
-        match &self.signature {
+        match self.signature.as_ref() {
             Some(sig) if sig == signature => self.value.take(),
             _ => None,
         }
@@ -81,13 +88,9 @@ fn arg_trim(args: &[String]) -> &[String] {
 
 
 fn check_message(channel: &str, author: &str) -> Option<Message> {
-    let sig: &str = &format!(
-        "{}:{}",
-        &channel,
-        strip_formatting(author).unwrap_or_default(),
-    );
-
-    CURRENT.lock().pop(sig)
+    CURRENT.lock().pop(
+        &format!("Some({:?}):{:?}", channel, strip_formatting(author))
+    )
 }
 
 
