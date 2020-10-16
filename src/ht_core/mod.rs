@@ -94,9 +94,12 @@ fn check_message(channel: &str, author: &str) -> Option<Message> {
 }
 
 
+fn this_is_twitch() -> bool { get_network_name().unwrap_or_default() == NETWORK }
+
+
 /// Reset the Color of a newly-focused Tab.
 pub fn cb_focus(_channel: ChannelRef) -> EatMode {
-    if get_network_name().unwrap_or_default() == NETWORK {
+    if this_is_twitch() {
         TABCOLORS.lock().reset();
     }
     EatMode::None
@@ -105,7 +108,7 @@ pub fn cb_focus(_channel: ChannelRef) -> EatMode {
 
 /// Hide a Join Event if it is fake.
 pub fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
-    if get_network_name().unwrap_or_default() == NETWORK
+    if this_is_twitch()
         && !word[2].contains("tmi.twitch.tv")
     {
         EatMode::All
@@ -116,7 +119,7 @@ pub fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
 
 
 pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
-    if get_network_name().unwrap_or_default() == NETWORK {
+    if this_is_twitch() {
         let channel = get_channel_name();
 
         if let Some(msg) = check_message(&channel, &word[0]) {
@@ -137,7 +140,7 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
 
 /// Handle a Server Message, received by the Hook for "RAW LINE".
 pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
-    if get_network_name().unwrap_or_default() == NETWORK {
+    if this_is_twitch() {
         let msg: Message = raw.parse().expect("Failed to parse IRC Message");
         let opt_eat: Option<EatMode> = match msg.command.as_str() {
             //  Chat Messages.
@@ -271,7 +274,7 @@ pub fn cmd_tjoin(arg_full: &[String]) -> EatMode {
 pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
     let arg: &[String] = arg_trim(arg_full);
 
-    if arg.len() > 1 && get_network_name().unwrap_or_default() == NETWORK {
+    if arg.len() > 1 && this_is_twitch() {
         let msg: String = arg[2..].join(" ");
 
         //  Check for message.
