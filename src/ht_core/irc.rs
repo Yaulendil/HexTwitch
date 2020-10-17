@@ -114,7 +114,7 @@ impl Prefix {
 impl fmt::Display for Prefix {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Prefix::ServerName(server) => write!(f, "{}", server),
+            Prefix::ServerName(server) => f.write_str(server),
 
             Prefix::User { nick, user: Some(u), host: Some(h) } =>
                 write!(f, "{}!{}@{}", nick, u, h),
@@ -125,7 +125,7 @@ impl fmt::Display for Prefix {
             Prefix::User { nick, host: Some(h), .. } =>
                 write!(f, "{}@{}", nick, h),
 
-            Prefix::User { nick, .. } => write!(f, "{}", nick),
+            Prefix::User { nick, .. } => f.write_str(nick),
         }
     }
 }
@@ -201,10 +201,10 @@ impl Message {
 
     /// Set a Tag on the `Message`. If the Tag was already present, its old
     ///     value is returned. If the `Message` has `None` for its Tags field,
-    ///     `Err(())` is returned.
+    ///     `Err(NoneError)` is returned.
     ///
     /// Input: `&str`, `&str`
-    /// Return: `Result<Option<String>, ()>`
+    /// Return: `Result<Option<String>, NoneError>`
     pub fn set_tag(&mut self, key: &str, value: &str)
                    -> Result<Option<String>, NoneError>
     {
@@ -227,7 +227,8 @@ impl fmt::Display for Message {
                         key.to_owned()
                     } else {
                         format!("{}={}", key, val)
-                    })
+                    }
+                )
                 .collect();
 
             tagseq.sort_unstable();
@@ -308,7 +309,7 @@ impl std::str::FromStr for Message {
 
         //  Compile everything into a Message Struct, and send it back up.
         Ok(Self {
-            prefix: prefix.parse().unwrap(),  // "asdfqwert!asdfqwert@twitch.tv"
+            prefix: prefix.parse()?,  // "asdfqwert!asdfqwert@twitch.tv"
             command: String::from(command),  // "PRIVMSG"
             args,  // ["#zxcv", "arg2"]
             trail: String::from(trail),  // "this is a message"
