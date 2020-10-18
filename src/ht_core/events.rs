@@ -427,17 +427,18 @@ pub fn whisper_send(etype: PrintEvent, channel: &str, word: &[String]) {
     //  "asdf qwert" normal -> exec SAY ".w asdf qwert"
     //  ".w asdf qwert" -> emit "asdf qwert" as private
 
-    let text: &str = &word[1];
+    let message: &str = &word[1];
 
-    if text.starts_with(".w ") {
+    if message.starts_with(".w ") {
         //  Normal Message, begins with ".w". The Whisper has been sent. Print
         //      the message in the Tab.
-        let mut iter = text[3..].trim().splitn(2, " ");
-        let user: &str = iter.next().unwrap();
+        let (user, mut text) = split_at_char(message[3..].trim(), ' ');
 
-        if let Some(mut text) = iter.next() {
+        if !text.is_empty() {
             if user != channel {
-                echo(PrintEvent::MESSAGE_SEND, &[&user, &text], 2);
+                //  If the current tab is not the target tab, also print a line
+                //      here confirming the message is sent.
+                echo(PrintEvent::MESSAGE_SEND, &[user, text], 2);
             }
 
             let etype_dm: PrintEvent = match etype {
@@ -458,9 +459,9 @@ pub fn whisper_send(etype: PrintEvent, channel: &str, word: &[String]) {
         //  Normal Message, does NOT begin with ".w". Need to send the Whisper.
         //      Execute SAY on the message with ".w" prepended.
         if etype == PrintEvent::YOUR_ACTION {
-            send_command(&format!("SAY .w {} /me {}", &channel, text));
+            send_command(&format!("SAY .w {} /me {}", channel, message));
         } else {
-            send_command(&format!("SAY .w {} {}", &channel, text));
+            send_command(&format!("SAY .w {} {}", channel, message));
         }
     }
 }
