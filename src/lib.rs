@@ -24,6 +24,7 @@ use hexchat::{
     remove_print_event_listener,
     remove_raw_server_event_listener,
     remove_window_event_listener,
+    send_command,
     WindowEvent,
     WindowEventListener,
 };
@@ -123,6 +124,12 @@ impl Plugin for HexTwitch {
             Priority::NORMAL,
             cmd_whisper_here,
         )));
+
+        for cmd in &[
+            "Twitch",
+            "\"Twitch/Toggle USERNOTICE Debug\" HTDEBUG",
+            "\"Twitch/Toggle in-channel Whispers\" WHISPERHERE",
+        ] { send_command(&format!("MENU ADD {}", cmd)); }
 
         //  Hook for User Joins.
         hook_print!(hooks, PrintEvent::JOIN, cb_join);
