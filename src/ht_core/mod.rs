@@ -26,6 +26,7 @@ use irc::Message;
 use output::{
     alert_basic,
     alert_error,
+    BADGES_UNK,
     print_with_irc,
     print_without_irc,
     TABCOLORS,
@@ -266,6 +267,23 @@ pub fn cmd_tjoin(arg_full: &[String]) -> EatMode {
         "JOIN {}",
         arg_trim(&arg_full[1..]).join(" "),
     ));
+
+    EatMode::All
+}
+
+
+pub fn cmd_unk_badges(_arg_full: &[String]) -> EatMode {
+    let unk = BADGES_UNK.read();
+
+    if unk.is_empty() {
+        alert_basic("No unknown Badges have been seen.");
+    } else {
+        alert_basic("The following Badges do not have associated icons:");
+
+        let mut vec: Vec<&str> = unk.iter().map(String::as_str).collect();
+        vec.sort_unstable();
+        vec.into_iter().for_each(alert_basic);
+    }
 
     EatMode::All
 }

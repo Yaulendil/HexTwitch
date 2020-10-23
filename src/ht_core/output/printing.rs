@@ -1,7 +1,7 @@
 use cached::proc_macro::cached;
 use hexchat::{print_event, PrintEvent};
 use parking_lot::RwLock;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use super::{
     super::irc::split_at_char,
     tabs::TABCOLORS,
@@ -116,6 +116,11 @@ static SUBS: &[(usize, char)] = &[
 // ];
 
 
+safe_static! {
+    pub static lazy BADGES_UNK: RwLock<HashSet<String>> = Default::default();
+}
+
+
 fn get_badge(class: &str, rank: &str) -> char {
     match class {
         "broadcaster"       /**/ => '🜲',
@@ -144,7 +149,11 @@ fn get_badge(class: &str, rank: &str) -> char {
 
         s if s.starts_with("twitchcon") => 'c',
         s if s.starts_with("overwatch-league-insider") => 'w',
-        _ => '?',
+        s => {
+            BADGES_UNK.write().get_or_insert_owned(s);
+
+            '?'
+        }
     }
 }
 

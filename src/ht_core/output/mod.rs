@@ -8,6 +8,7 @@ pub use printing::{
     alert_subscription,
     alert_sub_upgrade,
     badge_parse,
+    BADGES_UNK,
     echo,
     EVENT_ALERT,
     EVENT_CHANNEL,

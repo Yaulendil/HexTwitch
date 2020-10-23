@@ -1,6 +1,6 @@
 //! Core package for the HexTwitch Rust Plugin.
 
-#![feature(option_result_contains, test, toowned_clone_into, try_trait)]
+#![feature(hash_set_entry, test, toowned_clone_into, try_trait)]
 
 extern crate cached;
 #[macro_use]
@@ -37,6 +37,7 @@ use ht_core::{
     cmd_reward,
     cmd_title,
     cmd_tjoin,
+    cmd_unk_badges,
     cmd_whisper,
     cmd_whisper_here,
 };
@@ -83,7 +84,7 @@ impl Plugin for HexTwitch {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
     fn new() -> Self {
-        let mut hooks: Vec<Hook> = Vec::with_capacity(15);
+        let mut hooks: Vec<Hook> = Vec::with_capacity(16);
 
         //  Register Plugin Commands, with helptext.
         hooks.push(Hook::Command(register_command(
@@ -123,6 +124,12 @@ impl Plugin for HexTwitch {
             "Toggle whether Twitch Whispers should be duplicated in the current Tab.",
             Priority::NORMAL,
             cmd_whisper_here,
+        )));
+        hooks.push(Hook::Command(register_command(
+            "UNKNOWNS",
+            "Display unknown Badge Keys that have been seen.",
+            Priority::NORMAL,
+            cmd_unk_badges,
         )));
 
         for cmd in &[
