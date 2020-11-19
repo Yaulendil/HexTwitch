@@ -121,6 +121,27 @@ safe_static! {
 }
 
 
+/// Determine if a Badge title is probably a game-specific badge.
+///
+/// There are dozens of these, so it is not worth assigning each one a unique
+///     character.
+fn is_game_badge(name: &str) -> bool {
+    //  Find the last underscore.
+    match name.rfind('_') {
+        Some(idx) => {
+            //  Check the slice after the last underscore.
+            let end: &str = &name[idx + 1..];
+
+            //  This is probably a Game Badge if it does not end with an
+            //      underscore, and all characters after the underscore are
+            //      numeric.
+            end.parse::<usize>().is_ok()
+        }
+        None => false,
+    }
+}
+
+
 fn get_badge(class: &str, rank: &str) -> char {
     match class {
         "broadcaster"       /**/ => '🜲',
@@ -147,8 +168,13 @@ fn get_badge(class: &str, rank: &str) -> char {
         "glhf-pledge"       /**/ => '~',
         "anonymous-cheerer" /**/ => '*',
 
+        "ambassador"        /**/ => 'a',
+        "glitchcon2020"     /**/ => 'g',
+        "predictions"       /**/ => 'p',
+
         s if s.starts_with("twitchcon") => 'c',
         s if s.starts_with("overwatch-league-insider") => 'w',
+        s if is_game_badge(s) => 'G',
         s => {
             BADGES_UNK.write().get_or_insert_owned(s);
 
@@ -226,7 +252,7 @@ impl Badges {
 
 
 /// Passthrough function required for caching.
-#[cached(size=50)]
+#[cached(size = 50)]
 pub fn badge_parse(input: String, info: String) -> Badges {
     Badges::from_str(input, info)
 }
@@ -279,31 +305,31 @@ safe_static! {
 }
 
 
-#[cfg(test)]
-mod tests_badge {
-    extern crate test;
-
-    use crate::ht_core::irc::{
-        Message,
-        tests_irc::SAMPLES,
-    };
-    use super::*;
-    use test::Bencher;
-
-    /// Benchmark performance of reading `Badges` from `Message`s.
-    #[bench]
-    fn bench_badges(b: &mut Bencher) {
-        for raw in SAMPLES {
-            let msg: Message = raw.parse().expect("Parse Failed");
-
-            if msg.has_tags() {
-                b.iter(|| {
-                    let _b = badge_parse(
-                        msg.get_tag("badges").unwrap_or_default(),
-                        msg.get_tag("badge-info").unwrap_or_default(),
-                    );
-                });
-            }
-        }
-    }
-}
+// #[cfg(test)]
+// mod tests_badge {
+//     extern crate test;
+//
+//     use crate::ht_core::irc::{
+//         Message,
+//         tests_irc::SAMPLES,
+//     };
+//     use super::*;
+//     use test::Bencher;
+//
+//     /// Benchmark performance of reading `Badges` from `Message`s.
+//     #[bench]
+//     fn bench_badges(b: &mut Bencher) {
+//         for raw in SAMPLES {
+//             let msg: Message = raw.parse().expect("Parse Failed");
+//
+//             if msg.has_tags() {
+//                 b.iter(|| {
+//                     let _b: Badges = badge_parse(
+//                         msg.get_tag("badges").unwrap_or_default(),
+//                         msg.get_tag("badge-info").unwrap_or_default(),
+//                     );
+//                 });
+//             }
+//         }
+//     }
+// }
