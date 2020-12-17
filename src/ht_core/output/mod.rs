@@ -62,7 +62,7 @@ pub fn print_with_irc(
 
             echo(
                 etype,
-                &[&*word[0], &*word[1], "", &*badges.output],
+                &[&*word[0], &*word[1], "", &badges],
                 if etype == PrintEvent::CHANNEL_MSG_HILIGHT
                     || etype == PrintEvent::CHANNEL_ACTION_HILIGHT
                 { 3 } else { 2 },

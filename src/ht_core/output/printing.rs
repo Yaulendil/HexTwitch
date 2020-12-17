@@ -1,7 +1,10 @@
 use cached::proc_macro::cached;
 use hexchat::{print_event, PrintEvent};
 use parking_lot::RwLock;
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::Deref,
+};
 use super::{
     super::irc::split_at_char,
     tabs::TABCOLORS,
@@ -251,6 +254,24 @@ impl Badges {
 }
 
 
+impl<T> AsRef<T> for Badges where
+    String: AsRef<T>,
+{
+    fn as_ref(&self) -> &T {
+        self.output.as_ref()
+    }
+}
+
+
+impl Deref for Badges {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.output
+    }
+}
+
+
 /// Passthrough function required for caching.
 #[cached(size = 50)]
 pub fn badge_parse(input: String, info: String) -> Badges {
@@ -270,7 +291,7 @@ impl States {
     /// Return: `&str`
     pub fn get(&self, channel: &str) -> &str {
         match self.inner.get(channel) {
-            Some(badges) => &badges.output,
+            Some(badges) => badges,
             None => Badges::NONE,
         }
     }

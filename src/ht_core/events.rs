@@ -350,7 +350,7 @@ pub fn userstate(msg: Message) -> Option<EatMode> {
         echo(EVENT_REWARD, &[
             "BADGES",
             "New Badges received:",
-            &badges.output,
+            &badges,
         ], 0);
     }
 
