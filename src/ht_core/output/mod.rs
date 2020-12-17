@@ -8,6 +8,7 @@ pub use printing::{
     alert_subscription,
     alert_sub_upgrade,
     badge_parse,
+    Badges,
     BADGES_UNK,
     echo,
     EVENT_ALERT,
@@ -54,10 +55,11 @@ pub fn print_with_irc(
         | PrintEvent::CHANNEL_MSG_HILIGHT
         | PrintEvent::CHANNEL_ACTION_HILIGHT
         => {
-            let badges = badge_parse(
+            let badges: Badges = badge_parse(
                 msg.get_tag("badges").unwrap_or_default(),
                 msg.get_tag("badge-info").unwrap_or_default(),
             );
+
             echo(
                 etype,
                 &[&*word[0], &*word[1], "", &*badges.output],
@@ -66,11 +68,12 @@ pub fn print_with_irc(
                 { 3 } else { 2 },
             );
 
-            send_command(&format!(
-                "RECV :{0}!{0}@twitch.tv/{0} JOIN {1}",
-                msg.author().to_ascii_lowercase(),
-                channel,
-            ));
+            if !word[0].eq_ignore_ascii_case("ananonymouscheerer") {
+                send_command(&format!(
+                    "RECV :{0}!twitch.tv/{0} JOIN {1}",
+                    word[0], channel,
+                ));
+            }
 
             EatMode::All
         }
