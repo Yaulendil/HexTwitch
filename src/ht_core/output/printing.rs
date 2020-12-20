@@ -2,7 +2,10 @@ use cached::proc_macro::cached;
 use hexchat::{print_event, PrintEvent};
 use parking_lot::RwLock;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{
+        hash_map::{Entry, HashMap},
+        HashSet,
+    },
     ops::Deref,
 };
 use super::{
@@ -207,7 +210,7 @@ fn highest(max: usize, seq: &[(usize, char)]) -> char {
 ///     Function.
 #[derive(Clone, Default)]
 pub struct Badges {
-    input: String,
+    input: (String, String),
     pub output: String,
 }
 
@@ -221,18 +224,18 @@ impl Badges {
     ///
     /// Input: `String`, `String`
     /// Return: `Badges`
-    fn from_str(input: String, info: String) -> Self {
+    fn from_str(badges: String, meta: String) -> Self {
         let mut output: String = String::with_capacity(16);
 
-        if !input.is_empty() {
-            for pair in input.split(',') {
+        if !badges.is_empty() {
+            for pair in badges.split(',') {
                 //  Twitch now provides the number of months attached to a Sub
                 //      Badge separately, in the `badge-info` Tag. The number
                 //      attached directly to the Badge itself will only reflect
                 //      the correct number of months if the channel has a custom
                 //      icon set for the tier.
-                if pair.starts_with("subscriber/") && !info.is_empty() {
-                    for pair_info in info.split(',') {
+                if pair.starts_with("subscriber/") && !meta.is_empty() {
+                    for pair_info in meta.split(',') {
                         if pair_info.starts_with("subscriber/") {
                             output.push(get_badge("subscriber", &pair_info[11..]));
                             break;
@@ -249,7 +252,7 @@ impl Badges {
 
         // output.shrink_to_fit();
 
-        Self { input, output }
+        Self { input: (badges, meta), output }
     }
 }
 
@@ -279,8 +282,8 @@ pub fn badge_parse(input: String, info: String) -> Badges {
 }
 
 
-/// States: Effectively a Box for a HashMap. Stores the Badges for the User in
-///     each Channel.
+/// States: Effectively a guarded wrapper for a HashMap. Stores the Badges for
+///     the User in each Channel.
 #[derive(Default)]
 pub struct States { inner: HashMap<String, Badges> }
 
@@ -290,32 +293,37 @@ impl States {
     /// Input: `&str`
     /// Return: `&str`
     pub fn get(&self, channel: &str) -> &str {
-        match self.inner.get(channel) {
-            Some(badges) => badges,
-            None => Badges::NONE,
-        }
+        self.inner.get(channel)
+            .map(Deref::deref)
+            .unwrap_or(Badges::NONE)
     }
 
     /// Set the Badges for the User in a given Channel. This is mostly just a
-    ///     guarded passthrough to the `HashMap::insert()` of the internal map,
-    ///     but with one significant difference: If the current value for the
-    ///     given Channel in the Map was created from the same input as has been
-    ///     given here, the input is NOT evaluated again.
+    ///     guarded passthrough to the internal HashMap, but with one
+    ///     significant difference: If the current value for the given Channel
+    ///     in the Map was created from the same input as has been given here,
+    ///     the input is NOT evaluated again.
     ///
     /// Returns a Reference to the new `Badges` if there was a change, `None`
     ///     otherwise.
     ///
     /// Input: `String`, `String`, `String`
     /// Output: `Option<&Badges>`
-    pub fn set(&mut self, channel: String, new: String, info: String) -> Option<&Badges> {
-        match self.inner.get(&channel) {
-            Some(old) if old.input == new => None,  // Channel is in Map, with the same Badges.
-            _ => {
-                self.inner.insert(
-                    channel.clone(),
-                    badge_parse(new, info),
-                );
-                self.inner.get(&channel)
+    pub fn set(&mut self, channel: String, bstr: String, meta: String)
+               -> Option<&Badges>
+    {
+        match self.inner.entry(channel) {
+            Entry::Vacant(entry) => Some(entry.insert(badge_parse(bstr, meta))),
+            Entry::Occupied(entry) => {
+                let badges: &mut Badges = entry.into_mut();
+
+                if badges.input.0 != bstr || badges.input.1 != meta {
+                    *badges = badge_parse(bstr, meta);
+                    Some(badges)
+                } else {
+                    //  Channel is in Map, with the same Badges.
+                    None
+                }
             }
         }
     }
