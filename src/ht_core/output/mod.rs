@@ -68,10 +68,10 @@ pub fn print_with_irc(
                 { 3 } else { 2 },
             );
 
-            if !word[0].eq_ignore_ascii_case("ananonymouscheerer") {
+            if msg.get_tag("anonymous-cheerer").is_none() {
                 send_command(&format!(
                     "RECV :{0}!twitch.tv/{0} JOIN {1}",
-                    word[0], channel,
+                    msg.author(), channel,
                 ));
             }
 
