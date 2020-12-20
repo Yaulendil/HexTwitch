@@ -95,7 +95,12 @@ fn check_message(channel: &str, author: &str) -> Option<Message> {
 }
 
 
-fn this_is_twitch() -> bool { get_network_name().unwrap_or_default() == NETWORK }
+fn this_is_twitch() -> bool {
+    match get_network_name() {
+        Some(network) => network == NETWORK,
+        None => false,
+    }
+}
 
 
 /// Reset the Color of a newly-focused Tab.
@@ -109,9 +114,7 @@ pub fn cb_focus(_channel: ChannelRef) -> EatMode {
 
 /// Hide a Join Event if it is fake.
 pub fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
-    if this_is_twitch()
-        && !word[2].contains("tmi.twitch.tv")
-    {
+    if this_is_twitch() && !word[2].contains("tmi.twitch.tv") {
         EatMode::All
     } else {
         EatMode::None
@@ -121,7 +124,7 @@ pub fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
 
 pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
     if this_is_twitch() {
-        let channel = get_channel_name();
+        let channel: String = get_channel_name();
 
         if let Some(msg) = check_message(&channel, &word[0]) {
             //  Message comes from Server. IRC Representation available.
@@ -153,6 +156,7 @@ pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
 
             //  Status updates.
             "HOSTTARGET" => events::hosttarget(msg),
+            "RECONNECT" => events::reconnect(),
             "ROOMSTATE" => events::roomstate(msg),
             "USERNOTICE" => events::usernotice(msg),
             "USERSTATE" => events::userstate(msg),
@@ -195,13 +199,13 @@ pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
     let new: bool = get_pref_int("PREF_htdebug").unwrap_or(0) == 0;
 
     if set_pref_int("PREF_htdebug", new.into()).is_ok() {
-        alert_basic({
+        alert_basic(
             if new {
                 "Unrecognized UserNotices will now show the full Message."
             } else {
                 "Unrecognized UserNotices will NOT show the full Message."
             }
-        });
+        );
     } else {
         alert_error("FAILED to set Preference.");
     }
@@ -312,13 +316,13 @@ pub fn cmd_whisper_here(_arg_full: &[String]) -> EatMode {
     let new: bool = get_pref_int("PREF_whispers_in_current").unwrap_or(0) == 0;
 
     if set_pref_int("PREF_whispers_in_current", new.into()).is_ok() {
-        alert_basic({
+        alert_basic(
             if new {
                 "Twitch Whispers will also show in the current Tab."
             } else {
                 "Twitch Whispers will ONLY be shown in their own Tabs."
             }
-        });
+        );
     } else {
         alert_error("FAILED to set Preference.");
     }

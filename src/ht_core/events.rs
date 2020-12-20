@@ -70,6 +70,16 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
 }
 
 
+pub fn reconnect() -> Option<EatMode> {
+    echo(PrintEvent::SERVER_NOTICE, &[
+        "IRC Service is about to restart.",
+        "Twitch",
+    ], 0);
+
+    Some(EatMode::All)
+}
+
+
 pub fn roomstate(msg: Message) -> Option<EatMode> {
     let tags: &HashMap<String, String> = msg.tags.as_ref()?;
 
