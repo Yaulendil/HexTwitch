@@ -2,6 +2,7 @@
 
 use std::{
     collections::HashMap,
+    convert::Infallible,
     fmt,
     ops::Try,
     option::NoneError,
@@ -105,8 +106,15 @@ impl Prefix {
     /// Return: `&str`
     pub fn name(&self) -> &str {
         match self {
-            Prefix::ServerName(server) => server,
-            Prefix::User { nick, .. } => nick,
+            Self::ServerName(server) => server,
+            Self::User { nick, .. } => nick,
+        }
+    }
+
+    pub fn server(&self) -> Option<&str> {
+        match self {
+            Self::ServerName(server) => Some(server),
+            Self::User { host, .. } => host.as_ref().map(String::as_str),
         }
     }
 }
@@ -114,40 +122,53 @@ impl Prefix {
 impl fmt::Display for Prefix {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Prefix::ServerName(server) => f.write_str(server),
+            Self::ServerName(server) => f.write_str(server),
 
-            Prefix::User { nick, user: Some(u), host: Some(h) } =>
-                write!(f, "{}!{}@{}", nick, u, h),
+            Self::User { nick, user: Some(user), host: Some(host) } =>
+                write!(f, "{}!{}@{}", nick, user, host),
 
-            Prefix::User { nick, user: Some(u), .. } =>
-                write!(f, "{}!{}", nick, u),
+            Self::User { nick, user: Some(user), .. } =>
+                write!(f, "{}!{}", nick, user),
 
-            Prefix::User { nick, host: Some(h), .. } =>
-                write!(f, "{}@{}", nick, h),
+            Self::User { nick, host: Some(host), .. } =>
+                write!(f, "{}@{}", nick, host),
 
-            Prefix::User { nick, .. } => f.write_str(nick),
+            Self::User { nick, .. } => f.write_str(nick),
         }
     }
 }
 
 impl std::str::FromStr for Prefix {
-    type Err = ();
+    type Err = Infallible;
 
     /// Split an IRC Prefix string into an Author.
     ///
     /// Input: `&str`
-    /// Return: `Result<Prefix, ()>`
-    fn from_str(s0: &str) -> Result<Self, Self::Err> {
-        if s0.contains('.') && !s0.contains('@') {
-            Ok(Prefix::ServerName(String::from(s0)))
+    /// Return: `Result<Prefix, !>`
+    fn from_str(nick_user_host: &str) -> Result<Self, Self::Err> {
+        if nick_user_host.contains('.') && !nick_user_host.contains('@') {
+            Ok(Self::ServerName(String::from(nick_user_host)))
         } else {
-            let (s1, h1) = split_at_char(s0, '@');
-            let host = if !h1.is_empty() { Some(String::from(h1)) } else { None };
+            let (nick_user, hostname) = split_at_char(nick_user_host, '@');
+            let (nickname, username) = split_at_char(nick_user, '!');
 
-            let (s2, h2) = split_at_char(s1, '!');
-            let user = if !h2.is_empty() { Some(String::from(h2)) } else { None };
-
-            Ok(Prefix::User { nick: String::from(s2), user, host })
+            Ok(Self::User {
+                nick: String::from(nickname),
+                user: {
+                    if !username.is_empty() {
+                        Some(String::from(username))
+                    } else {
+                        None
+                    }
+                },
+                host: {
+                    if !hostname.is_empty() {
+                        Some(String::from(hostname))
+                    } else {
+                        None
+                    }
+                },
+            })
         }
     }
 }
@@ -309,7 +330,7 @@ impl std::str::FromStr for Message {
 
         //  Compile everything into a Message Struct, and send it back up.
         Ok(Self {
-            prefix: prefix.parse()?,  // "asdfqwert!asdfqwert@twitch.tv"
+            prefix: prefix.parse().unwrap(),  // "asdfqwert!asdfqwert@twitch.tv"
             command: String::from(command),  // "PRIVMSG"
             args,  // ["#zxcv", "arg2"]
             trail: String::from(trail),  // "this is a message"

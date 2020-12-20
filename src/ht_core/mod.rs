@@ -156,7 +156,7 @@ pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
 
             //  Status updates.
             "HOSTTARGET" => events::hosttarget(msg),
-            "RECONNECT" => events::reconnect(),
+            "RECONNECT" => events::reconnect(msg),
             "ROOMSTATE" => events::roomstate(msg),
             "USERNOTICE" => events::usernotice(msg),
             "USERSTATE" => events::userstate(msg),

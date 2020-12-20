@@ -70,10 +70,10 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
 }
 
 
-pub fn reconnect() -> Option<EatMode> {
+pub fn reconnect(msg: Message) -> Option<EatMode> {
     echo(PrintEvent::SERVER_NOTICE, &[
         "IRC Service is about to restart.",
-        "Twitch",
+        msg.prefix.server().unwrap_or(NETWORK),
     ], 0);
 
     Some(EatMode::All)
