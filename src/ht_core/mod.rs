@@ -95,6 +95,26 @@ fn check_message(channel: &str, author: &str) -> Option<Message> {
 }
 
 
+/// Plugin preferences do not support a boolean type. This function wraps an
+///     Integer preference to serve the same purpose. A preference with any non-
+///     zero value will be interpreted as `true`. Unset preferences will result
+///     in `false`.
+#[inline]
+fn get_pref_bool(name: &str) -> bool {
+    get_pref_int(name).unwrap_or(0) != 0
+}
+
+
+/// Plugin preferences do not support a boolean type. This function wraps an
+///     Integer preference to serve the same purpose. Stores either `1` or `0`
+///     in the preference, cast directly from the boolean input. Will return
+///     `Ok(())` on success, or `Err(())` otherwise.
+#[inline]
+fn set_pref_bool(name: &str, value: bool) -> Result<(), ()> {
+    set_pref_int(name, value as _)
+}
+
+
 fn this_is_twitch() -> bool {
     match get_network_name() {
         Some(network) => network == NETWORK,
@@ -196,9 +216,9 @@ pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
 
 
 pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
-    let new: bool = get_pref_int("PREF_htdebug").unwrap_or(0) == 0;
+    let new: bool = !get_pref_bool("PREF_htdebug");
 
-    if set_pref_int("PREF_htdebug", new.into()).is_ok() {
+    if set_pref_bool("PREF_htdebug", new).is_ok() {
         alert_basic(
             if new {
                 "Unrecognized UserNotices will now show the full Message."
@@ -313,9 +333,9 @@ pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_whisper_here(_arg_full: &[String]) -> EatMode {
-    let new: bool = get_pref_int("PREF_whispers_in_current").unwrap_or(0) == 0;
+    let new: bool = !get_pref_bool("PREF_whispers_in_current");
 
-    if set_pref_int("PREF_whispers_in_current", new.into()).is_ok() {
+    if set_pref_bool("PREF_whispers_in_current", new).is_ok() {
         alert_basic(
             if new {
                 "Twitch Whispers will also show in the current Tab."

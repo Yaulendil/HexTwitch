@@ -4,18 +4,15 @@ use hexchat::{
     EatMode,
     get_channel,
     get_channel_name,
-    get_pref_int,
     get_pref_string,
     print_event_to_channel,
     print_plain,
     PrintEvent,
     send_command,
 };
-use std::{
-    collections::HashMap,
-    fmt::Write,
-};
+use std::{collections::HashMap, fmt::Write};
 use super::{
+    get_pref_bool,
     irc::{Message, split_at_char},
     output::{
         alert_basic,
@@ -29,6 +26,13 @@ use super::{
         USERSTATE,
     },
 };
+
+
+/// Invocation of a self-action command.
+const ME: &str = "/me ";
+/// Length of the invocation of a self-action command. Defined by Constant to
+///     avoid using a "magic number" to slice off the prefix.
+const ME_LEN: usize = ME.len();
 
 
 pub fn cheer(name: &str, number: usize) {
@@ -292,20 +296,18 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
                 if &num == "1" { "" } else { "s" },
             ));
         }
-        "standardpayforward" => {
-            match msg.get_tag("msg-param-prior-gifter-user-name") {
-                Some(prior) => alert_basic(&format!(
-                    "<{}> pays forward a gift subscription from <{}> to <{}>",
-                    msg.get_tag("login")?,
-                    prior,
-                    msg.get_tag("msg-param-recipient-user-name")?,
-                )),
-                None => alert_basic(&format!(
-                    "<{}> pays forward an anonymous gift subscription to <{}>",
-                    msg.get_tag("login")?,
-                    msg.get_tag("msg-param-recipient-user-name")?,
-                )),
-            }
+        "standardpayforward" => match msg.get_tag("msg-param-prior-gifter-user-name") {
+            Some(prior) => alert_basic(&format!(
+                "<{}> pays forward a gift subscription from <{}> to <{}>",
+                msg.get_tag("login")?,
+                prior,
+                msg.get_tag("msg-param-recipient-user-name")?,
+            )),
+            None => alert_basic(&format!(
+                "<{}> pays forward an anonymous gift subscription to <{}>",
+                msg.get_tag("login")?,
+                msg.get_tag("msg-param-recipient-user-name")?,
+            )),
         }
         "communitypayforward" => match msg.get_tag("msg-param-prior-gifter-user-name") {
             Some(prior) => alert_basic(&format!(
@@ -334,9 +336,9 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
         )),
 
         _ => {
-            if get_pref_int("PREF_htdebug").unwrap_or(0) != 0 {
+            if get_pref_bool("PREF_htdebug") {
                 alert_error(&format!(
-                    "Unknown SType '{}': {}",
+                    "Unknown UserNotice ID {:?}: {}",
                     stype, msg,
                 ));
             }
@@ -407,11 +409,11 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
     //  Action Messages have a different format than simply a `/me` command. For
     //      example, the command "/me does something" would have to be changed
     //      to "\x01ACTION does something\x01".
-    if msg.trail.starts_with("/me ") {
-        let text: &str = &msg.trail[4..]; // Slice off the `/me `.
+    if msg.trail.starts_with(ME) {
+        let text: &str = &msg.trail[ME_LEN..]; // Slice off the `/me `.
 
         //  If the Whisper Tab is not focused, also post it here.
-        if get_pref_int("PREF_whispers_in_current").unwrap_or(0) != 0
+        if get_pref_bool("PREF_whispers_in_current")
             && get_channel_name() != user
         {
             echo(PrintEvent::PRIVATE_ACTION, &[user, text], 2);
@@ -421,7 +423,7 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         msg.trail = format!("\x01ACTION {}\x01", &text);
     } else {
         //  If the Whisper Tab is not focused, also post it here.
-        if get_pref_int("PREF_whispers_in_current").unwrap_or(0) != 0
+        if get_pref_bool("PREF_whispers_in_current")
             && get_channel_name() != user
         {
             echo(PrintEvent::PRIVATE_MESSAGE, &[user, &msg.trail], 2);
@@ -453,8 +455,8 @@ pub fn whisper_send(etype: PrintEvent, channel: &str, word: &[String]) {
 
             let etype_dm: PrintEvent = match etype {
                 PrintEvent::YOUR_ACTION => PrintEvent::PRIVATE_ACTION_TO_DIALOG,
-                PrintEvent::YOUR_MESSAGE if text.starts_with("/me ") => {
-                    text = &text[4..];
+                PrintEvent::YOUR_MESSAGE if text.starts_with(ME) => {
+                    text = &text[ME_LEN..];
                     PrintEvent::PRIVATE_ACTION_TO_DIALOG
                 }
                 PrintEvent::YOUR_MESSAGE => PrintEvent::PRIVATE_MESSAGE_TO_DIALOG,
