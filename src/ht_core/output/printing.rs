@@ -87,10 +87,10 @@ static BITS: &[(usize, char)] = &[
 /// NOTE: if any value here is not greater than the previous one, it and
 ///     subsequent pairs will not be considered in the correct order.
 static SUBS: &[(usize, char)] = &[
-    (0, '①'),
-    (3, '③'),
-    (6, '⑥'),
-    (9, '⑨'),
+    (0, '⓵'),
+    (3, '⓷'),
+    (6, '⓺'),
+    (9, '⓽'),
     (12, 'ⅰ'),
     (24, 'ⅱ'),
     (36, 'ⅲ'),
@@ -103,6 +103,15 @@ static SUBS: &[(usize, char)] = &[
     (120, 'ⅹ'),
     (132, 'ⅺ'),
     (144, 'ⅻ'),
+    (156, '⓭'),
+    (168, '⓮'),
+    (180, '⓯'),
+    (192, '⓰'),
+    (204, '⓱'),
+    (216, '⓲'),
+    (228, '⓳'),
+    (240, '⓴'),
+    (252, '⁑'),
 ];
 // /// GIFTS: Badge characters for Subscription Gifters. If a User has a Gifter
 // /// Badge, the User is given the `char` corresponding to the last value found
@@ -135,13 +144,10 @@ fn is_game_badge(name: &str) -> bool {
     //  Find the last underscore.
     match name.rfind('_') {
         Some(idx) => {
-            //  Check the slice after the last underscore.
-            let end: &str = &name[idx + 1..];
-
             //  This is probably a Game Badge if it does not end with an
             //      underscore, and all characters after the underscore are
             //      numeric.
-            end.parse::<usize>().is_ok()
+            name[idx + 1..].parse::<usize>().is_ok()
         }
         None => false,
     }
@@ -152,9 +158,9 @@ fn get_badge(class: &str, rank: &str) -> char {
     match class {
         "broadcaster"       /**/ => '🜲',
         "staff"             /**/ => '🜨',
-        "admin"             /**/ => '🜶',
+        "admin"             /**/ => '⛨',
 
-        "moderator"         /**/ => '🗡',  // ⛨?
+        "moderator"         /**/ => '🗡',
         "subscriber"        /**/ => highest(rank.parse().unwrap_or(0), &SUBS),
         "vip"               /**/ => '⚑',
         "founder"           /**/ => 'ⲷ',
@@ -176,7 +182,7 @@ fn get_badge(class: &str, rank: &str) -> char {
 
         "ambassador"        /**/ => 'a',
         "glitchcon2020"     /**/ => 'g',
-        "predictions"       /**/ => 'p',
+        "predictions"       /**/ => '‡',
 
         s if s.starts_with("twitchcon") => 'c',
         s if s.starts_with("overwatch-league-insider") => 'w',
@@ -191,17 +197,11 @@ fn get_badge(class: &str, rank: &str) -> char {
 
 
 fn highest(max: usize, seq: &[(usize, char)]) -> char {
-    let mut out: char = '¿';
-
-    for pair in seq {
-        if pair.0 <= max {
-            out = pair.1;
-        } else {
-            break;
-        }
+    match seq.binary_search_by(|pair: &(usize, char)| pair.0.cmp(&max)) {
+        Err(0) => '¿',
+        Err(idx) => unsafe { seq.get_unchecked(idx - 1).1 }
+        Ok(idx) => unsafe { seq.get_unchecked(idx).1 }
     }
-
-    out
 }
 
 
