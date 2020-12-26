@@ -521,19 +521,24 @@ pub fn clearmsg(msg: Message) -> Option<EatMode> {
 
 
 pub fn clearchat(msg: Message) -> Option<EatMode> {
-    let mut text: String = String::with_capacity(128);
+    if msg.trail.is_empty() {
+        alert_error("Chat history has been cleared.");
+    } else {
+        let mut text: String = String::with_capacity(128);
 
-    match msg.get_tag("ban-duration") {
-        Some(t) => write!(&mut text, "{} is timed out for {}s", &msg.trail, t).ok()?,
-        None => write!(&mut text, "{} is banned permanently", &msg.trail).ok()?,
-    };
+        match msg.get_tag("ban-duration") {
+            Some(t) => write!(&mut text, "{} is timed out for {}s", &msg.trail, t).ok()?,
+            None => write!(&mut text, "{} is banned permanently", &msg.trail).ok()?,
+        };
 
-    if let Some(reason) = msg.get_tag("ban-reason") {
-        if !reason.is_empty() {
-            write!(&mut text, ". Reason: {}", reason).ok()?;
+        if let Some(reason) = msg.get_tag("ban-reason") {
+            if !reason.is_empty() {
+                write!(&mut text, ". Reason: {}", reason).ok()?;
+            }
         }
+
+        alert_error(&text);
     }
 
-    alert_error(&text);
     Some(EatMode::Hexchat)
 }
