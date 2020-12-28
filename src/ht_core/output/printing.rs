@@ -182,7 +182,7 @@ fn get_badge(class: &str, rank: &str) -> char {
 
         "ambassador"        /**/ => 'a',
         "glitchcon2020"     /**/ => 'g',
-        "predictions"       /**/ => '‡',
+        "predictions"       /**/ => prediction_badge(rank),
 
         s if s.starts_with("twitchcon") => 'c',
         s if s.starts_with("overwatch-league-insider") => 'w',
@@ -201,6 +201,21 @@ fn highest(max: usize, seq: &[(usize, char)]) -> char {
         Err(0) => '¿',
         Err(idx) => unsafe { seq.get_unchecked(idx - 1).1 }
         Ok(idx) => unsafe { seq.get_unchecked(idx).1 }
+    }
+}
+
+
+fn prediction_badge(pred: &str) -> char {
+    match pred {
+        //  These two will suffice if Twitch never adds more possibilities. This
+        //      does not seem likely, but it is possible.
+        "blue-1" => '⧮',
+        "pink-2" => '⧯',
+        _ => {
+            BADGES_UNK.write().get_or_insert(format!("predictions/{}", pred));
+
+            'p'
+        }
     }
 }
 
