@@ -27,6 +27,7 @@ use output::{
     alert_basic,
     alert_error,
     BADGES_UNK,
+    prediction::get_prediction,
     print_with_irc,
     print_without_irc,
     TABCOLORS,
@@ -229,6 +230,16 @@ pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
     } else {
         alert_error("FAILED to set Preference.");
     }
+
+    EatMode::All
+}
+
+
+pub fn cmd_prediction(_arg_full: &[String]) -> EatMode {
+    alert_basic(&format!(
+        "Current Prediction: {}",
+        get_prediction(&get_channel_name()).unwrap_or_default(),
+    ));
 
     EatMode::All
 }

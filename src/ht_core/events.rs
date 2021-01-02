@@ -364,6 +364,8 @@ pub fn userstate(msg: Message) -> Option<EatMode> {
             "New Badges received:",
             &badges,
         ], 0);
+
+        badges.update_prediction();
     }
 
     Some(EatMode::All)

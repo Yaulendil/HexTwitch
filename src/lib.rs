@@ -34,6 +34,7 @@ use ht_core::{
     cb_print,
     cb_server,
     cmd_ht_debug,
+    cmd_prediction,
     cmd_reward,
     cmd_title,
     cmd_tjoin,
@@ -84,7 +85,7 @@ impl Plugin for HexTwitch {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
     fn new() -> Self {
-        let mut hooks: Vec<Hook> = Vec::with_capacity(16);
+        let mut hooks: Vec<Hook> = Vec::with_capacity(17);
 
         //  Register Plugin Commands, with helptext.
         hooks.push(Hook::Command(register_command(
@@ -92,6 +93,12 @@ impl Plugin for HexTwitch {
             "Toggle whether unknown UserNotices should show the full plain IRC.",
             Priority::NORMAL,
             cmd_ht_debug,
+        )));
+        hooks.push(Hook::Command(register_command(
+            "PREDICTION",
+            "View the current Prediction of the current Twitch Channel.",
+            Priority::NORMAL,
+            cmd_prediction,
         )));
         hooks.push(Hook::Command(register_command(
             "REWARD",

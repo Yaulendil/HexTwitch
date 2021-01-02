@@ -1,5 +1,5 @@
 use cached::proc_macro::cached;
-use hexchat::{print_event, PrintEvent};
+use hexchat::{get_channel_name, print_event, PrintEvent};
 use parking_lot::RwLock;
 use std::{
     collections::{
@@ -9,6 +9,7 @@ use std::{
     ops::Deref,
 };
 use super::{
+    prediction::{get_prediction, update_prediction},
     super::irc::split_at_char,
     tabs::TABCOLORS,
 };
@@ -250,6 +251,9 @@ impl Badges {
                 //      the correct number of months if the channel has a custom
                 //      icon set for the tier.
                 if pair.starts_with("subscriber/") && !meta.is_empty() {
+                    //  This is a special case, because we do not actually care
+                    //      about the rank of the Subscriber Badge. What we want
+                    //      to use as the rank is in the metadata map.
                     for pair_info in meta.split(',') {
                         if pair_info.starts_with("subscriber/") {
                             output.push(get_badge("subscriber", &pair_info[11..]));
@@ -268,6 +272,33 @@ impl Badges {
         // output.shrink_to_fit();
 
         Self { input: (badges, meta), output }
+    }
+
+    /// Update the map of Predictions to include the data in the message used to
+    ///     create these badges.
+    pub fn update_prediction(&self) -> bool {
+        if !self.input.0.is_empty() && !self.input.1.is_empty() {
+            for rank in self.input.0.split(',') {
+                if rank.starts_with("predictions/") {
+                    for meta in self.input.1.split(',') {
+                        if meta.starts_with("predictions/")
+                            && update_prediction(&rank[12..], &meta[12..])
+                            == Some(true)
+                        {
+                            alert_basic(&format!(
+                                "Prediction Updated: {}",
+                                get_prediction(&get_channel_name())
+                                    .unwrap_or_default(),
+                            ));
+                            return true;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        false
     }
 }
 

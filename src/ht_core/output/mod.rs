@@ -1,3 +1,4 @@
+pub(super) mod prediction;
 mod printing;
 mod tabs;
 
@@ -67,6 +68,8 @@ pub fn print_with_irc(
                     || etype == PrintEvent::CHANNEL_ACTION_HILIGHT
                 { 3 } else { 2 },
             );
+
+            badges.update_prediction();
 
             if msg.get_tag("anonymous-cheerer").is_none() {
                 send_command(&format!(
