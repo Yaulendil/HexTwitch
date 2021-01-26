@@ -174,20 +174,19 @@ impl std::str::FromStr for Prefix {
 }
 
 
-/// Message: An IRC Message in a usable structure.
-///     prefix  : `Prefix`          : UserString: `nick[!user][@host]`
-///     command : `String`          : IRC Command.
-///     args    : `Vec<String>`     : Arguments passed to the Command.
-///     trail   : `String`          : Remainder of the Message. Whatever.
-///     tags    : `Option<HashMap>` : IRCv3 Tags. Strings mapped to Strings.
-///                                     This will be `None` if the original
-///                                     message did not include a Tags segment.
+/// An IRC Message in a usable structure.
 #[derive(Debug, PartialEq)]
 pub struct Message {
+    /// UserString: `nick[!user][@host]`
     pub prefix: Prefix,
+    /// IRC Command.
     pub command: String,
+    /// Arguments passed to the Command.
     pub args: Vec<String>,
+    /// Remainder of the Message.
     pub trail: String,
+    /// IRCv3 Tags. Strings mapped to Strings. This will be `None` if the
+    ///     original message did not include a Tags segment.
     pub tags: Option<HashMap<String, String>>,
 }
 
@@ -265,12 +264,12 @@ impl fmt::Display for Message {
 }
 
 impl std::str::FromStr for Message {
-    type Err = ();
+    type Err = Infallible;
 
     /// Split a raw IRC string into a usable `Message`.
     ///
     /// Input: `&str`
-    /// Return: `Result<Message, ()>`
+    /// Return: `Result<Message, !>`
     fn from_str(full_str: &str) -> Result<Self, Self::Err> {
         //  "@badges=bits/100;display-name=AsdfQwert;emotes= :asdfqwert!asdfqwert@twitch.tv PRIVMSG #zxcv arg2 :this is a message"
 
@@ -330,7 +329,7 @@ impl std::str::FromStr for Message {
 
         //  Compile everything into a Message Struct, and send it back up.
         Ok(Self {
-            prefix: prefix.parse().unwrap(),  // "asdfqwert!asdfqwert@twitch.tv"
+            prefix: prefix.parse()?,  // "asdfqwert!asdfqwert@twitch.tv"
             command: String::from(command),  // "PRIVMSG"
             args,  // ["#zxcv", "arg2"]
             trail: String::from(trail),  // "this is a message"
