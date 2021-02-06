@@ -70,7 +70,7 @@ pub fn unescape(line: &str) -> String {
 /// Split a `&str` at the first occurrence of a delimiting `char`.
 pub fn split_at_char(line: &str, delim: char) -> (&str, &str) {
     match line.find(delim) {
-        Some(idx) => (&line[..idx], &line[idx + 1..]),
+        Some(idx) => (&line[..idx], &line[idx + delim.len_utf8()..]),
         None => (line, ""),
     }
 }
