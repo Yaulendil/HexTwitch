@@ -278,22 +278,28 @@ impl Badges {
     ///     create these badges.
     pub fn update_prediction(&self) -> bool {
         if !self.input.0.is_empty() && !self.input.1.is_empty() {
-            for rank in self.input.0.split(',') {
-                if rank.starts_with("predictions/") {
-                    for meta in self.input.1.split(',') {
-                        if meta.starts_with("predictions/")
-                            && update_prediction(&rank[12..], &meta[12..])
-                            == Some(true)
-                        {
-                            alert_basic(&format!(
-                                "Prediction Updated: {}",
-                                get_prediction(&get_channel_name())
-                                    .unwrap_or_default(),
-                            ));
-                            return true;
+            //  Search the badge info tag first; It is likely much shorter than
+            //      the badges tag, so if there is no tag found for Predictions,
+            //      this order will fail and move on more quickly.
+            'search:
+            for meta in self.input.1.split(',') {
+                if meta.starts_with("predictions/") {
+                    for rank in self.input.0.split(',') {
+                        if rank.starts_with("predictions/") {
+                            if update_prediction(&rank[12..], &meta[12..])
+                                == Some(true)
+                            {
+                                alert_basic(&format!(
+                                    "Prediction Updated: {}",
+                                    get_prediction(&get_channel_name())
+                                        .unwrap_or_default(),
+                                ));
+                                return true;
+                            }
+                            break 'search;
                         }
                     }
-                    break;
+                    break 'search;
                 }
             }
         }
