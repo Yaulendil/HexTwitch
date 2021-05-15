@@ -8,7 +8,6 @@ use hexchat::{
     print_event_to_channel,
     print_plain,
     PrintEvent,
-    send_command,
 };
 use std::{collections::HashMap, fmt::Write};
 use super::{
@@ -381,7 +380,7 @@ pub fn userstate(msg: Message) -> Option<EatMode> {
 /// Panics: If the Channel is not found after `QUERY` is executed.
 pub fn ensure_tab(name: &str) -> ChannelRef {
     get_channel(NETWORK, &name).unwrap_or_else(|| {
-        send_command(&format!("QUERY {}", &name));
+        cmd!("QUERY {}", &name);
         get_channel(NETWORK, &name).expect("Failed to ensure Whisper Tab.")
     })
 }
@@ -432,7 +431,7 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         }
     }
 
-    send_command(&format!("RECV {}", msg));
+    cmd!("RECV {}", msg);
     Some(EatMode::All)
 }
 
@@ -473,9 +472,9 @@ pub fn whisper_send(etype: PrintEvent, channel: &str, word: &[String]) {
         //  Normal Message, does NOT begin with ".w". Need to send the Whisper.
         //      Execute SAY on the message with ".w" prepended.
         if etype == PrintEvent::YOUR_ACTION {
-            send_command(&format!("SAY .w {} /me {}", channel, message));
+            cmd!("SAY .w {} /me {}", channel, message);
         } else {
-            send_command(&format!("SAY .w {} {}", channel, message));
+            cmd!("SAY .w {} {}", channel, message);
         }
     }
 }

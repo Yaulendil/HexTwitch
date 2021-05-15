@@ -14,7 +14,6 @@ use hexchat::{
     get_pref_string,
     get_prefs,
     PrintEvent,
-    send_command,
     set_pref_int,
     set_pref_string,
     strip_formatting,
@@ -287,21 +286,21 @@ pub fn cmd_reward(arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_title(arg_full: &[String]) -> EatMode {
-    send_command(&format!(
+    cmd!(
         "RECV :Twitch!twitch@twitch.tv TOPIC #{} :{}",
         &arg_full[1].to_ascii_lowercase(),
         arg_trim(&arg_full[2..]).join(" "),
-    ));
+    );
 
     EatMode::All
 }
 
 
 pub fn cmd_tjoin(arg_full: &[String]) -> EatMode {
-    send_command(&format!(
+    cmd!(
         "JOIN {}",
         arg_trim(&arg_full[1..]).join(" "),
-    ));
+    );
 
     EatMode::All
 }
@@ -333,10 +332,10 @@ pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
         //  Check for message.
         if msg.is_empty() {
             //  None: Switch to Whisper Tab.
-            send_command(&format!("QUERY {}", arg[1]));
+            cmd!("QUERY {}", arg[1]);
         } else {
             //  Some: Send through Whisper.
-            send_command(&format!("SAY .w {} {}", arg[1], msg));
+            cmd!("SAY .w {} {}", arg[1], msg);
         }
     }
     EatMode::All

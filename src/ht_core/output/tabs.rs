@@ -1,4 +1,4 @@
-use hexchat::{get_channel_name, get_current_channel, get_focused_channel, send_command};
+use hexchat::{get_channel_name, get_current_channel, get_focused_channel};
 use parking_lot::Mutex;
 use std::collections::hash_map::{Entry, HashMap};
 
@@ -24,12 +24,12 @@ impl Tabs {
                     if color_new > *color {
                         //  New color is greater than old color. Replace.
                         *color = color_new;
-                        send_command(&format!("GUI COLOR {}", color_new));
+                        cmd!("GUI COLOR {}", color_new);
                     }
                 }
                 Entry::Vacant(entry) => {
                     entry.insert(color_new);
-                    send_command(&format!("GUI COLOR {}", color_new));
+                    cmd!("GUI COLOR {}", color_new);
                 }
             }
         }
@@ -39,7 +39,7 @@ impl Tabs {
     ///     focused, so that its unread status is cleared.
     pub fn reset(&mut self) {
         self.inner.insert(get_channel_name(), 0);
-        send_command("GUI COLOR 0");
+        cmd!("GUI COLOR 0");
     }
 }
 
