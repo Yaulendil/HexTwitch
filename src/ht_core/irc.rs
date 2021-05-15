@@ -67,6 +67,17 @@ pub fn unescape(line: &str) -> String {
 }
 
 
+/// Create a new owned `String` from a `&str`, but only if it is not empty; If
+///     it is empty, instead return `None`.
+fn owned_not_empty(instr: &str) -> Option<String> {
+    if instr.is_empty() {
+        None
+    } else {
+        Some(String::from(instr))
+    }
+}
+
+
 /// Split a `&str` at the first occurrence of a delimiting `char`.
 pub fn split_at_char(line: &str, delim: char) -> (&str, &str) {
     match line.find(delim) {
@@ -154,20 +165,8 @@ impl std::str::FromStr for Prefix {
 
             Ok(Self::User {
                 nick: String::from(nickname),
-                user: {
-                    if !username.is_empty() {
-                        Some(String::from(username))
-                    } else {
-                        None
-                    }
-                },
-                host: {
-                    if !hostname.is_empty() {
-                        Some(String::from(hostname))
-                    } else {
-                        None
-                    }
-                },
+                user: owned_not_empty(username),
+                host: owned_not_empty(hostname),
             })
         }
     }
