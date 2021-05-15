@@ -13,17 +13,32 @@ const INIT: &str = "<UNKNOWN>";
 pub struct Predict {
     blue: String,
     pink: String,
+    gray1: String,
+    gray2: String,
 }
 
 
 impl Default for Predict {
-    fn default() -> Self { Self { blue: INIT.into(), pink: INIT.into() } }
+    fn default() -> Self {
+        Self {
+            blue: INIT.into(),
+            pink: INIT.into(),
+            gray1: INIT.into(),
+            gray2: INIT.into(),
+        }
+    }
 }
 
 
 impl fmt::Display for Predict {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?} or {:?}", self.blue, self.pink)
+        write!(
+            f, "{:?} (⧮), {:?} (⧯), {:?} (⧲), or {:?} (⧳)",
+            self.blue,
+            self.pink,
+            self.gray1,
+            self.gray2,
+        )
     }
 }
 
@@ -57,6 +72,22 @@ pub fn update_prediction(variant: &str, label: &str) -> Option<bool> {
         "pink-2" => {
             if pred.pink != label {
                 pred.pink = label.into();
+                Some(true)
+            } else {
+                Some(false)
+            }
+        }
+        "gray-1" => {
+            if pred.gray1 != label {
+                pred.gray1 = label.into();
+                Some(true)
+            } else {
+                Some(false)
+            }
+        }
+        "gray-2" => {
+            if pred.gray2 != label {
+                pred.gray2 = label.into();
                 Some(true)
             } else {
                 Some(false)

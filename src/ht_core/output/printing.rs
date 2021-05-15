@@ -212,6 +212,9 @@ fn prediction_badge(pred: &str) -> char {
         //      does not seem likely, but it is possible.
         "blue-1" => '⧮',
         "pink-2" => '⧯',
+        //  Okay, these FOUR may suffice, I guess.
+        "gray-1" => '⧲',
+        "gray-2" => '⧳',
         _ => {
             BADGES_UNK.write().get_or_insert(format!("predictions/{}", pred));
 
@@ -277,16 +280,19 @@ impl Badges {
     /// Update the map of Predictions to include the data in the message used to
     ///     create these badges.
     pub fn update_prediction(&self) -> bool {
+        const KEY: &str = "predictions/";
+        const LEN: usize = KEY.len();
+
         if !self.input.0.is_empty() && !self.input.1.is_empty() {
             //  Search the badge info tag first; It is likely much shorter than
             //      the badges tag, so if there is no tag found for Predictions,
             //      this order will fail and move on more quickly.
             'search:
             for meta in self.input.1.split(',') {
-                if meta.starts_with("predictions/") {
+                if meta.starts_with(KEY) {
                     for rank in self.input.0.split(',') {
-                        if rank.starts_with("predictions/") {
-                            if update_prediction(&rank[12..], &meta[12..])
+                        if rank.starts_with(KEY) {
+                            if update_prediction(&rank[LEN..], &meta[LEN..])
                                 == Some(true)
                             {
                                 alert_basic(&format!(
