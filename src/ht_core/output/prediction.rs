@@ -6,39 +6,49 @@ use std::{
 };
 
 
-const INIT: &str = "<UNKNOWN>";
+const ICONS: &[&str] = &["⧮", "⧯", "⧲", "⧳"];
+const UNK: &str = "Unknown";
 
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Predict {
-    blue: String,
-    pink: String,
-    gray1: String,
-    gray2: String,
+    blue: Option<String>,
+    pink: Option<String>,
+    gray1: Option<String>,
+    gray2: Option<String>,
 }
 
 
-impl Default for Predict {
-    fn default() -> Self {
-        Self {
-            blue: INIT.into(),
-            pink: INIT.into(),
-            gray1: INIT.into(),
-            gray2: INIT.into(),
-        }
+impl Predict {
+    fn pairs(&self) -> Vec<(&String, &'static str)> {
+        let Predict { blue, pink, gray1, gray2 } = self;
+
+        [blue, pink, gray1, gray2]
+            .iter()
+            .zip(ICONS)
+            .filter_map(|(label, &icon)| {
+                label.as_ref().map(|inner| (inner, icon))
+            })
+            .collect()
     }
 }
 
 
 impl fmt::Display for Predict {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f, "{:?} (⧮), {:?} (⧯), {:?} (⧲), or {:?} (⧳)",
-            self.blue,
-            self.pink,
-            self.gray1,
-            self.gray2,
-        )
+        macro_rules! args {
+            ($pair:expr) => {format_args!("{:?} ({})", $pair.0, $pair.1)};
+        }
+
+        match self.pairs().as_slice() {
+            &[] => f.write_str(UNK),
+            &[one] => f.write_fmt(args!(one)),
+            &[one, two] => write!(f, "{} or {}", args!(one), args!(two)),
+            &[ref most @ .., last] => {
+                for each in most { write!(f, "{}, ", args!(each))?; }
+                write!(f, "or {}", args!(last))
+            }
+        }
     }
 }
 
@@ -60,39 +70,23 @@ pub fn update_prediction(variant: &str, label: &str) -> Option<bool> {
         Entry::Occupied(entry) => entry.into_mut(),
     };
 
+    macro_rules! update {
+        ($field:ident) => {{
+            match &pred.$field {
+                Some(s) if label == s => Some(false),
+                _ => {
+                    pred.$field.replace(label.into());
+                    Some(true)
+                }
+            }
+        }};
+    }
+
     match variant {
-        "blue-1" => {
-            if pred.blue != label {
-                pred.blue = label.into();
-                Some(true)
-            } else {
-                Some(false)
-            }
-        }
-        "pink-2" => {
-            if pred.pink != label {
-                pred.pink = label.into();
-                Some(true)
-            } else {
-                Some(false)
-            }
-        }
-        "gray-1" => {
-            if pred.gray1 != label {
-                pred.gray1 = label.into();
-                Some(true)
-            } else {
-                Some(false)
-            }
-        }
-        "gray-2" => {
-            if pred.gray2 != label {
-                pred.gray2 = label.into();
-                Some(true)
-            } else {
-                Some(false)
-            }
-        }
+        "blue-1" => update!(blue),
+        "pink-2" => update!(pink),
+        "gray-1" => update!(gray1),
+        "gray-2" => update!(gray2),
         _ => None,
     }
 }
