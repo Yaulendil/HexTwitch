@@ -174,7 +174,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
             echo(EVENT_ALERT, &["BADGE", &notif], 1);
         }
 
-        "unraid" => alert_basic("A raid has been canceled"),
+        "unraid" => alert_basic("A raid is canceled"),
 
         "sub" | "resub" => {
             // Maximum possible usage should be 362 bytes; 384=256+128
