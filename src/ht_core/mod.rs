@@ -150,7 +150,8 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
             //  Message comes from Server. IRC Representation available.
             print_with_irc(&channel, etype, word, msg)
         } else if etype == PrintEvent::YOUR_MESSAGE
-            || etype == PrintEvent::YOUR_ACTION {
+            || etype == PrintEvent::YOUR_ACTION
+        {
             //  No IRC Representation available for Message.
             print_without_irc(&channel, etype, word)
         } else {
@@ -314,9 +315,12 @@ pub fn cmd_unk_badges(_arg_full: &[String]) -> EatMode {
     } else {
         alert_basic("The following Badges do not have associated icons:");
 
-        let mut vec: Vec<&str> = unk.iter().map(String::as_str).collect();
+        let mut vec: Vec<&String> = unk.iter().collect();
         vec.sort_unstable();
-        vec.into_iter().for_each(alert_basic);
+
+        for s in vec {
+            alert_basic(s);
+        }
     }
 
     EatMode::All
