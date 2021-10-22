@@ -4,8 +4,6 @@ use std::{
     collections::HashMap,
     convert::Infallible,
     fmt,
-    ops::Try,
-    option::NoneError,
 };
 
 
@@ -220,14 +218,14 @@ impl Message {
 
     /// Set a Tag on the `Message`. If the Tag was already present, its old
     ///     value is returned. If the `Message` has `None` for its Tags field,
-    ///     `Err(NoneError)` is returned.
+    ///     `Err(())` is returned.
     ///
     /// Input: `&str`, `&str`
-    /// Return: `Result<Option<String>, NoneError>`
+    /// Return: `Result<Option<String>, ()>`
     pub fn set_tag(&mut self, key: &str, value: &str)
-                   -> Result<Option<String>, NoneError>
+                   -> Result<Option<String>, ()>
     {
-        self.tags.as_mut().into_result()
+        self.tags.as_mut().ok_or(())
             .map(|tags| tags.insert(String::from(key), escape(value)))
     }
 }
@@ -392,7 +390,7 @@ pub mod tests_irc {
             "'Tagless' Message returns value for test key.",
         );
         assert_eq!(
-            Err(NoneError),
+            Err(()),
             tagless.set_tag(TEST_KEY, TEST_VAL_1),
             "Insertion of Tag does not fail on Message without Tags.",
         );
