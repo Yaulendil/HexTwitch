@@ -161,7 +161,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
                     "<{}> earns a new tier of Bits Badge for cheering {} Bits \
                         (${:.2}) total",
                     msg.get_tag("login")?, bits,
-                    bits as f64 / 100.0,
+                    bits as f64 * 0.01,
                 ),
                 None => format!(
                     "<{}> earns a new tier of Bits Badge",
@@ -288,12 +288,23 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
             alert_subscription(&line);
         }
         "submysterygift" => {
+            let mut line: String = String::with_capacity(128);
             let num: String = msg.get_tag("msg-param-mass-gift-count")?;
-            alert_subscription(&format!(
+
+            write!(
+                &mut line,
                 "<{}> gives out ({}) random gift subscription{}",
                 msg.get_tag("login")?, num,
                 if &num == "1" { "" } else { "s" },
-            ));
+            ).ok()?;
+
+            if let Some(gifts) = msg.get_tag("msg-param-sender-count") {
+                if gifts.parse().unwrap_or(0) > 0 {
+                    write!(&mut line, " (Total: {})", gifts).ok()?;
+                }
+            }
+
+            alert_subscription(&line);
         }
         "standardpayforward" => match msg.get_tag("msg-param-prior-gifter-user-name") {
             Some(prior) => alert_basic(&format!(
