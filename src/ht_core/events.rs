@@ -1,4 +1,4 @@
-use crate::NETWORK;
+use crate::{NETWORK, Pref};
 use hexchat::{
     ChannelRef,
     EatMode,
@@ -346,7 +346,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
         )),
 
         _ => {
-            if get_pref_bool("PREF_htdebug") {
+            if get_pref_bool(Pref::DEBUG) {
                 alert_error(&format!(
                     "Unknown UserNotice ID {:?}: {}",
                     stype, msg,
@@ -436,7 +436,7 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         let text: &str = &msg.trail[ME_LEN..]; // Slice off the `/me `.
 
         //  If the Whisper Tab is not focused, also post it here.
-        if get_pref_bool("PREF_whispers_in_current")
+        if get_pref_bool(Pref::WHISPERS)
             && get_channel_name() != user
         {
             echo(PrintEvent::PRIVATE_ACTION, &[user, text], 2);
@@ -446,7 +446,7 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         msg.trail = format!("\x01ACTION {}\x01", &text);
     } else {
         //  If the Whisper Tab is not focused, also post it here.
-        if get_pref_bool("PREF_whispers_in_current")
+        if get_pref_bool(Pref::WHISPERS)
             && get_channel_name() != user
         {
             echo(PrintEvent::PRIVATE_MESSAGE, &[user, &msg.trail], 2);

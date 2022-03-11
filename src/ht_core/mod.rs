@@ -20,7 +20,7 @@ use hexchat::{
 };
 use parking_lot::Mutex;
 
-use crate::NETWORK;
+use crate::{NETWORK, Pref};
 use irc::Message;
 use output::{
     alert_basic,
@@ -217,9 +217,9 @@ pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
 
 
 pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
-    let new: bool = !get_pref_bool("PREF_htdebug");
+    let new: bool = !get_pref_bool(Pref::DEBUG);
 
-    if set_pref_bool("PREF_htdebug", new).is_ok() {
+    if set_pref_bool(Pref::DEBUG, new).is_ok() {
         alert_basic(
             if new {
                 "Unrecognized UserNotices will now show the full Message."
@@ -253,7 +253,7 @@ pub fn cmd_reward(arg_full: &[String]) -> EatMode {
         //  Print the current Reward Names.
         alert_basic("REWARD EVENTS:");
         for pref in get_prefs() {
-            if !pref.is_empty() && !pref.starts_with("PREF") {
+            if !pref.is_empty() && !pref.starts_with(Pref::PREFIX) {
                 alert_basic(&format!(
                     "{}: '{}'",
                     pref,
@@ -262,7 +262,7 @@ pub fn cmd_reward(arg_full: &[String]) -> EatMode {
                 ));
             }
         }
-    } else if !arg[0].starts_with("PREF")
+    } else if !arg[0].starts_with(Pref::PREFIX)
         &&
         {
             if len < 2 {
@@ -347,9 +347,9 @@ pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_whisper_here(_arg_full: &[String]) -> EatMode {
-    let new: bool = !get_pref_bool("PREF_whispers_in_current");
+    let new: bool = !get_pref_bool(Pref::WHISPERS);
 
-    if set_pref_bool("PREF_whispers_in_current", new).is_ok() {
+    if set_pref_bool(Pref::WHISPERS, new).is_ok() {
         alert_basic(
             if new {
                 "Twitch Whispers will also show in the current Tab."
