@@ -246,40 +246,40 @@ pub fn cmd_prediction(_arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_reward(arg_full: &[String]) -> EatMode {
-    let arg: &[String] = arg_trim(&arg_full[1..]);
-    let len: usize = arg.len();
+    match arg_trim(&arg_full[1..]) {
+        [] => {
+            //  Print the current Reward Names.
+            alert_basic("REWARD EVENTS:");
 
-    if len < 1 {
-        //  Print the current Reward Names.
-        alert_basic("REWARD EVENTS:");
-        for pref in get_prefs() {
-            if !pref.is_empty() && !pref.starts_with(Pref::PREFIX) {
-                alert_basic(&format!(
-                    "{}: '{}'",
-                    pref,
-                    get_pref_string(&pref)
-                        .unwrap_or_default(),
-                ));
+            for pref in get_prefs() {
+                if !pref.is_empty() && !pref.starts_with(Pref::PREFIX) {
+                    alert_basic(&format!(
+                        "{}: '{}'",
+                        pref,
+                        get_pref_string(&pref).unwrap_or_default(),
+                    ));
+                }
             }
         }
-    } else if !arg[0].starts_with(Pref::PREFIX)
-        &&
-        {
-            if len < 2 {
+        [pref, ..] if pref.starts_with(Pref::PREFIX) => {
+            alert_error("Invalid Reward ID.");
+        }
+        [reward_id, content @ ..] => {
+            let pref: String = reward_id.to_lowercase();
+            let set_ok: bool = if content.is_empty() {
                 //  Unset a Reward.
-                delete_pref(&arg[0].to_lowercase())
+                delete_pref(&pref).is_ok()
             } else {
                 //  Set a Reward.
-                set_pref_string(
-                    &arg[0].to_lowercase(),
-                    &arg_trim(&arg[1..]).join(" "),
-                )
+                set_pref_string(&pref, &content.join(" ")).is_ok()
+            };
+
+            if set_ok {
+                alert_basic("Preference updated.");
+            } else {
+                alert_error("FAILED to update Preference.");
             }
-        }.is_ok()
-    {
-        alert_basic("Preference set.");
-    } else {
-        alert_error("FAILED to set Preference.");
+        }
     }
 
     EatMode::All
