@@ -173,6 +173,8 @@ fn get_badge(class: &str, rank: &str) -> char {
         "bits-leader"       /**/ => '❖',
         "bits"              /**/ => highest(rank.parse().unwrap_or(0), &BITS),
         "hype-train"        /**/ => '.',
+        // "moments"           /**/ => highest(rank.parse().unwrap_or(0), &MOMENT),
+        "moments"           /**/ => 'm',
 
         "partner"           /**/ => '✓',
         "turbo"             /**/ => '+',
@@ -182,9 +184,9 @@ fn get_badge(class: &str, rank: &str) -> char {
         "anonymous-cheerer" /**/ => '*',
 
         "ambassador"        /**/ => 'a',
-        "glitchcon2020"     /**/ => 'g',
         "predictions"       /**/ => prediction_badge(rank),
 
+        s if s.starts_with("glitchcon") => 'g',
         s if s.starts_with("twitchcon") => 'c',
         s if s.starts_with("overwatch-league-insider") => 'w',
         s if is_game_badge(s) => 'G',
