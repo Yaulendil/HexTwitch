@@ -364,18 +364,29 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 
 
 pub fn userstate(msg: Message) -> Option<EatMode> {
+    /// The title put in brackets at the start of a state update message.
+    const HEADER: &'static str = "BADGES";
+
     if let Some(badges) = USERSTATE.write().set(
         get_channel_name(),
         msg.get_tag("badges").unwrap_or_default(),
         msg.get_tag("badge-info").unwrap_or_default(),
     ) {
-        echo(EVENT_REWARD, &[
-            "BADGES",
-            "New Badges received:",
-            &badges,
-        ], 0);
+        if badges.is_empty() {
+            echo(EVENT_REWARD, &[
+                HEADER,
+                "Badges cleared.",
+                "",
+            ], 0);
+        } else {
+            echo(EVENT_REWARD, &[
+                HEADER,
+                "New Badges received:",
+                &badges,
+            ], 0);
 
-        badges.update_prediction();
+            badges.update_prediction();
+        }
     }
 
     Some(EatMode::All)
