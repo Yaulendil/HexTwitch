@@ -24,19 +24,6 @@ impl Display for TabColor {
     }
 }
 
-//  TODO: Remove this impl after all uses of `echo()` are converted.
-impl From<u8> for TabColor {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::None,
-            1 => Self::Event,
-            2 => Self::Message,
-            3 => Self::Highlight,
-            _ => Self::None,
-        }
-    }
-}
-
 
 /// Tabs: A mapping of HexChat Channel names to their current colors. Provides
 ///     an interface to change the colors, while also minimizing unnecessary

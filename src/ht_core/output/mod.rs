@@ -20,7 +20,7 @@ pub use printing::{
     USERSTATE,
 };
 use super::{events, irc::Message};
-pub use tabs::TABCOLORS;
+pub use tabs::{TabColor, TABCOLORS};
 
 
 /// Message comes from Server. IRC Representation available.
@@ -47,7 +47,7 @@ pub fn print_with_irc(
             echo(etype, &[
                 &*word[0], &*word[1], "_",
                 USERSTATE.read().get(&channel),
-            ], 2);
+            ], TabColor::Message);
 
             EatMode::All
         }
@@ -66,7 +66,7 @@ pub fn print_with_irc(
                 &[&*word[0], &*word[1], "", &badges],
                 if etype == PrintEvent::CHANNEL_MSG_HILIGHT
                     || etype == PrintEvent::CHANNEL_ACTION_HILIGHT
-                { 3 } else { 2 },
+                { TabColor::Highlight } else { TabColor::Message },
             );
 
             badges.update_prediction();
@@ -109,7 +109,7 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
         echo(etype, &[
             &*word[0], &*word[1], "_",
             USERSTATE.read().get(&channel),
-        ], 2);
+        ], TabColor::Message);
 
         EatMode::All
     } else {

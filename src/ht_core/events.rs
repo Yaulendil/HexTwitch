@@ -22,6 +22,7 @@ use super::{
         EVENT_ALERT,
         EVENT_CHANNEL,
         EVENT_REWARD,
+        TabColor,
         USERSTATE,
     },
 };
@@ -40,7 +41,7 @@ pub fn cheer(name: &str, number: usize) {
             "CHEER",
             &format!("{} cheers", name),
             &format!("{} bit{}", number, if number == 1 { "" } else { "s" }),
-        ], 1)
+        ], TabColor::Event)
     }
 }
 
@@ -53,12 +54,12 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
                 &notif,
                 &format!("{}:", msg.author()),
                 &word[1],
-            ], 2),
+            ], TabColor::Message),
             None => echo(EVENT_REWARD, &[
                 "CUSTOM",
                 &format!("({}) {}:", custom, msg.author()),
                 &word[1],
-            ], 2),
+            ], TabColor::Message),
         }
 
         Some(EatMode::All)
@@ -66,7 +67,7 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
         echo(EVENT_ALERT, &[
             msg.author(),
             &word[1],
-        ], 2);
+        ], TabColor::Message);
 
         Some(EatMode::All)
     } else { None }
@@ -77,7 +78,7 @@ pub fn reconnect(msg: Message) -> Option<EatMode> {
     echo(PrintEvent::SERVER_NOTICE, &[
         "IRC Service is about to restart.",
         msg.prefix.server().unwrap_or(NETWORK),
-    ], 0);
+    ], TabColor::None);
 
     Some(EatMode::All)
 }
@@ -171,7 +172,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 
             if !msg.trail.is_empty() { write!(&mut notif, ": {}", msg.trail).ok()?; }
 
-            echo(EVENT_ALERT, &["BADGE", &notif], 1);
+            echo(EVENT_ALERT, &["BADGE", &notif], TabColor::Event);
         }
 
         "unraid" => alert_basic("A raid is canceled"),
@@ -354,7 +355,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
             }
 
             if let Some(sysmsg) = msg.get_tag("system-msg") {
-                echo(EVENT_ALERT, &["UNKNOWN", &sysmsg], 1);
+                echo(EVENT_ALERT, &["UNKNOWN", &sysmsg], TabColor::Event);
             }
         }
     }
@@ -377,13 +378,13 @@ pub fn userstate(msg: Message) -> Option<EatMode> {
                 HEADER,
                 "Badges cleared.",
                 "",
-            ], 0);
+            ], TabColor::None);
         } else {
             echo(EVENT_REWARD, &[
                 HEADER,
                 "New Badges received:",
                 &badges,
-            ], 0);
+            ], TabColor::None);
 
             badges.update_prediction();
         }
@@ -439,7 +440,7 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         if get_pref_bool(Pref::WHISPERS)
             && get_channel_name() != user
         {
-            echo(PrintEvent::PRIVATE_ACTION, &[user, text], 2);
+            echo(PrintEvent::PRIVATE_ACTION, &[user, text], TabColor::Message);
         }
 
         //  Format the sliced text into an Action Message and replace the Trail.
@@ -449,7 +450,11 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         if get_pref_bool(Pref::WHISPERS)
             && get_channel_name() != user
         {
-            echo(PrintEvent::PRIVATE_MESSAGE, &[user, &msg.trail], 2);
+            echo(
+                PrintEvent::PRIVATE_MESSAGE,
+                &[user, &msg.trail],
+                TabColor::Message,
+            );
         }
     }
 
@@ -478,7 +483,7 @@ pub fn whisper_send_command(etype: PrintEvent, channel: &str, word: &[String]) {
         if user != channel {
             //  If the current tab is not the target tab, also print a line here
             //      confirming the message is sent.
-            echo(PrintEvent::MESSAGE_SEND, &[user, text], 2);
+            echo(PrintEvent::MESSAGE_SEND, &[user, text], TabColor::Message);
         }
 
         let etype_dm: PrintEvent = match etype {
@@ -515,7 +520,7 @@ pub fn hosttarget(msg: Message) -> Option<EatMode> {
 
         echo(EVENT_CHANNEL, &[
             &hashtarg, &format!("https://twitch.tv/{}", target),
-        ], 1);
+        ], TabColor::Event);
 
         if let Some(channel) = get_channel(NETWORK, &hashtarg) {
             print_event_to_channel(&channel, EVENT_REWARD, &[

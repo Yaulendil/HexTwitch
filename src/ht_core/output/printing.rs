@@ -29,12 +29,12 @@ pub const EVENT_REWARD: PrintEvent = PrintEvent::WHOIS_AUTHENTICATED;
 
 /// Echo: Print an event to HexChat in the current Channel, and color the tab.
 ///
-/// Input: `PrintEvent`, `&[impl AsRef<str>]`, `impl Into<TabColor>`
+/// Input: `PrintEvent`, `&[impl AsRef<str>]`, `TabColor`
 #[inline]
 pub fn echo(
     event: PrintEvent,
     args: &[impl AsRef<str>],
-    tab_color: impl Into<TabColor>,
+    tab_color: TabColor,
 ) {
     print_event(event, args);
     TABCOLORS.lock().color(tab_color.into());
