@@ -9,7 +9,7 @@ use std::{
     ops::Deref,
 };
 use super::{
-    prediction::{get_prediction, update_prediction},
+    prediction::{get_prediction, PredictionBadge, update_prediction},
     super::irc::split_at_char,
     tabs::TABCOLORS,
 };
@@ -209,15 +209,10 @@ fn highest(max: usize, seq: &[(usize, char)]) -> char {
 
 
 fn prediction_badge(pred: &str) -> char {
-    match pred {
-        //  These two will suffice if Twitch never adds more possibilities. This
-        //      does not seem likely, but it is possible.
-        "blue-1" => '⧮',
-        "pink-2" => '⧯',
-        //  Okay, these FOUR may suffice, I guess.
-        "gray-1" => '⧲',
-        "gray-2" => '⧳',
-        _ => {
+    //  twitch why
+    match pred.parse::<PredictionBadge>() {
+        Ok(pb) => pb.badge(),
+        Err(_) => {
             BADGES_UNK.write().get_or_insert(format!("predictions/{}", pred));
 
             'p'
