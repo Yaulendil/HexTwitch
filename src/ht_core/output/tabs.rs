@@ -6,11 +6,18 @@ use hexchat::{get_channel_name, get_current_channel, get_focused_channel};
 use parking_lot::Mutex;
 
 
+/// The four possible colors for a HexChat tab, representing the types of events
+///     that have occurred since the tab was last viewed.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum TabColor {
+    /// The standard color for a tab. White under default settings.
     None = 0,
+    /// Indicates that minor or non-chat events have occurred. Blue by default.
     Event = 1,
+    /// Indicates that regular chat messages have occurred. Orange by default.
     Message = 2,
+    /// Indicates that highlighted chat messages have occurred, usually along
+    ///     with an audible ping. Green by default.
     Highlight = 3,
 }
 
