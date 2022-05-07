@@ -11,7 +11,7 @@ use std::{
 use super::{
     prediction::{get_prediction, PredictionBadge, update_prediction},
     super::irc::split_at_char,
-    tabs::TABCOLORS,
+    tabs::{TabColor, TABCOLORS},
 };
 
 
@@ -29,31 +29,35 @@ pub const EVENT_REWARD: PrintEvent = PrintEvent::WHOIS_AUTHENTICATED;
 
 /// Echo: Print an event to HexChat in the current Channel, and color the tab.
 ///
-/// Input: `PrintEvent`, `&[impl AsRef<str>]`, `u8`
+/// Input: `PrintEvent`, `&[impl AsRef<str>]`, `impl Into<TabColor>`
 #[inline]
-pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: u8) {
+pub fn echo(
+    event: PrintEvent,
+    args: &[impl AsRef<str>],
+    tab_color: impl Into<TabColor>,
+) {
     print_event(event, args);
-    TABCOLORS.lock().color(tab_color);
+    TABCOLORS.lock().color(tab_color.into());
 }
 
 
 pub fn alert_basic(message: &str) {
-    echo(EVENT_NORMAL, &[message], 1);
+    echo(EVENT_NORMAL, &[message], TabColor::Event);
 }
 
 
 pub fn alert_error(message: &str) {
-    echo(EVENT_ERR, &[message], 1);
+    echo(EVENT_ERR, &[message], TabColor::Event);
 }
 
 
 pub fn alert_subscription(message: &str) {
-    echo(EVENT_ALERT, &["SUBSCRIPTION", message], 2);
+    echo(EVENT_ALERT, &["SUBSCRIPTION", message], TabColor::Message);
 }
 
 
 pub fn alert_sub_upgrade(message: &str) {
-    echo(EVENT_ALERT, &["UPGRADE", message], 2);
+    echo(EVENT_ALERT, &["UPGRADE", message], TabColor::Message);
 }
 
 
