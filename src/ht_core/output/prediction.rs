@@ -17,13 +17,13 @@ pub enum PredColor {
 }
 
 impl PredColor {
-    // pub const fn color(&self) -> &'static str {
-    //     match self {
-    //         Self::Blue => "blue",
-    //         Self::Pink => "pink",
-    //         Self::Gray => "gray",
-    //     }
-    // }
+    pub const fn color(&self) -> &'static str {
+        match self {
+            Self::Blue => "blue",
+            Self::Pink => "pink",
+            Self::Gray => "gray",
+        }
+    }
 
     pub const fn badge(&self, number: usize) -> char {
         let icons = self.icons();
@@ -65,6 +65,12 @@ impl PredictionBadge {
     }
 }
 
+impl Display for PredictionBadge {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}-{}", self.color.color(), self.index)
+    }
+}
+
 impl std::str::FromStr for PredictionBadge {
     type Err = ();
 
@@ -79,14 +85,42 @@ impl std::str::FromStr for PredictionBadge {
 }
 
 
+#[derive(Clone, Copy)]
+struct BadgeLabel<'s> {
+    badge: &'s PredictionBadge,
+    label: &'s String,
+}
+
+impl<'s> BadgeLabel<'s> {
+    const fn new(pair: (&'s PredictionBadge, &'s String)) -> Self {
+        let (badge, label) = pair;
+
+        Self { badge, label }
+    }
+}
+
+impl<'s> Display for BadgeLabel<'s> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            // "\"{name}\"/'{icon}' ({text:?})",
+            "{text:?} ({icon}: {name})",
+            icon = self.badge.badge(),
+            name = self.badge,
+            text = self.label,
+        )
+    }
+}
+
+
 #[derive(Clone, Default)]
 pub struct Predict {
     map: HashMap<PredictionBadge, String>,
 }
 
 impl Predict {
-    fn pairs(&self) -> Vec<(&PredictionBadge, &String)> {
-        self.map.iter().collect()
+    fn pairs(&self) -> Vec<BadgeLabel> {
+        self.map.iter().map(BadgeLabel::new).collect()
     }
 
     fn set_label(&mut self, badge: PredictionBadge, label: &str) -> bool {
@@ -102,17 +136,15 @@ impl Predict {
 
 impl Display for Predict {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        macro_rules! args {
-            ($p:expr) => {format_args!("{:?} ({})", $p.1, $p.0.badge())};
-        }
-
         match self.pairs().as_slice() {
             &[] => f.write_str(UNK),
-            &[one] => f.write_fmt(args!(one)),
-            &[one, two] => write!(f, "{} or {}", args!(one), args!(two)),
+            &[one] => one.fmt(f),
+            &[one, two] => write!(f, "{} or {}", one, two),
             &[ref most @ .., last] => {
-                for each in most { write!(f, "{}, ", args!(each))?; }
-                write!(f, "or {}", args!(last))
+                for each in most {
+                    write!(f, "{}, ", each)?;
+                }
+                write!(f, "or {}", last)
             }
         }
     }
