@@ -9,15 +9,22 @@ readme = "README.md"
 keywords = ["hexchat", "xchat", "twitch", "irc", "plugin"]
 license = "GPL-3.0"
 
+
 [dependencies]
 cached = "0.19.0"
 chrono = "0.4"
 hexchat = { git = "https://github.com/Yaulendil/hexchat-rs" }
 parking_lot = { version = "0.11" } #features = ["nightly"] }
 
+
 [lib]
 name = "hextwitchr"
 crate-type = ["cdylib", "rlib"]
+
+
+[features]
+nightly = []
+
 
 [profile.release]
 lto = true

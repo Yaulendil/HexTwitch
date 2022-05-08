@@ -1,6 +1,6 @@
 //! Core package for the HexTwitch Rust Plugin.
 
-#![feature(toowned_clone_into)]
+#![cfg_attr(feature = "nightly", feature(toowned_clone_into))]
 
 extern crate cached;
 #[macro_use]

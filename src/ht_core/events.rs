@@ -423,12 +423,18 @@ pub fn ensure_tab(name: &str) -> ChannelRef {
 pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
     let user: &str = msg.prefix.name();
 
+    #[cfg(feature = "nightly")]
     //  Swap out fields of the Message to reshape it into one that HexChat can
     //      nicely handle for us.
     //  The Command is (fragilely) guaranteed to have previously been "WHISPER",
     //      which is the same length as "PRIVMSG", so we can probably avoid an
     //      allocation by overwriting it.
+    //  TODO: Decide whether this is pointless. It feels pointless.
     "PRIVMSG".clone_into(&mut msg.command);
+
+    #[cfg(not(feature = "nightly"))] {
+        msg.command = String::from("PRIVMSG");
+    }
 
     //  Change the first Argument to be the name of the author.
     msg.args[0] = user.to_owned();
