@@ -15,6 +15,7 @@ macro_rules! cmd {
 
 
 mod ht_core;
+pub mod irc;
 
 use hexchat::{
     add_print_event_listener,

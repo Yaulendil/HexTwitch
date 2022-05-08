@@ -1,6 +1,3 @@
-use cached::proc_macro::cached;
-use hexchat::{get_channel_name, print_event, PrintEvent};
-use parking_lot::RwLock;
 use std::{
     collections::{
         hash_map::{Entry, HashMap},
@@ -8,9 +5,12 @@ use std::{
     },
     ops::Deref,
 };
+use cached::proc_macro::cached;
+use hexchat::{get_channel_name, print_event, PrintEvent};
+use parking_lot::RwLock;
+use crate::irc::split_at_char;
 use super::{
     prediction::{get_prediction, PredictionBadge, update_prediction},
-    super::irc::split_at_char,
     tabs::{TabColor, TABCOLORS},
 };
 

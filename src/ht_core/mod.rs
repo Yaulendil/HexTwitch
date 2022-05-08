@@ -1,5 +1,4 @@
 mod events;
-mod irc;
 mod output;
 
 
@@ -20,8 +19,7 @@ use hexchat::{
 };
 use parking_lot::Mutex;
 
-use crate::{NETWORK, Pref};
-use irc::Message;
+use crate::{irc::Message, NETWORK, Pref};
 use output::{
     alert_basic,
     alert_error,
@@ -330,18 +328,19 @@ pub fn cmd_unk_badges(_arg_full: &[String]) -> EatMode {
 pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
     let arg: &[String] = arg_trim(arg_full);
 
-    if arg.len() > 1 && this_is_twitch() {
-        let msg: String = arg[2..].join(" ");
-
-        //  Check for message.
-        if msg.is_empty() {
-            //  None: Switch to Whisper Tab.
-            cmd!("QUERY {}", arg[1]);
-        } else {
-            //  Some: Send through Whisper.
-            cmd!("SAY .w {} {}", arg[1], msg);
+    match arg {
+        [] | [_] => {}
+        _ if !this_is_twitch() => {}
+        [_, name] => {
+            //  Switch to Whisper Tab.
+            cmd!("QUERY {}", name);
+        }
+        [_, name, words @ ..] => {
+            //  Send through Whisper.
+            cmd!("SAY .w {} {}", name, words.join(" "));
         }
     }
+
     EatMode::All
 }
 

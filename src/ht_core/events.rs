@@ -1,4 +1,4 @@
-use crate::{NETWORK, Pref};
+use std::{collections::HashMap, fmt::Write};
 use hexchat::{
     ChannelRef,
     EatMode,
@@ -9,10 +9,13 @@ use hexchat::{
     print_plain,
     PrintEvent,
 };
-use std::{collections::HashMap, fmt::Write};
+use crate::{
+    irc::{Message, split_at_char},
+    NETWORK,
+    Pref,
+};
 use super::{
     get_pref_bool,
-    irc::{Message, split_at_char},
     output::{
         alert_basic,
         alert_error,

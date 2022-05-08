@@ -3,6 +3,8 @@ mod printing;
 mod tabs;
 
 use hexchat::{EatMode, PrintEvent, send_command};
+use crate::irc::Message;
+use super::events;
 pub use printing::{
     alert_basic,
     alert_error,
@@ -19,7 +21,6 @@ pub use printing::{
     EVENT_REWARD,
     USERSTATE,
 };
-use super::{events, irc::Message};
 pub use tabs::{TabColor, TABCOLORS};
 
 
