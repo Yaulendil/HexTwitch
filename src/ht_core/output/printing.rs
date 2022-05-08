@@ -195,7 +195,12 @@ fn get_badge(class: &str, rank: &str) -> char {
         s if s.starts_with("overwatch-league-insider") => 'w',
         s if is_game_badge(s) => 'G',
         s => {
-            BADGES_UNK.write().get_or_insert_owned(s);
+            // let mut set = BADGES_UNK.write();
+            // if !set.contains(s) {
+            //     set.insert(s.to_owned());
+            // }
+
+            BADGES_UNK.write().insert(s.to_owned());
 
             '?'
         }
@@ -217,7 +222,7 @@ fn prediction_badge(pred: &str) -> char {
     match pred.parse::<PredictionBadge>() {
         Ok(pb) => pb.badge(),
         Err(_) => {
-            BADGES_UNK.write().get_or_insert(format!("predictions/{}", pred));
+            BADGES_UNK.write().insert(format!("predictions/{}", pred));
 
             'p'
         }
