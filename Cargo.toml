@@ -17,7 +17,7 @@ parking_lot = { version = "0.11" } #features = ["nightly"] }
 
 [lib]
 name = "hextwitchr"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [profile.release]
 lto = true

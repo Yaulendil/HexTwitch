@@ -1,6 +1,6 @@
 //! Core package for the HexTwitch Rust Plugin.
 
-#![feature(hash_set_entry, test, toowned_clone_into)]
+#![feature(hash_set_entry, toowned_clone_into)]
 
 extern crate cached;
 #[macro_use]
