@@ -85,7 +85,7 @@ impl std::str::FromStr for PredictionBadge {
 }
 
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
 struct BadgeLabel<'s> {
     badge: &'s PredictionBadge,
     label: &'s String,
@@ -120,7 +120,12 @@ pub struct Predict {
 
 impl Predict {
     fn pairs(&self) -> Vec<BadgeLabel> {
-        self.map.iter().map(BadgeLabel::new).collect()
+        let mut pairs: Vec<BadgeLabel> = self.map.iter()
+            .map(BadgeLabel::new)
+            .collect();
+
+        pairs.sort_unstable();
+        pairs
     }
 
     fn set_label(&mut self, badge: PredictionBadge, label: &str) -> bool {
