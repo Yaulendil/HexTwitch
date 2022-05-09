@@ -99,7 +99,10 @@ fn check_message(channel: &str, author: &str) -> Option<Message> {
 ///     in `false`.
 #[inline]
 fn get_pref_bool(name: &str) -> bool {
-    get_pref_int(name).unwrap_or(0) != 0
+    match get_pref_int(name) {
+        Some(0) | None => false,
+        Some(_) => true,
+    }
 }
 
 
