@@ -70,7 +70,7 @@ pub fn print_with_irc(
                 { TabColor::Highlight } else { TabColor::Message },
             );
 
-            badges.update_prediction();
+            badges.update_prediction(&channel);
 
             if msg.get_tag("anonymous-cheerer").is_none() {
                 send_command(&format!(

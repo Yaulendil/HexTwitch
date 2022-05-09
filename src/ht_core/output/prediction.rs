@@ -2,7 +2,6 @@ use std::{
     collections::hash_map::{Entry, HashMap},
     fmt::{Display, Formatter},
 };
-use hexchat::get_channel_name;
 use parking_lot::RwLock;
 
 
@@ -166,11 +165,15 @@ pub fn get_prediction(channel: &str) -> Option<Predict> {
 }
 
 
-pub fn update_prediction(variant: &str, label: &str) -> Option<bool> {
+pub fn update_prediction(
+    channel: String,
+    variant: &str,
+    label: &str,
+) -> Option<bool> {
     match variant.parse::<PredictionBadge>() {
         Ok(pb) => {
             let mut map = PREDICT.write();
-            let pred: &mut Predict = match map.entry(get_channel_name()) {
+            let pred: &mut Predict = match map.entry(channel) {
                 Entry::Vacant(entry) => entry.insert(Default::default()),
                 Entry::Occupied(entry) => entry.into_mut(),
             };

@@ -371,8 +371,10 @@ pub fn userstate(msg: Message) -> Option<EatMode> {
     /// The title put in brackets at the start of a state update message.
     const HEADER: &'static str = "BADGES";
 
+    let channel: String = get_channel_name();
+
     if let Some(badges) = USERSTATE.write().set(
-        get_channel_name(),
+        channel.clone(),
         msg.get_tag("badges").unwrap_or_default(),
         msg.get_tag("badge-info").unwrap_or_default(),
     ) {
@@ -389,7 +391,7 @@ pub fn userstate(msg: Message) -> Option<EatMode> {
                 badges.as_str(),
             ], TabColor::None);
 
-            badges.update_prediction();
+            badges.update_prediction(&channel);
         }
     }
 

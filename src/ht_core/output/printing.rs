@@ -1,6 +1,6 @@
 use std::collections::{hash_map::{Entry, HashMap}, HashSet};
 use cached::proc_macro::cached;
-use hexchat::{get_channel_name, print_event, PrintEvent};
+use hexchat::{print_event, PrintEvent};
 use parking_lot::RwLock;
 use crate::irc::split_at_char;
 use super::{
@@ -301,7 +301,7 @@ impl Badges {
 
     /// Update the map of Predictions to include the data in the message used to
     ///     create these badges.
-    pub fn update_prediction(&self) -> bool {
+    pub fn update_prediction(&self, channel: &str) -> bool {
         const KEY: &str = "predictions/";
         const LEN: usize = KEY.len();
 
@@ -316,11 +316,14 @@ impl Badges {
                     let variant = &rank[LEN..];
                     let label = &info[LEN..];
 
-                    if let Some(true) = update_prediction(variant, label) {
+                    if let Some(true) = update_prediction(
+                        channel.to_owned(),
+                        variant,
+                        label,
+                    ) {
                         alert_basic(&format!(
                             "Prediction Updated: {}",
-                            get_prediction(&get_channel_name())
-                                .unwrap_or_default(),
+                            get_prediction(channel).unwrap_or_default(),
                         ));
                         return true;
                     }
