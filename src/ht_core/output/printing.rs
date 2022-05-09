@@ -235,7 +235,8 @@ fn prediction_badge(pred: &str) -> char {
 ///     Function.
 #[derive(Clone, Default)]
 pub struct Badges {
-    input: (String, String),
+    badges: String,
+    badge_info: String,
     pub output: String,
 }
 
@@ -249,28 +250,34 @@ impl Badges {
     ///
     /// Input: `String`, `String`
     /// Return: `Badges`
-    fn from_str(badges: String, meta: String) -> Self {
+    fn from_str(badges: String, badge_info: String) -> Self {
+        const SUB: &str = "subscriber";
+        const KEY: &str = "subscriber/";
+        const LEN: usize = KEY.len();
+
         let mut output: String = String::with_capacity(16);
 
         if !badges.is_empty() {
-            for pair in badges.split(',') {
+            let check_subs: bool = !badge_info.is_empty();
+
+            for pair_badge in badges.split(',') {
                 //  Twitch now provides the number of months attached to a Sub
                 //      Badge separately, in the `badge-info` Tag. The number
                 //      attached directly to the Badge itself will only reflect
                 //      the correct number of months if the channel has a custom
                 //      icon set for the tier.
-                if pair.starts_with("subscriber/") && !meta.is_empty() {
+                if check_subs && pair_badge.starts_with(KEY) {
                     //  This is a special case, because we do not actually care
                     //      about the rank of the Subscriber Badge. What we want
-                    //      to use as the rank is in the metadata map.
-                    for pair_info in meta.split(',') {
-                        if pair_info.starts_with("subscriber/") {
-                            output.push(get_badge("subscriber", &pair_info[11..]));
+                    //      to use as the rank is in the `badge-info` Tag.
+                    for pair_info in badge_info.split(',') {
+                        if pair_info.starts_with(KEY) {
+                            output.push(get_badge(SUB, &pair_info[LEN..]));
                             break;
                         }
                     }
                 } else {
-                    let (class, rank) = split_at_char(pair, '/');
+                    let (class, rank) = split_at_char(pair_badge, '/');
                     output.push(get_badge(class, rank));
                 }
             }
@@ -280,7 +287,7 @@ impl Badges {
 
         // output.shrink_to_fit();
 
-        Self { input: (badges, meta), output }
+        Self { badges, badge_info, output }
     }
 
     /// Update the map of Predictions to include the data in the message used to
@@ -289,16 +296,16 @@ impl Badges {
         const KEY: &str = "predictions/";
         const LEN: usize = KEY.len();
 
-        if !self.input.0.is_empty() && !self.input.1.is_empty() {
+        if !self.badges.is_empty() && !self.badge_info.is_empty() {
             //  Search the badge info tag first; It is likely much shorter than
             //      the badges tag, so if there is no tag found for Predictions,
             //      this order will fail and move on more quickly.
             'search:
-            for meta in self.input.1.split(',') {
-                if meta.starts_with(KEY) {
-                    for rank in self.input.0.split(',') {
+            for info in self.badge_info.split(',') {
+                if info.starts_with(KEY) {
+                    for rank in self.badges.split(',') {
                         if rank.starts_with(KEY) {
-                            if update_prediction(&rank[LEN..], &meta[LEN..])
+                            if update_prediction(&rank[LEN..], &info[LEN..])
                                 == Some(true)
                             {
                                 alert_basic(&format!(
@@ -341,8 +348,8 @@ impl Deref for Badges {
 
 /// Passthrough function required for caching.
 #[cached(size = 50)]
-pub fn badge_parse(input: String, info: String) -> Badges {
-    Badges::from_str(input, info)
+pub fn badge_parse(badges: String, badge_info: String) -> Badges {
+    Badges::from_str(badges, badge_info)
 }
 
 
@@ -381,7 +388,7 @@ impl States {
             Entry::Occupied(entry) => {
                 let badges: &mut Badges = entry.into_mut();
 
-                if badges.input.0 != bstr || badges.input.1 != meta {
+                if badges.badges != bstr || badges.badge_info != meta {
                     *badges = badge_parse(bstr, meta);
                     Some(badges)
                 } else {
