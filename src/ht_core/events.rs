@@ -386,7 +386,7 @@ pub fn userstate(msg: Message) -> Option<EatMode> {
             echo(EVENT_REWARD, &[
                 HEADER,
                 "New Badges received:",
-                &badges,
+                badges.as_str(),
             ], TabColor::None);
 
             badges.update_prediction();

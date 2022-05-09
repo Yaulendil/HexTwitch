@@ -1,10 +1,4 @@
-use std::{
-    collections::{
-        hash_map::{Entry, HashMap},
-        HashSet,
-    },
-    ops::Deref,
-};
+use std::collections::{hash_map::{Entry, HashMap}, HashSet};
 use cached::proc_macro::cached;
 use hexchat::{get_channel_name, print_event, PrintEvent};
 use parking_lot::RwLock;
@@ -237,7 +231,7 @@ fn prediction_badge(pred: &str) -> char {
 pub struct Badges {
     badges: String,
     badge_info: String,
-    pub output: String,
+    pub output: Option<String>,
 }
 
 impl Badges {
@@ -255,9 +249,8 @@ impl Badges {
         const KEY: &str = "subscriber/";
         const LEN: usize = KEY.len();
 
-        let mut output: String = String::with_capacity(16);
-
-        if !badges.is_empty() {
+        let output: Option<String> = if !badges.is_empty() {
+            let mut output: String = String::with_capacity(16);
             let check_subs: bool = !badge_info.is_empty();
 
             for pair_badge in badges.split(',') {
@@ -282,12 +275,28 @@ impl Badges {
                 }
             }
 
-            if !output.is_empty() { output.push(' '); }
-        }
-
-        // output.shrink_to_fit();
+            if !output.is_empty() {
+                output.push(' ');
+                Some(output)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
 
         Self { badges, badge_info, output }
+    }
+
+    pub fn as_str(&self) -> &str {
+        match &self.output {
+            Some(oput) => oput,
+            None => Self::NONE,
+        }
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        self.output.is_none()
     }
 
     /// Update the map of Predictions to include the data in the message used to
@@ -327,21 +336,17 @@ impl Badges {
     }
 }
 
-
-impl<T> AsRef<T> for Badges where
-    String: AsRef<T>,
-{
-    fn as_ref(&self) -> &T {
-        self.output.as_ref()
+impl AsRef<str> for Badges {
+    fn as_ref(&self) -> &str {
+        self.as_str()
     }
 }
 
-
-impl Deref for Badges {
-    type Target = str;
-
-    fn deref(&self) -> &Self::Target {
-        &self.output
+impl<T> AsRef<T> for Badges where
+    str: AsRef<T>,
+{
+    fn as_ref(&self) -> &T {
+        self.as_str().as_ref()
     }
 }
 
@@ -365,7 +370,7 @@ impl States {
     /// Return: `&str`
     pub fn get(&self, channel: &str) -> &str {
         self.inner.get(channel)
-            .map(Deref::deref)
+            .map(Badges::as_str)
             .unwrap_or(Badges::NONE)
     }
 

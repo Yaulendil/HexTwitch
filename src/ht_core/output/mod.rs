@@ -64,7 +64,7 @@ pub fn print_with_irc(
 
             echo(
                 etype,
-                &[&*word[0], &*word[1], "", &badges],
+                &[&*word[0], &*word[1], "", badges.as_str()],
                 if etype == PrintEvent::CHANNEL_MSG_HILIGHT
                     || etype == PrintEvent::CHANNEL_ACTION_HILIGHT
                 { TabColor::Highlight } else { TabColor::Message },
