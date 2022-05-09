@@ -305,29 +305,25 @@ impl Badges {
         const KEY: &str = "predictions/";
         const LEN: usize = KEY.len();
 
+        fn is_prediction(pair: &&str) -> bool { pair.starts_with(KEY) }
+
         if !self.badges.is_empty() && !self.badge_info.is_empty() {
             //  Search the badge info tag first; It is likely much shorter than
             //      the badges tag, so if there is no tag found for Predictions,
             //      this order will fail and move on more quickly.
-            'search:
-            for info in self.badge_info.split(',') {
-                if info.starts_with(KEY) {
-                    for rank in self.badges.split(',') {
-                        if rank.starts_with(KEY) {
-                            if update_prediction(&rank[LEN..], &info[LEN..])
-                                == Some(true)
-                            {
-                                alert_basic(&format!(
-                                    "Prediction Updated: {}",
-                                    get_prediction(&get_channel_name())
-                                        .unwrap_or_default(),
-                                ));
-                                return true;
-                            }
-                            break 'search;
-                        }
+            if let Some(info) = self.badge_info.split(',').find(is_prediction) {
+                if let Some(rank) = self.badges.split(',').find(is_prediction) {
+                    let variant = &rank[LEN..];
+                    let label = &info[LEN..];
+
+                    if let Some(true) = update_prediction(variant, label) {
+                        alert_basic(&format!(
+                            "Prediction Updated: {}",
+                            get_prediction(&get_channel_name())
+                                .unwrap_or_default(),
+                        ));
+                        return true;
                     }
-                    break 'search;
                 }
             }
         }
