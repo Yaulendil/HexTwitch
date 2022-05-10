@@ -4,7 +4,7 @@ mod tabs;
 
 use hexchat::{EatMode, PrintEvent, send_command};
 use crate::irc::Message;
-use super::events;
+use super::{events, mark_processed, mark_processed_sig};
 pub use printing::{
     alert_basic,
     alert_error,
@@ -45,8 +45,9 @@ pub fn print_with_irc(
         PrintEvent::YOUR_MESSAGE
         | PrintEvent::YOUR_ACTION
         => {
+            mark_processed_sig(msg.get_signature());
             echo(etype, &[
-                &*word[0], &*word[1], "_",
+                &*word[0], &*word[1], &*word[2],
                 USERSTATE.read().get(&channel),
             ], TabColor::Message);
 
@@ -62,9 +63,10 @@ pub fn print_with_irc(
                 msg.get_tag("badge-info").unwrap_or_default(),
             );
 
+            mark_processed_sig(msg.get_signature());
             echo(
                 etype,
-                &[&*word[0], &*word[1], "", badges.as_str()],
+                &[&*word[0], &*word[1], &*word[2], badges.as_str()],
                 if etype == PrintEvent::CHANNEL_MSG_HILIGHT
                     || etype == PrintEvent::CHANNEL_ACTION_HILIGHT
                 { TabColor::Highlight } else { TabColor::Message },
@@ -100,21 +102,21 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
         events::whisper_send_channel(etype, &channel, word);
 
         EatMode::All
-    } else if word[2].is_empty() {
+    } else {
+        let author: &str = &word[0];
+
         //  FIXME: Currently, a `/ME` Command executed by the User is not given
         //      the User Badges, while it IS given Badges when received from the
         //      Server. This seems to be where that goes wrong, but it is not
         //      clear why.
-        //  User has spoken in a normal Channel, but has no Badges.
-        //      Add the Badges from the User State and re-emit.
+        //  User has spoken in a normal Channel, but has not yet been given
+        //      Badges. Add the Badges from the User State and re-emit.
+        mark_processed(&channel, &author);
         echo(etype, &[
-            &*word[0], &*word[1], "_",
+            author, &*word[1], &*word[2],
             USERSTATE.read().get(&channel),
         ], TabColor::Message);
 
         EatMode::All
-    } else {
-        //  This is a re-emit. Do nothing.
-        EatMode::None
     }
 }

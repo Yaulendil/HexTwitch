@@ -102,6 +102,18 @@ macro_rules! hook_print {
 }
 
 
+fn make_signature(
+    channel: Option<impl AsRef<str>>,
+    author: Result<impl AsRef<str>, ()>,
+) -> String {
+    format!(
+        "{:?}:{:?}",
+        channel.as_ref().map(|s| s.as_ref()),
+        author.as_ref().map(|s| s.as_ref()),
+    )
+}
+
+
 #[derive(Default)]
 struct HexTwitch { hooks: Vec<Hook> }
 

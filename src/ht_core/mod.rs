@@ -19,7 +19,7 @@ use hexchat::{
 };
 use parking_lot::Mutex;
 
-use crate::{irc::Message, NETWORK, Pref};
+use crate::{irc::Message, make_signature, NETWORK, Pref};
 use output::{
     alert_basic,
     alert_error,
@@ -31,20 +31,44 @@ use output::{
 };
 
 
+enum MsgSrc {
+    /// This message has already been processed, and is being emitted again. It
+    ///     should be passed through unaffected.
+    ReEmit,
+    /// This message is from the IRC Server. It should be processed, and has IRC
+    ///     data associated with it.
+    Server(Message),
+    /// This message has no associated IRC data, but it has not been processed
+    ///     already.
+    Unknown,
+}
+
+
 #[derive(Default)]
 struct Sponge {
     signature: Option<String>,
-    value: Option<Message>,
+    previous: Option<String>,
+    message: Option<Message>,
 }
 
 impl Sponge {
     /// Place a Message into the Sponge. The previous Message in the Sponge, if
     ///     any, is removed. Takes Ownership of the new Message.
     ///
-    /// Input: `Message`
+    /// Input: [`Message`]
     fn put(&mut self, new: Message) {
-        self.signature.replace(new.get_signature());
-        self.value.replace(new);
+        let sig_new = new.get_signature();
+
+        if self.previous.as_ref() == Some(&sig_new) {
+            //  New message is a re-emit of the last message finished. Ignore
+            //      it, but do NOT ignore the NEXT reoccurrence of the same
+            //      signature.
+            self.previous.take();
+        } else {
+            //  New message does not match the last emitted. Accept it.
+            self.signature.replace(sig_new);
+            self.message.replace(new);
+        }
     }
 
     /// Remove the Message from the Sponge, but only if the current Message has
@@ -58,12 +82,35 @@ impl Sponge {
     ///     with the much fuller version received through a Server Hook.
     ///
     /// Input: `&str`
-    /// Return: `Option<Message>`
-    fn pop(&mut self, signature: &str) -> Option<Message> {
-        match self.signature.as_ref() {
-            Some(sig) if sig == signature => self.value.take(),
-            _ => None,
+    /// Return: [`MsgSrc`]
+    fn pop(&mut self, signature: &str) -> MsgSrc {
+        //  Check the last processed message signature. At the same time, clear
+        //      the last processed, because this check is the sole purpose for
+        //      its existence.
+        match self.previous.take() {
+            //  New signature matches previous. Probably a re-emit.
+            Some(old) if signature == old => MsgSrc::ReEmit,
+
+            //  Compare against the currently-held signature.
+            _ => match &self.signature {
+                Some(sig) if signature == sig => match self.message.take() {
+                    //  Signature matches and message is present. Return it.
+                    Some(msg) => MsgSrc::Server(msg),
+
+                    //  Signature matches, but message is already gone.
+                    None => MsgSrc::Unknown,
+                }
+
+                //  Signature does not match.
+                Some(_) => MsgSrc::Unknown,
+                //  Not holding a signature.
+                None => MsgSrc::Unknown,
+            }
         }
+    }
+
+    fn set_prev(&mut self, signature: String) {
+        self.previous = Some(signature);
     }
 }
 
@@ -86,10 +133,18 @@ fn arg_trim(args: &[String]) -> &[String] {
 }
 
 
-fn check_message(channel: &str, author: &str) -> Option<Message> {
-    CURRENT.lock().pop(
-        &format!("Some({:?}):{:?}", channel, strip_formatting(author))
-    )
+fn check_message(channel: &str, author: &str) -> MsgSrc {
+    CURRENT.lock().pop(&make_signature(Some(channel), strip_formatting(author)))
+}
+
+
+fn mark_processed(channel: &str, author: &str) {
+    mark_processed_sig(make_signature(Some(channel), Ok(author)));
+}
+
+
+fn mark_processed_sig(sig: String) {
+    CURRENT.lock().set_prev(sig);
 }
 
 
@@ -144,19 +199,28 @@ pub fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
 
 
 pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
+    fn need_irc(etype: PrintEvent) -> bool {
+        match etype {
+            PrintEvent::YOUR_ACTION => false,
+            PrintEvent::YOUR_MESSAGE => false,
+            _ => true,
+        }
+    }
+
     if this_is_twitch() {
         let channel: String = get_channel_name();
+        let author: &String = &word[0];
 
-        if let Some(msg) = check_message(&channel, &word[0]) {
+        //  Determine what should be done with this message.
+        match check_message(&channel, author) {
+            //  Message was already processed. Ignore it.
+            MsgSrc::ReEmit => EatMode::None,
             //  Message comes from Server. IRC Representation available.
-            print_with_irc(&channel, etype, word, msg)
-        } else if etype == PrintEvent::YOUR_MESSAGE
-            || etype == PrintEvent::YOUR_ACTION
-        {
+            MsgSrc::Server(msg) => print_with_irc(&channel, etype, word, msg),
+
             //  No IRC Representation available for Message.
-            print_without_irc(&channel, etype, word)
-        } else {
-            EatMode::None
+            MsgSrc::Unknown if need_irc(etype) => EatMode::None,
+            MsgSrc::Unknown => print_without_irc(&channel, etype, word),
         }
     } else {
         EatMode::None

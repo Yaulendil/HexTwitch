@@ -5,6 +5,7 @@ use std::{
     convert::Infallible,
     fmt,
 };
+use crate::make_signature;
 
 
 /// Given a string which may contain characters which are not allowed in an IRC
@@ -197,7 +198,7 @@ impl Message {
     ///
     /// Return: `String`
     pub fn get_signature(&self) -> String {
-        format!("{:?}:Ok({:?})", self.args.get(0), self.author())
+        make_signature(self.args.first(), Ok(self.author()))
     }
 
     /// Check whether this `Message` includes IRC Tags.

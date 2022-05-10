@@ -65,6 +65,14 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
             ], TabColor::Message),
         }
 
+        if custom.is_empty() {
+            echo(EVENT_REWARD, &[
+                "EMPTY",
+                "Empty Reward ID:",
+                &msg.to_string(),
+            ], TabColor::Message);
+        }
+
         Some(EatMode::All)
     } else if "highlighted-message" == msg.get_tag("msg-id")? {
         echo(EVENT_ALERT, &[
