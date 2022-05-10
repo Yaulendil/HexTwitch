@@ -291,7 +291,7 @@ impl Badges {
     pub fn as_str(&self) -> &str {
         match &self.output {
             Some(oput) => oput,
-            None => Self::NONE,
+            None => "",
         }
     }
 
