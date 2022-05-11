@@ -5,7 +5,6 @@ use std::{
     convert::Infallible,
     fmt,
 };
-use crate::make_signature;
 
 
 /// Given a string which may contain characters which are not allowed in an IRC
@@ -91,6 +90,23 @@ fn split_at_str<'a>(line: &'a str, delim: &str) -> (&'a str, &'a str) {
     match line.find(delim) {
         Some(idx) => (&line[..idx], &line[idx + delim.len()..]),
         None => (line, ""),
+    }
+}
+
+
+#[derive(Clone, Debug, Hash, Eq, PartialEq)]
+pub struct Signature(String);
+
+impl Signature {
+    pub fn new(
+        channel: Option<impl AsRef<str>>,
+        author: Result<impl AsRef<str>, ()>,
+    ) -> Self {
+        Self(format!(
+            "{:?}:{:?}",
+            channel.as_ref().map(|s| s.as_ref()),
+            author.as_ref().map(|s| s.as_ref()),
+        ))
     }
 }
 
@@ -196,9 +212,9 @@ impl Message {
 
     /// Get a `String` representing this `Message` which will identify it.
     ///
-    /// Return: `String`
-    pub fn get_signature(&self) -> String {
-        make_signature(self.args.first(), Ok(self.author()))
+    /// Return: [`Signature`]
+    pub fn get_signature(&self) -> Signature {
+        Signature::new(self.args.first(), Ok(self.author()))
     }
 
     /// Check whether this `Message` includes IRC Tags.

@@ -19,7 +19,7 @@ use hexchat::{
 };
 use parking_lot::Mutex;
 
-use crate::{irc::Message, make_signature, NETWORK, Pref};
+use crate::{irc::{Message, Signature}, NETWORK, Pref};
 use output::{
     alert_basic,
     alert_error,
@@ -46,8 +46,8 @@ enum MsgSrc {
 
 #[derive(Default)]
 struct Sponge {
-    signature: Option<String>,
-    previous: Option<String>,
+    signature: Option<Signature>,
+    previous: Option<Signature>,
     message: Option<Message>,
 }
 
@@ -81,15 +81,17 @@ impl Sponge {
     ///     Print Hooks. This way, that minimal representation can be associated
     ///     with the much fuller version received through a Server Hook.
     ///
-    /// Input: `&str`
+    /// Input: [`&Signature`]
     /// Return: [`MsgSrc`]
-    fn pop(&mut self, signature: &str) -> MsgSrc {
+    ///
+    /// [`&Signature`]: Signature
+    fn pop(&mut self, signature: &Signature) -> MsgSrc {
         //  Check the last processed message signature. At the same time, clear
         //      the last processed, because this check is the sole purpose for
         //      its existence.
         match self.previous.take() {
             //  New signature matches previous. Probably a re-emit.
-            Some(old) if signature == old => MsgSrc::ReEmit,
+            Some(old) if signature == &old => MsgSrc::ReEmit,
 
             //  Compare against the currently-held signature.
             _ => match &self.signature {
@@ -109,7 +111,7 @@ impl Sponge {
         }
     }
 
-    fn set_prev(&mut self, signature: String) {
+    fn set_prev(&mut self, signature: Signature) {
         self.previous = Some(signature);
     }
 }
@@ -134,16 +136,14 @@ fn arg_trim(args: &[String]) -> &[String] {
 
 
 fn check_message(channel: &str, author: &str) -> MsgSrc {
-    CURRENT.lock().pop(&make_signature(Some(channel), strip_formatting(author)))
+    CURRENT.lock().pop(&Signature::new(
+        Some(channel),
+        strip_formatting(author),
+    ))
 }
 
 
-fn mark_processed(channel: &str, author: &str) {
-    mark_processed_sig(make_signature(Some(channel), Ok(author)));
-}
-
-
-fn mark_processed_sig(sig: String) {
+fn mark_processed(sig: Signature) {
     CURRENT.lock().set_prev(sig);
 }
 

@@ -3,8 +3,8 @@ mod printing;
 mod tabs;
 
 use hexchat::{EatMode, PrintEvent, send_command};
-use crate::irc::Message;
-use super::{events, mark_processed, mark_processed_sig};
+use crate::irc::{Message, Signature};
+use super::{events, mark_processed};
 pub use printing::{
     alert_basic,
     alert_error,
@@ -45,7 +45,7 @@ pub fn print_with_irc(
         PrintEvent::YOUR_MESSAGE
         | PrintEvent::YOUR_ACTION
         => {
-            mark_processed_sig(msg.get_signature());
+            mark_processed(msg.get_signature());
             echo(etype, &[
                 &*word[0], &*word[1], &*word[2],
                 USERSTATE.read().get(&channel),
@@ -63,7 +63,7 @@ pub fn print_with_irc(
                 msg.get_tag("badge-info").unwrap_or_default(),
             );
 
-            mark_processed_sig(msg.get_signature());
+            mark_processed(msg.get_signature());
             echo(
                 etype,
                 &[&*word[0], &*word[1], &*word[2], badges.as_str()],
@@ -111,7 +111,7 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
         //      clear why.
         //  User has spoken in a normal Channel, but has not yet been given
         //      Badges. Add the Badges from the User State and re-emit.
-        mark_processed(&channel, &author);
+        mark_processed(Signature::new(Some(channel), Ok(author)));
         echo(etype, &[
             author, &*word[1], &*word[2],
             USERSTATE.read().get(&channel),
