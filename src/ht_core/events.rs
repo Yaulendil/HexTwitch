@@ -50,28 +50,47 @@ pub fn cheer(name: &str, number: usize) {
 
 
 pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
-    if let Some(custom) = msg.get_tag("custom-reward-id") {
+    const REWARD_UNKNOWN: &str = "CUSTOM";
+
+    if let Some(id) = msg.get_tag("custom-reward-id") {
         //  This Message is a Custom Reward.
-        match get_pref_string(&custom) {
-            Some(notif) => echo(EVENT_REWARD, &[
-                &notif,
-                &format!("{}:", msg.author()),
-                &word[1],
-            ], TabColor::Message),
-            None => echo(EVENT_REWARD, &[
-                "CUSTOM",
-                &format!("({}) {}:", custom, msg.author()),
-                &word[1],
-            ], TabColor::Message),
+        let reward_owned: String;
+        let reward_name: &str;
+        let author_name: String;
+
+        if id.is_empty() {
+            //  [CUSTOM] (No ID) username: message
+            reward_name = REWARD_UNKNOWN;
+            author_name = format!("(No ID) {}:", msg.author());
+        } else {
+            match get_pref_string(&id) {
+                //  [Reward] username: message
+                Some(title_pref) => {
+                    reward_owned = title_pref;
+                    reward_name = &reward_owned;
+                    author_name = format!("{}:", msg.author());
+                }
+
+                //  [CUSTOM] (00000000-0000-0000-0000-000000000000) username: message
+                None => {
+                    reward_name = REWARD_UNKNOWN;
+                    author_name = format!("({}) {}:", id, msg.author());
+                }
+
+                /*//  [00000000-0000-0000-0000-000000000000] username: message
+                None => {
+                    reward_owned = id;
+                    reward_name = &reward_owned;
+                    id_author = format!("{}:", msg.author());
+                }*/
+            }
         }
 
-        if custom.is_empty() {
-            echo(EVENT_REWARD, &[
-                "EMPTY",
-                "Empty Reward ID:",
-                &msg.to_string(),
-            ], TabColor::Message);
-        }
+        echo(EVENT_REWARD, &[
+            reward_name,
+            &author_name,
+            &word[1],
+        ], TabColor::Message);
 
         Some(EatMode::All)
     } else if "highlighted-message" == msg.get_tag("msg-id")? {
