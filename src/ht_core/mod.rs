@@ -9,17 +9,15 @@ use hexchat::{
     EatMode,
     get_channel_name,
     get_network_name,
-    get_pref_int,
     get_pref_string,
     get_prefs,
     PrintEvent,
-    set_pref_int,
     set_pref_string,
     strip_formatting,
 };
 use parking_lot::Mutex;
 
-use crate::{irc::{Message, Signature}, NETWORK, Pref};
+use crate::{irc::{Message, Signature}, NETWORK, prefs::{HexPrefSet, Pref}};
 use output::{
     alert_basic,
     alert_error,
@@ -148,29 +146,6 @@ fn mark_processed(sig: Signature) {
 }
 
 
-/// Plugin preferences do not support a boolean type. This function wraps an
-///     Integer preference to serve the same purpose. A preference with any non-
-///     zero value will be interpreted as `true`. Unset preferences will result
-///     in `false`.
-#[inline]
-fn get_pref_bool(name: &str) -> bool {
-    match get_pref_int(name) {
-        Some(0) | None => false,
-        Some(_) => true,
-    }
-}
-
-
-/// Plugin preferences do not support a boolean type. This function wraps an
-///     Integer preference to serve the same purpose. Stores either `1` or `0`
-///     in the preference, cast directly from the boolean input. Will return
-///     `Ok(())` on success, or `Err(())` otherwise.
-#[inline]
-fn set_pref_bool(name: &str, value: bool) -> Result<(), ()> {
-    set_pref_int(name, value as _)
-}
-
-
 fn this_is_twitch() -> bool {
     match get_network_name() {
         Some(network) => network == NETWORK,
@@ -282,9 +257,9 @@ pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
 
 
 pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
-    let new: bool = !get_pref_bool(Pref::DEBUG);
+    let new: bool = !Pref::DEBUG.is(true);
 
-    if set_pref_bool(Pref::DEBUG, new).is_ok() {
+    if Pref::DEBUG.set(new).is_ok() {
         alert_basic(
             if new {
                 "Unrecognized UserNotices will now show the full Message."
@@ -413,9 +388,9 @@ pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_whisper_here(_arg_full: &[String]) -> EatMode {
-    let new: bool = !get_pref_bool(Pref::WHISPERS);
+    let new: bool = !Pref::WHISPERS.is(true);
 
-    if set_pref_bool(Pref::WHISPERS, new).is_ok() {
+    if Pref::WHISPERS.set(new).is_ok() {
         alert_basic(
             if new {
                 "Twitch Whispers will also show in the current Tab."
