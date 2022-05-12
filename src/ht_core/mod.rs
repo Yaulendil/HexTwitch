@@ -5,19 +5,15 @@ mod output;
 use chrono::{DateTime, Utc};
 use hexchat::{
     ChannelRef,
-    delete_pref,
     EatMode,
     get_channel_name,
     get_network_name,
-    get_pref_string,
-    get_prefs,
     PrintEvent,
-    set_pref_string,
     strip_formatting,
 };
 use parking_lot::Mutex;
 
-use crate::{irc::{Message, Signature}, NETWORK, prefs::{HexPrefSet, Pref}};
+use crate::{irc::{Message, Signature}, NETWORK, prefs::*};
 use output::{
     alert_basic,
     alert_error,
@@ -257,9 +253,9 @@ pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
 
 
 pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
-    let new: bool = !Pref::DEBUG.is(true);
+    let new: bool = !PREF_DEBUG.is(true);
 
-    if Pref::DEBUG.set(new).is_ok() {
+    if PREF_DEBUG.set(new).is_ok() {
         alert_basic(
             if new {
                 "Unrecognized UserNotices will now show the full Message."
@@ -291,34 +287,36 @@ pub fn cmd_reward(arg_full: &[String]) -> EatMode {
             //  Print the current Reward Names.
             alert_basic("REWARD EVENTS:");
 
-            for pref in get_prefs() {
-                if !pref.is_empty() && !pref.starts_with(Pref::PREFIX) {
-                    alert_basic(&format!(
-                        "{}: '{}'",
-                        pref,
-                        get_pref_string(&pref).unwrap_or_default(),
-                    ));
-                }
+            // for pref in get_prefs() {
+            //     if !pref.is_empty() && !pref.starts_with(Pref::PREFIX) {
+            //         alert_basic(&format!(
+            //             "{}: '{}'",
+            //             pref,
+            //             get_pref_string(&pref).unwrap_or_default(),
+            //         ));
+            //     }
+            // }
+
+            for reward in Reward::get_all() {
+                alert_basic(&format!(
+                    "{}: '{}'",
+                    reward.id(),
+                    reward.get().unwrap_or_default(),
+                ));
             }
         }
-        [pref, ..] if pref.starts_with(Pref::PREFIX) => {
-            alert_error("Invalid Reward ID.");
-        }
-        [reward_id, content @ ..] => {
-            let pref: String = reward_id.to_lowercase();
-            let set_ok: bool = if content.is_empty() {
+        [uuid, content @ ..] => match uuid.parse::<Reward>() {
+            Ok(reward) => match if content.is_empty() {
                 //  Unset a Reward.
-                delete_pref(&pref).is_ok()
+                reward.unset()
             } else {
                 //  Set a Reward.
-                set_pref_string(&pref, &content.join(" ")).is_ok()
-            };
-
-            if set_ok {
-                alert_basic("Preference updated.");
-            } else {
-                alert_error("FAILED to update Preference.");
+                reward.set(&content.join(" "))
+            } {
+                Ok(()) => alert_basic("Reward updated."),
+                Err(()) => alert_error("FAILED to update Reward."),
             }
+            Err(()) => alert_error("Invalid Reward ID."),
         }
     }
 
@@ -388,9 +386,9 @@ pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_whisper_here(_arg_full: &[String]) -> EatMode {
-    let new: bool = !Pref::WHISPERS.is(true);
+    let new: bool = !PREF_WHISPERS.is(true);
 
-    if Pref::WHISPERS.set(new).is_ok() {
+    if PREF_WHISPERS.set(new).is_ok() {
         alert_basic(
             if new {
                 "Twitch Whispers will also show in the current Tab."

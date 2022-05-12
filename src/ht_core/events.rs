@@ -4,16 +4,11 @@ use hexchat::{
     EatMode,
     get_channel,
     get_channel_name,
-    get_pref_string,
     print_event_to_channel,
     print_plain,
     PrintEvent,
 };
-use crate::{
-    irc::{Message, split_at_char},
-    NETWORK,
-    prefs::Pref,
-};
+use crate::{irc::{Message, split_at_char}, NETWORK, prefs::*};
 use super::output::{
     alert_basic,
     alert_error,
@@ -55,12 +50,20 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
         let reward_name: &str;
         let author_name: String;
 
-        if id.is_empty() {
+        match id.parse::<Reward>() {
             //  [CUSTOM] (No ID) username: message
-            reward_name = REWARD_UNKNOWN;
-            author_name = format!("(No ID) {}:", msg.author());
-        } else {
-            match get_pref_string(&id) {
+            Err(()) if id.is_empty() => {
+                reward_name = REWARD_UNKNOWN;
+                author_name = format!("(No ID) {}:", msg.author());
+            }
+
+            //  [CUSTOM] (1334121037) username: message
+            Err(()) => {
+                reward_name = REWARD_UNKNOWN;
+                author_name = format!("({}) {}:", id, msg.author());
+            }
+
+            Ok(reward) => match reward.get() {
                 //  [Reward] username: message
                 Some(title_pref) => {
                     reward_owned = title_pref;
@@ -374,7 +377,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
         )),
 
         _ => {
-            if Pref::DEBUG.is(true) {
+            if PREF_DEBUG.is(true) {
                 alert_error(&format!(
                     "Unknown UserNotice ID {:?}: {}",
                     stype, msg,
@@ -472,7 +475,7 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         let text: &str = &msg.trail[ME_LEN..]; // Slice off the `/me `.
 
         //  If the Whisper Tab is not focused, also post it here.
-        if Pref::WHISPERS.is(true) && get_channel_name() != user {
+        if PREF_WHISPERS.is(true) && get_channel_name() != user {
             echo(PrintEvent::PRIVATE_ACTION, &[user, text], TabColor::Message);
         }
 
@@ -480,7 +483,7 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         msg.trail = format!("\x01ACTION {}\x01", &text);
     } else {
         //  If the Whisper Tab is not focused, also post it here.
-        if Pref::WHISPERS.is(true) && get_channel_name() != user {
+        if PREF_WHISPERS.is(true) && get_channel_name() != user {
             echo(
                 PrintEvent::PRIVATE_MESSAGE,
                 &[user, &msg.trail],

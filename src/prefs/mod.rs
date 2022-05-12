@@ -9,23 +9,23 @@
 
 mod pref_trait;
 mod pref_types;
+pub mod reward;
 
 pub use pref_trait::*;
 pub use pref_types::*;
+pub use reward::Reward;
 
 
-/// Plugin-global DRY declarations for preferences stored in Hexchat.
-pub struct Pref;
+/// Prefix indicating an actual preference setting (as opposed to stored
+///     "Reward" data).
+#[allow(dead_code)]
+const PREFIX: &'static str = "PREF_";
 
-impl Pref {
-    /// Prefix indicating an actual preference setting (as opposed to stored
-    ///     "Reward" data).
-    pub const PREFIX: &'static str = "PREF";
 
-    /// Preference: Debug mode for the plugin.
-    pub const DEBUG: PrefBool = PrefBool::new("PREF_htdebug");
+/// Preference: Debug mode for the plugin.
+pub const PREF_DEBUG: PrefBool = PrefBool::new("PREF_htdebug");
 
-    /// Preference: Whether incoming whispers should be displayed in the current
-    ///     channel in addition to their respective tabs.
-    pub const WHISPERS: PrefBool = PrefBool::new("PREF_whispers_in_current");
-}
+
+/// Preference: Whether incoming whispers should be displayed in the current
+///     channel in addition to their respective tabs.
+pub const PREF_WHISPERS: PrefBool = PrefBool::new("PREF_whispers_in_current");

@@ -24,6 +24,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 nightly = []
+strict-reward-uuids = []
 
 
 [profile.release]
