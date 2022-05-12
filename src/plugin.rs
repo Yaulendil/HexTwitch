@@ -194,6 +194,8 @@ impl Plugin for HexTwitch {
         //  Report loadedness.
         print_plain(&format!("{} {} loaded.", Self::NAME, Self::VERSION));
 
+        crate::prefs::migrate_prefs();
+
         plugin
     }
 }

@@ -377,7 +377,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
         )),
 
         _ => {
-            if PREF_DEBUG.is(true) {
+            if PREF_DEBUG.get() == Some(true) {
                 alert_error(&format!(
                     "Unknown UserNotice ID {:?}: {}",
                     stype, msg,

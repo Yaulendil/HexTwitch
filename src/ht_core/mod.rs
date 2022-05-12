@@ -253,7 +253,7 @@ pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
 
 
 pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
-    let new: bool = !PREF_DEBUG.is(true);
+    let new: bool = PREF_DEBUG.get() != Some(true);
 
     if PREF_DEBUG.set(new).is_ok() {
         alert_basic(

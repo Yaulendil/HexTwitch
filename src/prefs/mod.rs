@@ -7,10 +7,12 @@
 //!     can be no automatic safeguard, however, against simply calling the
 //!     relevant Hexchat functions directly.
 
+mod migrations;
 mod pref_trait;
 mod pref_types;
 pub mod reward;
 
+use migrations::*;
 pub use pref_trait::*;
 pub use pref_types::*;
 pub use reward::Reward;
@@ -23,9 +25,50 @@ const PREFIX: &'static str = "PREF_";
 
 
 /// Preference: Debug mode for the plugin.
-pub const PREF_DEBUG: PrefBool = PrefBool::new("PREF_htdebug");
+pub const PREF_DEBUG: PrefMigrating<PrefBool> = PrefMigrating {
+    new: PrefBool::new("PREF_debug"),
+    old: PrefBool::new("PREF_htdebug"),
+};
 
 
 /// Preference: Whether incoming whispers should be displayed in the current
 ///     channel in addition to their respective tabs.
 pub const PREF_WHISPERS: PrefBool = PrefBool::new("PREF_whispers_in_current");
+
+
+/// Perform all necessary Preference migrations, printing a report for each one.
+#[allow(dead_code)]
+pub fn migrate_prefs() {
+    fn migrate_report<New, Old>(pref: PrefMigrating<New, Old>) where
+        New: HexPrefGet + HexPrefSet<<Old as HexPrefGet>::Output>,
+        Old: HexPrefGet + HexPrefUnset,
+    {
+        let report = match pref.migrate() {
+            Ok(MigrateAction::NoOldValue) => None,
+            Ok(MigrateAction::OldValueCleared) => Some(format!(
+                "Cleared outdated HexTwitch preference {old:?}.",
+                old = pref.old.name(),
+            )),
+            Ok(MigrateAction::OldValueMoved) => Some(format!(
+                "HexTwitch preference {old:?} has been renamed to {new:?}.",
+                new = pref.new.name(),
+                old = pref.old.name(),
+            )),
+            Err(MigrateFail::CannotUnsetOld) => Some(format!(
+                "Failed to clear outdated HexTwitch preference {old:?}.",
+                old = pref.old.name(),
+            )),
+            Err(MigrateFail::CannotSetNew) => Some(format!(
+                "Failed to rename HexTwitch preference {old:?} to {new:?}.",
+                new = pref.new.name(),
+                old = pref.old.name(),
+            )),
+        };
+
+        if let Some(text) = report {
+            hexchat::print_plain(&text);
+        }
+    }
+
+    migrate_report(PREF_DEBUG);
+}
