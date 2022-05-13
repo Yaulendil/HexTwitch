@@ -22,9 +22,9 @@ pub struct PrefMigrating<New, Old = New> {
 impl<New, Old> PrefMigrating<New, Old> {
     /// Copy the value of the old preference name to the new preference name,
     ///     and unset the old one.
-    pub fn migrate(&self) -> Result<MigrateAction, MigrateFail> where
-        New: HexPrefGet + HexPrefSet<<Old as HexPrefGet>::Output>,
-        Old: HexPrefGet + HexPrefUnset,
+    pub fn migrate<Val>(&self) -> Result<MigrateAction, MigrateFail> where
+        New: HexPrefGet + HexPrefSet<Val>,
+        Old: HexPrefGet<Output=Val> + HexPrefUnset,
     {
         use MigrateAction::*;
         use MigrateFail::*;
