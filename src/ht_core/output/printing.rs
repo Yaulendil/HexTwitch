@@ -163,6 +163,7 @@ fn get_badge(class: &str, rank: &str) -> char {
         "subscriber"        /**/ => highest(rank.parse().unwrap_or(0), &SUBS),
         "vip"               /**/ => '⚑',
         "founder"           /**/ => 'ⲷ',
+        "artist-badge"      /**/ => 'α',
 
         "sub-gift-leader"   /**/ => '⁘',
         // "sub-gifter"        /**/ => highest(rank.parse().unwrap_or(0), &GIFTS),
