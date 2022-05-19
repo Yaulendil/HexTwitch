@@ -76,11 +76,40 @@ fn owned_not_empty(instr: &str) -> Option<String> {
 }
 
 
+fn find_byte(line: &str, delim: u8) -> Option<usize> {
+    for (i, b) in line.as_bytes().iter().enumerate() {
+        if delim.eq(b) {
+            return Some(i);
+        }
+    }
+
+    None
+}
+
+
+/// Split a `&str` at the first occurrence of a delimiting `u8`.
+pub fn split_at_byte(line: &str, delim: u8) -> (&str, &str) {
+    match find_byte(line, delim) {
+        Some(idx) => (&line[..idx], &line[idx + 1..]),
+        None => (line, ""),
+    }
+}
+
+
 /// Split a `&str` at the first occurrence of a delimiting `char`.
 pub fn split_at_char(line: &str, delim: char) -> (&str, &str) {
-    match line.find(delim) {
-        Some(idx) => (&line[..idx], &line[idx + delim.len_utf8()..]),
-        None => (line, ""),
+    let bytes = delim.len_utf8();
+
+    if bytes == 1 {
+        match find_byte(line, delim as u8) {
+            Some(idx) => (&line[..idx], &line[idx + 1..]),
+            None => (line, ""),
+        }
+    } else {
+        match line.find(delim) {
+            Some(idx) => (&line[..idx], &line[idx + bytes..]),
+            None => (line, ""),
+        }
     }
 }
 
