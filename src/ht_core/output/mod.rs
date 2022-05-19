@@ -1,5 +1,6 @@
 pub(super) mod prediction;
 mod printing;
+mod statics;
 mod tabs;
 
 use hexchat::{EatMode, PrintEvent, send_command};
@@ -12,16 +13,15 @@ pub use printing::{
     alert_sub_upgrade,
     badge_parse,
     Badges,
-    BADGES_UNK,
     echo,
     EVENT_ALERT,
     EVENT_CHANNEL,
     EVENT_ERR,
     EVENT_NORMAL,
     EVENT_REWARD,
-    USERSTATE,
 };
-pub use tabs::{TabColor, TABCOLORS};
+pub use statics::{BADGES_UNKNOWN, PREDICTIONS, TABCOLORS, USERSTATE};
+pub use tabs::TabColor;
 
 
 /// Message comes from Server. IRC Representation available.
@@ -48,7 +48,7 @@ pub fn print_with_irc(
             mark_processed(msg.get_signature());
             echo(etype, &[
                 &*word[0], &*word[1], &*word[2],
-                USERSTATE.read().get(&channel),
+                &USERSTATE.get(&channel),
             ], TabColor::Message);
 
             EatMode::All
@@ -114,7 +114,7 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
         mark_processed(Signature::new(Some(channel), Ok(author)));
         echo(etype, &[
             author, &*word[1], &*word[2],
-            USERSTATE.read().get(&channel),
+            &USERSTATE.get(&channel),
         ], TabColor::Message);
 
         EatMode::All

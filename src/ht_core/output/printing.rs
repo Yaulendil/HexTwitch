@@ -1,11 +1,11 @@
-use std::collections::{hash_map::{Entry, HashMap}, HashSet};
+use std::collections::hash_map::{Entry, HashMap};
 use cached::proc_macro::cached;
 use hexchat::{print_event, PrintEvent};
-use parking_lot::RwLock;
 use crate::irc::split_at_char;
 use super::{
-    prediction::{get_prediction, PredictionBadge, update_prediction},
-    tabs::{TabColor, TABCOLORS},
+    prediction::PredictionBadge,
+    statics::{BADGES_UNKNOWN, PREDICTIONS, TABCOLORS},
+    tabs::TabColor,
 };
 
 
@@ -31,7 +31,7 @@ pub fn echo(
     tab_color: TabColor,
 ) {
     print_event(event, args);
-    TABCOLORS.lock().color(tab_color.into());
+    TABCOLORS.color(tab_color);
 }
 
 
@@ -130,11 +130,6 @@ static SUBS: &[(usize, char)] = &[
 // ];
 
 
-safe_static! {
-    pub static lazy BADGES_UNK: RwLock<HashSet<String>> = Default::default();
-}
-
-
 /// Determine if a Badge title is probably a game-specific badge.
 ///
 /// There are dozens of these, so it is not worth assigning each one a unique
@@ -189,16 +184,7 @@ fn get_badge(class: &str, rank: &str) -> char {
         s if s.starts_with("twitchcon") => 'c',
         s if s.starts_with("overwatch-league-insider") => 'w',
         s if is_game_badge(s) => 'G',
-        s => {
-            // let mut set = BADGES_UNK.write();
-            // if !set.contains(s) {
-            //     set.insert(s.to_owned());
-            // }
-
-            BADGES_UNK.write().insert(s.to_owned());
-
-            '?'
-        }
+        s => BADGES_UNKNOWN.add(s, '?'),
     }
 }
 
@@ -216,11 +202,7 @@ fn prediction_badge(pred: &str) -> char {
     //  twitch why
     match pred.parse::<PredictionBadge>() {
         Ok(pb) => pb.badge(),
-        Err(_) => {
-            BADGES_UNK.write().insert(format!("predictions/{}", pred));
-
-            'p'
-        }
+        Err(_) => BADGES_UNKNOWN.add(format!("predictions/{}", pred), 'p'),
     }
 }
 
@@ -317,14 +299,14 @@ impl Badges {
                     let variant = &rank[LEN..];
                     let label = &info[LEN..];
 
-                    if let Some(true) = update_prediction(
+                    if let Some(true) = PREDICTIONS.update(
                         channel.to_owned(),
                         variant,
                         label,
                     ) {
                         alert_basic(&format!(
                             "Prediction Updated: {}",
-                            get_prediction(channel).unwrap_or_default(),
+                            PREDICTIONS.get(channel),
                         ));
                         return true;
                     }
@@ -386,7 +368,7 @@ impl States {
     /// Input: `String`, `String`, `String`
     /// Output: `Option<&Badges>`
     pub fn set(&mut self, channel: String, bstr: String, meta: String)
-               -> Option<&Badges>
+        -> Option<&mut Badges>
     {
         match self.inner.entry(channel) {
             Entry::Vacant(entry) => Some(entry.insert(badge_parse(bstr, meta))),
@@ -403,10 +385,6 @@ impl States {
             }
         }
     }
-}
-
-safe_static! {
-    pub static lazy USERSTATE: RwLock<States> = Default::default();
 }
 
 

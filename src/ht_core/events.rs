@@ -400,7 +400,7 @@ pub fn userstate(msg: Message) -> Option<EatMode> {
 
     let channel: String = get_channel_name();
 
-    if let Some(badges) = USERSTATE.write().set(
+    if let Some(badges) = USERSTATE.set(
         channel.clone(),
         msg.get_tag("badges").unwrap_or_default(),
         msg.get_tag("badge-info").unwrap_or_default(),

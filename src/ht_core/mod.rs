@@ -1,7 +1,7 @@
 mod events;
 mod output;
 
-
+use std::collections::HashSet;
 use chrono::{DateTime, Utc};
 use hexchat::{
     ChannelRef,
@@ -17,8 +17,8 @@ use crate::{irc::{Message, Signature}, NETWORK, prefs::*};
 use output::{
     alert_basic,
     alert_error,
-    BADGES_UNK,
-    prediction::get_prediction,
+    BADGES_UNKNOWN,
+    PREDICTIONS,
     print_with_irc,
     print_without_irc,
     TABCOLORS,
@@ -153,7 +153,7 @@ fn this_is_twitch() -> bool {
 /// Reset the Color of a newly-focused Tab.
 pub fn cb_focus(_channel: ChannelRef) -> EatMode {
     if this_is_twitch() {
-        TABCOLORS.lock().reset();
+        TABCOLORS.reset();
     }
     EatMode::None
 }
@@ -274,7 +274,7 @@ pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
 pub fn cmd_prediction(_arg_full: &[String]) -> EatMode {
     alert_basic(&format!(
         "Current Prediction: {}",
-        get_prediction(&get_channel_name()).unwrap_or_default(),
+        PREDICTIONS.get(&get_channel_name()),
     ));
 
     EatMode::All
@@ -346,7 +346,7 @@ pub fn cmd_tjoin(arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_unk_badges(_arg_full: &[String]) -> EatMode {
-    let unk = BADGES_UNK.read();
+    let unk: &HashSet<String> = &BADGES_UNKNOWN.get();
 
     if unk.is_empty() {
         alert_basic("No unknown Badges have been seen.");

@@ -1,8 +1,4 @@
-use std::{
-    collections::hash_map::{Entry, HashMap},
-    fmt::{Display, Formatter},
-};
-use parking_lot::RwLock;
+use std::{collections::HashMap, fmt::{Display, Formatter}};
 
 
 const UNK: &str = "Unknown";
@@ -127,7 +123,9 @@ impl Predict {
         pairs
     }
 
-    fn set_label(&mut self, badge: PredictionBadge, label: &str) -> bool {
+    pub(super) fn set_label(&mut self, badge: PredictionBadge, label: &str)
+        -> bool
+    {
         match self.map.get(&badge) {
             Some(s) if label == s => false,
             _ => {
@@ -155,31 +153,14 @@ impl Display for Predict {
 }
 
 
-safe_static! {
-    static lazy PREDICT: RwLock<HashMap<String, Predict>> = Default::default();
-}
+#[repr(transparent)]
+pub struct MaybePredict<T: std::ops::Deref<Target=Predict>>(pub Option<T>);
 
-
-pub fn get_prediction(channel: &str) -> Option<Predict> {
-    PREDICT.read().get(channel).cloned()
-}
-
-
-pub fn update_prediction(
-    channel: String,
-    variant: &str,
-    label: &str,
-) -> Option<bool> {
-    match variant.parse::<PredictionBadge>() {
-        Ok(pb) => {
-            let mut map = PREDICT.write();
-            let pred: &mut Predict = match map.entry(channel) {
-                Entry::Vacant(entry) => entry.insert(Default::default()),
-                Entry::Occupied(entry) => entry.into_mut(),
-            };
-
-            Some(pred.set_label(pb, label))
+impl<T: std::ops::Deref<Target=Predict>> Display for MaybePredict<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match &self.0 {
+            Some(inner) => inner.fmt(f),
+            None => f.write_str(UNK),
         }
-        Err(_) => None,
     }
 }

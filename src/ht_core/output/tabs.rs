@@ -3,7 +3,6 @@ use std::{
     fmt::{Display, Formatter},
 };
 use hexchat::{get_channel_name, get_current_channel, get_focused_channel};
-use parking_lot::Mutex;
 
 
 /// The four possible colors for a HexChat tab, representing the types of events
@@ -70,9 +69,4 @@ impl Tabs {
         self.inner.insert(get_channel_name(), TabColor::RESET);
         cmd!("GUI COLOR {}", TabColor::RESET);
     }
-}
-
-
-safe_static! {
-    pub static lazy TABCOLORS: Mutex<Tabs> = Default::default();
 }
