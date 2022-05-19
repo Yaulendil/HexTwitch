@@ -139,10 +139,10 @@ impl Predict {
 impl Display for Predict {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.pairs().as_slice() {
-            &[] => f.write_str(UNK),
-            &[one] => one.fmt(f),
-            &[one, two] => write!(f, "{} or {}", one, two),
-            &[ref most @ .., last] => {
+            [] => f.write_str(UNK),
+            [one] => one.fmt(f),
+            [one, two] => write!(f, "{} or {}", one, two),
+            [most @ .., last] => {
                 for each in most {
                     write!(f, "{}, ", each)?;
                 }
