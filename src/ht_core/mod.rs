@@ -335,11 +335,8 @@ pub fn cmd_reward(arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_title(arg_full: &[String]) -> EatMode {
-    // let channel: String = arg_full[1].to_ascii_lowercase();
+    let channel: String = arg_full[1].to_ascii_lowercase();
     let topic: String = arg_trim(&arg_full[2..]).join(" ");
-
-    let mut channel: String = format!("#{}", arg_full[1]);
-    channel.make_ascii_lowercase();
 
     set_topic(&channel, &topic);
 
