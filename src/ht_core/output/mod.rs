@@ -19,6 +19,7 @@ pub use printing::{
     EVENT_ERR,
     EVENT_NORMAL,
     EVENT_REWARD,
+    print_topic,
 };
 pub use statics::{BADGES_UNKNOWN, PREDICTIONS, TABCOLORS, USERSTATE};
 pub use tabs::TabColor;

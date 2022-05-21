@@ -51,6 +51,24 @@ pub fn alert_sub_upgrade(message: &str) {
 }
 
 
+pub fn print_topic(channel: &str) -> Option<()> {
+    if let Some(cref) = hexchat::get_channel(crate::NETWORK, channel) {
+        let topic: String = hexchat::get_topic(&cref)?;
+
+        if !topic.is_empty() {
+            hexchat::print_event_to_channel(
+                &cref,
+                PrintEvent::TOPIC,
+                &[channel, &topic],
+                // TabColor::None,
+            );
+        }
+    }
+
+    Some(())
+}
+
+
 /// BITS: Badge characters for Bits. If a User has a Bits Badge, the User is
 ///     given the `char` corresponding to the last value found here which is
 ///     LESS THAN OR EQUAL TO the Rank of the Badge.
