@@ -31,6 +31,64 @@ You will need to have [Cargo](https://github.com/rust-lang/cargo) installed. Car
 cargo build --release
 ```
 
-After Cargo compiles the plugin, its Binary should be in `target/release/`, and should be named something like `libhextwitchr.so` or, on Windows, `libhextwitchr`. Move this File into the `addons` Directory in your HexChat config Directory; On Linux this should be at `$XDG_CONFIG_HOME/hexchat/addons/`.
+After Cargo compiles the plugin, its Binary should be in `target/release/`, and should be named something like `libhextwitchr` or `libhextwitchr.so`. Move this File into the `addons` Directory in your HexChat config Directory; On Linux, this should be at `$XDG_CONFIG_HOME/hexchat/addons/`.
 
 If you have not patched HexChat, it will probably crash. Otherwise, you should now have Twitch features.
+
+
+## Badge Icons
+
+It is not currently feasible to embed images inline in HexChat without creating a custom font. In lieu of that potential far-future solution, and to keep installation as simple as possible, Twitch user badges are mapped to Unicode codepoints, as detailed in the following lists.
+
+Badges without a codepoint specified will be rendered as `?`. A list of all unknown badge names can be viewed with the `/UNKNOWNS` command. This information should be provided as an Issue in this repository, so that they can be added to the plugin.
+
+Note that some typefaces may render some of these characters in an Emoji style, which may clash somewhat with the rest of the interface.
+
+### Global
+- `🜨` (![staff](img/badges/staff.png)): Twitch staff.
+- `⛨` (![admin](img/badges/admin.png)): Twitch administrator.
+- `✓` (![partner](img/badges/partner.png)): Twitch partner.
+- `a` (![ambassador](img/badges/ambassador.png)): Community "Ambassador", handpicked by Twitch.
+- `+` (![turbo](img/badges/turbo.png)): Twitch Turbo member.
+- `±` (![premium](img/badges/premium.png)): Twitch Prime member.
+- `~` (![glhf-pledge](img/badges/glhf-pledge.png)): User has taken the "GLHF Pledge".
+- `g` (![glitchcon](img/badges/glitchcon2020.png)): User has attended GlitchCon.
+- `c` (![twitchcon](img/badges/twitchcon2017.png)): User has attended TwitchCon.
+- `w` (![overwatch-league-insider](img/badges/overwatch-league-insider_2018B.png)): Overwatch League "Insider".
+- `G`: This icon represents various game-specific badges.
+
+### Channel-specific
+- `🜲` (![broadcaster](img/badges/broadcaster.png)): User is the Broadcaster, the owner of the channel.
+- `🗡` (![moderator](img/badges/moderator.png)): User is a Moderator of this channel with additional powers, handpicked by the Broadcaster.
+- `⚑` (![vip](img/badges/vip.png)): User is a VIP of this channel, handpicked by the Broadcaster.
+- `ⲷ` (![founder](img/badges/founder.png)): User was one of the first subscribers to this channel.
+- `α` (![artist-badge](img/badges/artist-badge.png)): User has contributed art or media to this channel.
+- `m` (![moments](img/badges/moments-4.png),![moments](img/badges/moments-8.png),![moments](img/badges/moments-12.png),![moments](img/badges/moments-16.png),![moments](img/badges/moments-20.png)): User was active in chat for a notable event, chosen by the Broadcaster.
+- `.` (![hype-train](img/badges/hype-train-1.png),![hype-train](img/badges/hype-train-2.png)): User has contributed to a Hype Train in this channel.
+- `Ⓐ` (![no_audio](img/badges/no_audio.png)): User is watching the stream with no audio.
+- `Ⓥ` (![no_video](img/badges/no_video.png)): User is listening to the stream with no video.
+
+### Cheering/Bits
+- `*` (![anonymous-cheerer](img/badges/anonymous-cheerer.png)): User is an anonymous cheerer.
+- `❖` (![bits-leader](img/badges/bits-leader-1.png),![bits-leader](img/badges/bits-leader-2.png),![bits-leader](img/badges/bits-leader-3.png)): User is one of the top three cheerers in this channel.
+- `🝔` (![bits-charity](img/badges/bits-charity.png)): User has given bits with the `#charity` tag.
+- `▴` (![bits](img/badges/bits-1.png)): User has given at least 1 bit ($0.01).
+- `⬧` (![bits](img/badges/bits-100.png)): User has given at least 100 bits ($1.00).
+- `⬠` (![bits](img/badges/bits-1000.png)): User has given at least 1,000 bits ($10.00).
+- `⬡` (![bits](img/badges/bits-5000.png)): User has given at least 5,000 bits ($50.00).
+- `🟋` (![bits](img/badges/bits-10000.png)): User has given at least 10,000 bits ($100.00).
+- `🟎` (![bits](img/badges/bits-100000.png)): User has given at least 100,000 bits ($1000.00).
+
+### Subscriptions (![subscriber](img/badges/subscriber-0.png))
+- `⁘` (![sub-gift-leader](img/badges/sub-gift-leader-1.png),![sub-gift-leader](img/badges/sub-gift-leader-2.png),![sub-gift-leader](img/badges/sub-gift-leader-3.png)): User is one of the top three givers of gift subscriptions in this channel.
+- `:` (![sub-gifter](img/badges/sub-gifter-1.png)): User has given gift subscriptions in this channel.
+- Double-circled digits (`⓵`,`⓷`,`⓺`,`⓽`) are used to represent subscriptions below 1 year.
+- Roman Numerals (`ⅰ`,`ⅱ`,`ⅲ`,`ⅳ`,`ⅴ`,`ⅵ`,`ⅶ`,`ⅷ`,`ⅸ`,`ⅹ`,`ⅺ`,`ⅻ`) are used to represent subscriptions of 1 year up to 12 years.
+- Inverted circled numbers `⓭` through `⓴` are used to represent subscriptions longer than 12 years.
+- `⁑`: User is a subscriber of at least 21 years. This one should not show up for quite a while.
+
+### Channel Points Predictions
+- `⧮`/`⧯` (![blue-1](img/badges/predictions-blue-1.png)–![blue-10](img/badges/predictions-blue-10.png)): User has bet channel points on a blue prediction, with up to 10 possible outcomes.
+- `⧰`/`⧱` (![pink-1](img/badges/predictions-pink-1.png),![pink-2](img/badges/predictions-pink-2.png)): User has bet channel points on a pink prediction, with only two possible outcomes.
+- `⧲`/`⧳` (![gray-1](img/badges/predictions-gray-1.png),![gray-2](img/badges/predictions-gray-2.png)): User has bet channel points on a gray prediction, with only two possible outcomes.
+- `p`: This codepoint represents an unknown Prediction badge, likely because Twitch added a new one again. If this is seen, an Issue should be opened in this repository, including the output of running the `/UNKNOWNS` command.

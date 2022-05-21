@@ -5,3 +5,7 @@ target/
 **/*.rs.bk
 *.iml
 Cargo.lock
+
+/badges/
+badges.json
+get_badges.py
