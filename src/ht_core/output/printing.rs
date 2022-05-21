@@ -169,8 +169,8 @@ fn get_badge(class: &str, rank: &str) -> char {
         "partner"           /**/ => '✓',
         "turbo"             /**/ => '+',
         "premium"           /**/ => '±',
-        "no-audio"          /**/ => 'Ⓐ', // Alternatively '🔇'?
-        "no-video"          /**/ => 'Ⓥ', // Alternatively '👁'?
+        "no_audio"          /**/ => 'Ⓐ', // Alternatively '🔇'?
+        "no_video"          /**/ => 'Ⓥ', // Alternatively '👁'?
 
         "glhf-pledge"       /**/ => '~',
         "anonymous-cheerer" /**/ => '*',
