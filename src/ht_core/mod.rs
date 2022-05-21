@@ -6,7 +6,6 @@ use chrono::{DateTime, Utc};
 use hexchat::{
     ChannelRef,
     EatMode,
-    get_channel,
     get_channel_name,
     get_network_name,
     PrintEvent,
@@ -19,8 +18,8 @@ use output::{
     alert_basic,
     alert_error,
     BADGES_UNKNOWN,
+    change_topic,
     PREDICTIONS,
-    print_topic,
     print_with_irc,
     print_without_irc,
     TABCOLORS,
@@ -141,14 +140,6 @@ fn check_message(channel: &str, author: &str) -> MsgSrc {
 
 fn mark_processed(sig: Signature) {
     CURRENT.lock().set_prev(sig);
-}
-
-
-fn set_topic(channel: &str, topic: &str) {
-    if get_channel(NETWORK, channel).is_some() {
-        print_topic(channel);
-        cmd!("RECV :Twitch!twitch@twitch.tv TOPIC {} :{}", channel, topic);
-    }
 }
 
 
@@ -338,7 +329,7 @@ pub fn cmd_title(arg_full: &[String]) -> EatMode {
     let channel: String = arg_full[1].to_ascii_lowercase();
     let topic: String = arg_trim(&arg_full[2..]).join(" ");
 
-    set_topic(&channel, &topic);
+    change_topic(&channel, &topic);
 
     EatMode::All
 }

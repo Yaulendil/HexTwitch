@@ -51,7 +51,49 @@ pub fn alert_sub_upgrade(message: &str) {
 }
 
 
-pub fn print_topic(channel: &str) -> Option<()> {
+pub fn change_topic(channel: &str, new: &str) {
+    if let Some(cref) = hexchat::get_channel(crate::NETWORK, channel) {
+        let topic_old = hexchat::get_topic(&cref);
+        let print_old: Option<&String>;
+        let apply_new: bool;
+
+        match &topic_old {
+            Some(old) if new != old => {
+                //  New topic is DIFFERENT from the old topic. Print the old
+                //      one, and apply the new one.
+                print_old = Some(old);
+                apply_new = true;
+            }
+            Some(_) => {
+                //  New topic is the SAME as the old topic. Do not print the old
+                //      one, and do not apply the new one.
+                print_old = None;
+                apply_new = false;
+            }
+            None => {
+                //  No topic is set. Apply the new one.
+                print_old = None;
+                apply_new = true;
+            }
+        };
+
+        if let Some(old) = print_old {
+            hexchat::print_event_to_channel(
+                &cref,
+                PrintEvent::TOPIC,
+                &[channel, old],
+                // TabColor::None,
+            );
+        }
+
+        if apply_new {
+            cmd!("RECV :Twitch!twitch@twitch.tv TOPIC {} :{}", channel, new);
+        }
+    }
+}
+
+
+/*pub fn print_topic(channel: &str) -> Option<()> {
     if let Some(cref) = hexchat::get_channel(crate::NETWORK, channel) {
         let topic: String = hexchat::get_topic(&cref)?;
 
@@ -66,7 +108,7 @@ pub fn print_topic(channel: &str) -> Option<()> {
     }
 
     Some(())
-}
+}*/
 
 
 /// BITS: Badge characters for Bits. If a User has a Bits Badge, the User is
