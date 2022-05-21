@@ -25,11 +25,7 @@ pub const EVENT_REWARD: PrintEvent = PrintEvent::WHOIS_AUTHENTICATED;
 ///
 /// Input: `PrintEvent`, `&[impl AsRef<str>]`, `TabColor`
 #[inline]
-pub fn echo(
-    event: PrintEvent,
-    args: &[impl AsRef<str>],
-    tab_color: TabColor,
-) {
+pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: TabColor) {
     print_event(event, args);
     TABCOLORS.color(tab_color);
 }
@@ -173,6 +169,8 @@ fn get_badge(class: &str, rank: &str) -> char {
         "partner"           /**/ => '✓',
         "turbo"             /**/ => '+',
         "premium"           /**/ => '±',
+        "no-audio"          /**/ => 'Ⓐ', // Alternatively '🔇'?
+        "no-video"          /**/ => 'Ⓥ', // Alternatively '👁'?
 
         "glhf-pledge"       /**/ => '~',
         "anonymous-cheerer" /**/ => '*',
