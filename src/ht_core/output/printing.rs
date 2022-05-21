@@ -354,6 +354,10 @@ impl States {
             .unwrap_or(Badges::NONE)
     }
 
+    pub fn has(&self, channel: &str) -> bool {
+        self.inner.contains_key(channel)
+    }
+
     /// Set the Badges for the User in a given Channel. This is mostly just a
     ///     guarded passthrough to the internal HashMap, but with one
     ///     significant difference: If the current value for the given Channel

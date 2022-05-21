@@ -104,6 +104,10 @@ impl UserState {
         )
     }
 
+    pub fn has(&self, channel: &str) -> bool {
+        self.0.read().has(channel)
+    }
+
     pub fn set<'s>(&'s self, channel: String, bstr: String, meta: String)
         -> Option<impl Deref<Target=Badges> + 's>
     {

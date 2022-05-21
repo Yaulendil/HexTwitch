@@ -394,27 +394,43 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 }
 
 
+const fn badge_phrase(replacing: bool, empty: bool) -> &'static str {
+    const INITIAL: bool = false;
+    const REPLACE: bool = true;
+    const SOME: bool = false;
+    const NONE: bool = true;
+
+    match (replacing, empty) {
+        (INITIAL, NONE) => "No Badges received.",
+        (REPLACE, NONE) => "Badges cleared.",
+
+        (INITIAL, SOME) => "Badges received:",
+        (REPLACE, SOME) => "New Badges received:",
+    }
+}
+
+
 pub fn userstate(msg: Message) -> Option<EatMode> {
     /// The title put in brackets at the start of a state update message.
     const HEADER: &'static str = "BADGES";
 
     let channel: String = get_channel_name();
+    let replacing: bool = USERSTATE.has(&channel);
 
     if let Some(badges) = USERSTATE.set(
         channel.clone(),
         msg.get_tag("badges").unwrap_or_default(),
         msg.get_tag("badge-info").unwrap_or_default(),
     ) {
-        if badges.is_empty() {
-            echo(EVENT_REWARD, &[
-                HEADER,
-                "Badges cleared.",
-                "",
-            ], TabColor::None);
+        let empty = badges.is_empty();
+        let phrase = badge_phrase(replacing, empty);
+
+        if empty {
+            echo(EVENT_REWARD, &[HEADER, phrase, ""], TabColor::None);
         } else {
             echo(EVENT_REWARD, &[
                 HEADER,
-                "New Badges received:",
+                phrase,
                 badges.as_str(),
             ], TabColor::None);
 
