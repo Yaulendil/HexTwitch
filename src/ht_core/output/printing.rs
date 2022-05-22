@@ -31,23 +31,23 @@ pub fn echo(event: PrintEvent, args: &[impl AsRef<str>], tab_color: TabColor) {
 }
 
 
-pub fn alert_basic(message: &str) {
+pub fn alert_basic(message: impl AsRef<str>) {
     echo(EVENT_NORMAL, &[message], TabColor::Event);
 }
 
 
-pub fn alert_error(message: &str) {
+pub fn alert_error(message: impl AsRef<str>) {
     echo(EVENT_ERR, &[message], TabColor::Event);
 }
 
 
-pub fn alert_subscription(message: &str) {
-    echo(EVENT_ALERT, &["SUBSCRIPTION", message], TabColor::Message);
+pub fn alert_subscription(message: impl AsRef<str>) {
+    echo(EVENT_ALERT, &["SUBSCRIPTION", message.as_ref()], TabColor::Message);
 }
 
 
-pub fn alert_sub_upgrade(message: &str) {
-    echo(EVENT_ALERT, &["UPGRADE", message], TabColor::Message);
+pub fn alert_sub_upgrade(message: impl AsRef<str>) {
+    echo(EVENT_ALERT, &["UPGRADE", message.as_ref()], TabColor::Message);
 }
 
 
