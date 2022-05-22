@@ -1,22 +1,6 @@
-use hexchat::{
-    add_print_event_listener,
-    add_raw_server_event_listener,
-    add_window_event_listener,
-    Command,
-    deregister_command,
-    Plugin,
-    print_plain,
-    PrintEvent,
-    PrintEventListener,
-    Priority,
-    RawServerEventListener,
-    register_command,
-    remove_print_event_listener,
-    remove_raw_server_event_listener,
-    remove_window_event_listener,
-    WindowEvent,
-    WindowEventListener,
-};
+mod hooks;
+
+use hexchat::{Plugin, print_plain, PrintEvent, WindowEvent};
 use crate::ht_core::{
     cb_focus,
     cb_join,
@@ -31,83 +15,35 @@ use crate::ht_core::{
     cmd_whisper,
     cmd_whisper_here,
 };
-
-
-enum Hook {
-    Command(Command),
-    Print(PrintEventListener),
-    Server(RawServerEventListener),
-    Window(WindowEventListener),
-}
-
-impl Hook {
-    fn unhook(self) {
-        match self {
-            Self::Command(handle) => { deregister_command(handle) }
-            Self::Print(handle) => { remove_print_event_listener(handle) }
-            Self::Server(handle) => { remove_raw_server_event_listener(handle) }
-            Self::Window(handle) => { remove_window_event_listener(handle) }
-        }
-    }
-}
+use hooks::{CbCommand, CbPrint, CbPrintPlugin, CbServer, CbWindow, Hook};
 
 
 #[derive(Default)]
 pub struct HexTwitch { hooks: Vec<Hook> }
 
 impl HexTwitch {
-    fn hook_command(
-        &mut self,
-        name: &str,
-        help: &str,
-        callback: impl Fn(&[String]) -> hexchat::EatMode + 'static,
-    ) {
-        self.hooks.push(Hook::Command(register_command(
-            name,
-            help,
-            Priority::NORMAL,
-            callback,
-        )));
+    fn hook_command(&mut self, name: &str, help: &str, cb: impl CbCommand) {
+        self.register(Hook::command(name, help, cb));
     }
 
-    fn hook_print(
-        &mut self,
-        event: PrintEvent,
-        callback: impl Fn(PrintEvent, &[String]) -> hexchat::EatMode + 'static,
-    ) {
-        self.hooks.push(Hook::Print(add_print_event_listener(
-            event,
-            Priority::NORMAL,
-            move |word, _| callback(event, word),
-        )));
+    fn hook_print(&mut self, event: PrintEvent, cb: impl CbPrint) {
+        self.register(Hook::print(event, cb));
     }
 
-    fn hook_server(
-        &mut self,
-        event: &str,
-        callback: impl Fn(
-            &[String],
-            chrono::DateTime<chrono::Utc>,
-            String,
-        ) -> hexchat::EatMode + 'static,
-    ) {
-        self.hooks.push(Hook::Server(add_raw_server_event_listener(
-            event,
-            Priority::NORMAL,
-            callback,
-        )));
+    fn hook_print_plugin(&mut self, event: PrintEvent, cb: impl CbPrintPlugin) {
+        self.hook_print(event, hooks::wrap_print(event, cb))
     }
 
-    fn hook_window(
-        &mut self,
-        event: WindowEvent,
-        callback: impl Fn(hexchat::ChannelRef) -> hexchat::EatMode + 'static,
-    ) {
-        self.hooks.push(Hook::Window(add_window_event_listener(
-            event,
-            Priority::NORMAL,
-            callback,
-        )));
+    fn hook_server(&mut self, event: &str, cb: impl CbServer) {
+        self.register(Hook::server(event, cb));
+    }
+
+    fn hook_window(&mut self, event: WindowEvent, cb: impl CbWindow) {
+        self.register(Hook::window(event, cb));
+    }
+
+    fn register(&mut self, hook: Hook) {
+        self.hooks.push(hook);
     }
 }
 
@@ -175,15 +111,15 @@ impl Plugin for HexTwitch {
         }
 
         //  Hook for User Joins.
-        plugin.hook_print(PrintEvent::JOIN, cb_join);
+        plugin.hook_print_plugin(PrintEvent::JOIN, cb_join);
 
         //  Hooks for User Messages.
-        plugin.hook_print(PrintEvent::CHANNEL_MESSAGE, cb_print);
-        plugin.hook_print(PrintEvent::CHANNEL_ACTION, cb_print);
-        plugin.hook_print(PrintEvent::CHANNEL_MSG_HILIGHT, cb_print);
-        plugin.hook_print(PrintEvent::CHANNEL_ACTION_HILIGHT, cb_print);
-        plugin.hook_print(PrintEvent::YOUR_MESSAGE, cb_print);
-        plugin.hook_print(PrintEvent::YOUR_ACTION, cb_print);
+        plugin.hook_print_plugin(PrintEvent::CHANNEL_MESSAGE, cb_print);
+        plugin.hook_print_plugin(PrintEvent::CHANNEL_ACTION, cb_print);
+        plugin.hook_print_plugin(PrintEvent::CHANNEL_MSG_HILIGHT, cb_print);
+        plugin.hook_print_plugin(PrintEvent::CHANNEL_ACTION_HILIGHT, cb_print);
+        plugin.hook_print_plugin(PrintEvent::YOUR_MESSAGE, cb_print);
+        plugin.hook_print_plugin(PrintEvent::YOUR_ACTION, cb_print);
 
         //  Hook RAW LINE Server Messages into the general Handler Callback.
         plugin.hook_server("RAW LINE", cb_server);
