@@ -111,7 +111,7 @@ impl Plugin for HexTwitch {
         }
 
         //  Hook for User Joins.
-        plugin.hook_print_plugin(PrintEvent::JOIN, cb_join);
+        plugin.hook_print(PrintEvent::JOIN, cb_join);
 
         //  Hooks for User Messages.
         plugin.hook_print_plugin(PrintEvent::CHANNEL_MESSAGE, cb_print);

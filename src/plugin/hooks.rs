@@ -61,7 +61,7 @@ trait_alias! {
     ///
     /// [`wrapped`]: wrap_print
     pub trait CbPrintPlugin = {
-        Fn(PrintEvent, &[String]) -> EatMode
+        Fn(PrintEvent, &[String], DateTime<Utc>) -> EatMode
         + 'static
     };
 
@@ -80,7 +80,7 @@ trait_alias! {
 
 
 pub fn wrap_print(event: PrintEvent, cb: impl CbPrintPlugin) -> impl CbPrint {
-    move |words: &[String], _| cb(event, words)
+    move |words: &[String], dt: DateTime<Utc>| cb(event, words, dt)
 }
 
 

@@ -44,6 +44,7 @@ struct Sponge {
     signature: Option<Signature>,
     previous: Option<Signature>,
     message: Option<Message>,
+    dt: Option<DateTime<Utc>>,
 }
 
 impl Sponge {
@@ -51,7 +52,7 @@ impl Sponge {
     ///     any, is removed. Takes Ownership of the new Message.
     ///
     /// Input: [`Message`]
-    fn put(&mut self, new: Message) {
+    fn put(&mut self, new: Message, dt: DateTime<Utc>) {
         let sig_new = new.get_signature();
 
         if self.previous.as_ref() == Some(&sig_new) {
@@ -61,8 +62,9 @@ impl Sponge {
             self.previous.take();
         } else {
             //  New message does not match the last emitted. Accept it.
-            self.signature.replace(sig_new);
-            self.message.replace(new);
+            self.signature = Some(sig_new);
+            self.message = Some(new);
+            self.dt = Some(dt);
         }
     }
 
@@ -76,17 +78,21 @@ impl Sponge {
     ///     Print Hooks. This way, that minimal representation can be associated
     ///     with the much fuller version received through a Server Hook.
     ///
-    /// Input: [`&Signature`]
+    /// Input: [`&Signature`], [`DateTime<Utc>`]
     /// Return: [`MsgSrc`]
     ///
     /// [`&Signature`]: Signature
-    fn pop(&mut self, signature: &Signature) -> MsgSrc {
+    /// [`DateTime<Utc>`]: DateTime
+    fn pop(&mut self, signature: &Signature, dt: DateTime<Utc>) -> MsgSrc {
         //  Check the last processed message signature. At the same time, clear
         //      the last processed, because this check is the sole purpose for
         //      its existence.
         match self.previous.take() {
             //  New signature matches previous. Probably a re-emit.
-            Some(old) if signature == &old => MsgSrc::ReEmit,
+            Some(prev) if signature == &prev => MsgSrc::ReEmit,
+
+            //  If the timestamp does not match, it cannot be the same message.
+            _ if self.dt != Some(dt) => MsgSrc::Unknown,
 
             //  Compare against the currently-held signature.
             _ => match &self.signature {
@@ -95,7 +101,7 @@ impl Sponge {
                     Some(msg) => MsgSrc::Server(msg),
 
                     //  Signature matches, but message is already gone.
-                    None => MsgSrc::Unknown,
+                    None => MsgSrc::ReEmit,
                 }
 
                 //  Signature does not match.
@@ -130,11 +136,14 @@ fn arg_trim(args: &[String]) -> &[String] {
 }
 
 
-fn check_message(channel: &str, author: &str) -> MsgSrc {
-    CURRENT.lock().pop(&Signature::new(
-        Some(channel),
-        strip_formatting(author),
-    ))
+fn check_message(channel: &str, author: &str, dt: DateTime<Utc>) -> MsgSrc {
+    let sig = Signature::new(Some(channel), strip_formatting(author));
+    CURRENT.lock().pop(&sig, dt)
+}
+
+
+fn store_message(msg: Message, dt: DateTime<Utc>) {
+    CURRENT.lock().put(msg, dt)
 }
 
 
@@ -161,7 +170,7 @@ pub fn cb_focus(_channel: ChannelRef) -> EatMode {
 
 
 /// Hide a Join Event if it is fake.
-pub fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
+pub fn cb_join(word: &[String], _dt: DateTime<Utc>) -> EatMode {
     if this_is_twitch() && !word[2].contains("tmi.twitch.tv") {
         EatMode::All
     } else {
@@ -170,7 +179,7 @@ pub fn cb_join(_etype: PrintEvent, word: &[String]) -> EatMode {
 }
 
 
-pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
+pub fn cb_print(etype: PrintEvent, word: &[String], dt: DateTime<Utc>) -> EatMode {
     fn need_irc(etype: PrintEvent) -> bool {
         match etype {
             PrintEvent::YOUR_ACTION => false,
@@ -184,7 +193,7 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
         let author: &String = &word[0];
 
         //  Determine what should be done with this message.
-        match check_message(&channel, author) {
+        match check_message(&channel, author, dt) {
             //  Message was already processed. Ignore it.
             MsgSrc::ReEmit => EatMode::None,
             //  Message comes from Server. IRC Representation available.
@@ -201,13 +210,13 @@ pub fn cb_print(etype: PrintEvent, word: &[String]) -> EatMode {
 
 
 /// Handle a Server Message, received by the Hook for "RAW LINE".
-pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
+pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
     if this_is_twitch() {
         let msg: Message = raw.parse().expect("Failed to parse IRC Message");
         let opt_eat: Option<EatMode> = match msg.command.as_str() {
             //  Chat Messages.
             "PRIVMSG" => {
-                CURRENT.lock().put(msg);
+                store_message(msg, dt);
                 Some(EatMode::None)
             }
             "WHISPER" => events::whisper_recv(msg),
@@ -238,15 +247,17 @@ pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
             _ => Some(EatMode::None),
         };
 
-        //  Print the Message if the handler fails to return an EatMode.
-        opt_eat.unwrap_or_else(|| {
-            //  Do not check for HTDEBUG setting here, because a failure in a
-            //      handler, for a known type, is a bigger deal than just not
-            //      having a handler for an unknown one. This needs to be
-            //      noticed and fixed.
-            alert_error(&format!("Handler for IRC Command failed: {}", raw));
-            EatMode::None
-        })
+        match opt_eat {
+            Some(mode) => mode,
+            None => {
+                //  Do not check for HTDEBUG setting here, because a failure in
+                //      a handler, for a known type, is a bigger deal than just
+                //      not having a handler for an unknown one. This needs to
+                //      be noticed and fixed.
+                alert_error(&format!("Handler for IRC Command failed: {raw}"));
+                EatMode::None
+            }
+        }
     } else {
         EatMode::None
     }
