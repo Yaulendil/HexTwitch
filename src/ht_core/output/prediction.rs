@@ -22,14 +22,15 @@ impl PredColor {
 
     pub const fn badge(&self, number: usize) -> char {
         let icons = self.icons();
-        icons[number % icons.len()]
+        let index = number - 1;
+        icons[index % icons.len()]
     }
 
-    const fn icons(&self) -> [char; 2] {
+    const fn icons(&self) -> &'static [char] {
         match self {
-            Self::Blue => ['⧮', '⧯'],
-            Self::Pink => ['⧰', '⧱'],
-            Self::Gray => ['⧲', '⧳'],
+            Self::Blue => &['❶', '❷', '❸', '❹', '❺', '❻', '❼', '❽', '❾', '❿'],
+            Self::Pink => &['❶', '❷'],
+            Self::Gray => &['⧲', '⧳'],
         }
     }
 }
@@ -87,7 +88,7 @@ struct BadgeLabel<'s> {
 }
 
 impl<'s> BadgeLabel<'s> {
-    const fn new(pair: (&'s PredictionBadge, &'s String)) -> Self {
+    const fn from_pair(pair: (&'s PredictionBadge, &'s String)) -> Self {
         let (badge, label) = pair;
 
         Self { badge, label }
@@ -108,6 +109,12 @@ impl<'s> Display for BadgeLabel<'s> {
 }
 
 
+//  At the time of this writing, it seems that a prediction may be between
+//      `blue-1` and `pink-2`, or between `blue-1`, `blue-2`, (...), and
+//      `blue-10`.
+//
+//  TODO: Keep track of which form of the above is currently in use, and drop
+//      unused values when it changes.
 #[derive(Clone, Default)]
 pub struct Predict {
     map: HashMap<PredictionBadge, String>,
@@ -116,7 +123,7 @@ pub struct Predict {
 impl Predict {
     fn pairs(&self) -> Vec<BadgeLabel> {
         let mut pairs: Vec<BadgeLabel> = self.map.iter()
-            .map(BadgeLabel::new)
+            .map(BadgeLabel::from_pair)
             .collect();
 
         pairs.sort_unstable();
