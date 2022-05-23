@@ -15,6 +15,7 @@ macro_rules! cmd {
 
 
 mod ht_core;
+mod icons;
 pub mod irc;
 mod plugin;
 mod prefs;

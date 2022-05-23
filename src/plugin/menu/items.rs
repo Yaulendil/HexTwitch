@@ -1,4 +1,5 @@
-use crate::prefs::HexPrefGet;
+use crate::{icons::Icon, prefs::HexPrefGet};
+
 
 pub trait MenuItem: Sized {
     fn add(&self) { menu_add!(struct self); }
@@ -13,12 +14,17 @@ pub trait MenuItem: Sized {
 pub struct MenuGroup {
     path: String,
     subpaths: Vec<String>,
+    icon: Option<&'static Icon>,
 }
 
 #[allow(dead_code)]
 impl MenuGroup {
     pub fn new(path: impl Into<String>) -> Self {
-        Self { path: path.into(), subpaths: Vec::new() }
+        Self {
+            path: path.into(),
+            subpaths: Vec::new(),
+            icon: None,
+        }
     }
 
     pub fn add_item(&mut self, item: impl MenuItem) {
@@ -42,9 +48,24 @@ impl MenuGroup {
     pub fn sub_menu(&mut self, sub: &str) -> Self {
         Self::new(format!("{}/{}", self.path, sub))
     }
+
+    pub fn with_icon(mut self, icon: &'static Icon) -> Self {
+        self.icon = Some(icon);
+        self
+    }
 }
 
 impl MenuItem for MenuGroup {
+    fn opts(&self) -> String {
+        match &self.icon {
+            Some(icon) => match icon.path_asset() {
+                Some(path) => format!("-i{}", path.display()),
+                None => String::new(),
+            }
+            None => String::new(),
+        }
+    }
+
     fn path(&self) -> String { self.path.clone() }
 }
 
@@ -64,6 +85,12 @@ pub struct MenuCommand {
     pub desc: &'static str,
 }
 
+impl MenuCommand {
+    pub fn with_icon(self, icon: &'static Icon) -> MenuCommandIcon {
+        MenuCommandIcon { cmd: self, icon }
+    }
+}
+
 impl MenuItem for MenuCommand {
     fn path(&self) -> String {
         String::from(self.desc)
@@ -71,6 +98,29 @@ impl MenuItem for MenuCommand {
 
     fn tail(&self) -> String {
         format!("{:?}", self.cmd)
+    }
+}
+
+
+pub struct MenuCommandIcon {
+    cmd: MenuCommand,
+    icon: &'static Icon,
+}
+
+impl MenuItem for MenuCommandIcon {
+    fn opts(&self) -> String {
+        match self.icon.path_asset() {
+            Some(path) => format!("-i{}", path.display()),
+            None => String::new(),
+        }
+    }
+
+    fn path(&self) -> String {
+        self.cmd.path()
+    }
+
+    fn tail(&self) -> String {
+        self.cmd.tail()
     }
 }
 

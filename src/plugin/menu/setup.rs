@@ -1,4 +1,4 @@
-use crate::prefs::*;
+use crate::{icons::*, prefs::*};
 use super::*;
 
 
@@ -49,11 +49,11 @@ pub fn create_menus() -> Vec<MenuGroup> {
         twitch.add_item(MenuCommand {
             cmd: "SAY .mods",
             desc: "List channel Moderators",
-        });
+        }.with_icon(&I_MOD));
         twitch.add_item(MenuCommand {
             cmd: "SAY .vips",
             desc: "List channel VIPs",
-        });
+        }.with_icon(&I_VIP));
     }
 
     //  Main menu: Section 3: Plugin config.
@@ -204,19 +204,19 @@ pub fn create_menus() -> Vec<MenuGroup> {
     user.add_item(MenuCommand {
         cmd: "SAY .mod %s",
         desc: "Add Mod",
-    });
+    }.with_icon(&I_MOD));
     user.add_item(MenuCommand {
         cmd: "SAY .unmod %s",
         desc: "Remove Mod",
-    });
+    }.with_icon(&I_UNMOD));
     user.add_item(MenuCommand {
         cmd: "SAY .vip %s",
         desc: "Add VIP",
-    });
+    }.with_icon(&I_VIP));
     user.add_item(MenuCommand {
         cmd: "SAY .unvip %s",
         desc: "Remove VIP",
-    });
+    }.with_icon(&I_UNVIP));
     menus.push(user);
 
     menus
