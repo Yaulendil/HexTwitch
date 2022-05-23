@@ -1,4 +1,5 @@
 mod hooks;
+mod menu;
 
 use hexchat::{Plugin, print_plain, PrintEvent, WindowEvent};
 use crate::ht_core::{
@@ -16,10 +17,15 @@ use crate::ht_core::{
     cmd_whisper_here,
 };
 use hooks::{CbCommand, CbPrint, CbPrintPlugin, CbServer, CbWindow, Hook};
+use menu::*;
 
 
 #[derive(Default)]
-pub struct HexTwitch { hooks: Vec<Hook> }
+pub struct HexTwitch {
+    hooks: Vec<Hook>,
+    #[allow(dead_code)]
+    menus: Vec<MenuGroup>,
+}
 
 impl HexTwitch {
     fn hook_command(&mut self, name: &str, help: &str, cb: impl CbCommand) {
@@ -53,7 +59,10 @@ impl Plugin for HexTwitch {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
     fn new() -> Self {
-        let mut plugin = Self { hooks: Vec::with_capacity(17) };
+        let mut plugin = Self {
+            hooks: Vec::with_capacity(17),
+            menus: create_menus(),
+        };
 
         //  Register Plugin Commands, with helptext.
         plugin.hook_command(
@@ -100,15 +109,6 @@ impl Plugin for HexTwitch {
             "Display unknown Badge Keys that have been seen.",
             cmd_unk_badges,
         );
-
-        for cmd in &[
-            "Twitch",
-            "\"Twitch/Toggle USERNOTICE Debug\" HTDEBUG",
-            "\"Twitch/Toggle in-channel Whispers\" WHISPERHERE",
-            "\"Twitch/View channel Prediction\" PREDICTION",
-        ] {
-            cmd!("MENU ADD {}", cmd);
-        }
 
         //  Hook for User Joins.
         plugin.hook_print(PrintEvent::JOIN, cb_join);
