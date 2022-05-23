@@ -4,6 +4,8 @@ use hexchat::{
     EatMode,
     get_channel,
     get_channel_name,
+    get_current_channel,
+    get_focused_channel,
     print_event_to_channel,
     print_plain,
     PrintEvent,
@@ -565,8 +567,25 @@ fn host_notif(viewers: &str) -> String {
 pub fn hosttarget(msg: Message) -> Option<EatMode> {
     let (target, viewers) = split_at_char(&msg.trail, ' ');
 
-    if target != "-" {
+    if !target.is_empty() && target != "-" {
         let hashtarg: String = format!("#{}", target);
+
+        //  Check whether we should try to follow the host.
+        if PREF_FOLLOW_HOSTS.is(true) {
+            let current = get_current_channel();
+            let focused = get_focused_channel();
+
+            //  Check whether the source channel is currently focused.
+            if Some(current) == focused {
+                //  Join the target channel, if necessary.
+                if get_channel(NETWORK, &hashtarg).is_none() {
+                    cmd!("JOIN {}", hashtarg);
+                }
+
+                //  Focus the target channel.
+                cmd!("DOAT {}/{} GUI focus", hashtarg, NETWORK);
+            }
+        }
 
         echo(EVENT_CHANNEL, &[
             &hashtarg, &format!("https://twitch.tv/{}", target),

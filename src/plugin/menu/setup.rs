@@ -66,6 +66,12 @@ pub fn create_menus() -> Vec<MenuGroup> {
             unset: None,
         });
         twitch.add_item(MenuPrefToggle {
+            pref: PREF_FOLLOW_HOSTS,
+            desc: "Follow hosts",
+            set: "HOSTFOLLOW",
+            unset: None,
+        });
+        twitch.add_item(MenuPrefToggle {
             pref: PREF_WHISPERS,
             desc: "Show Whispers in current tab",
             set: "WHISPERHERE",

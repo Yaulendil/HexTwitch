@@ -264,6 +264,25 @@ pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
 }
 
 
+pub fn cmd_follow_hosts(_arg_full: &[String]) -> EatMode {
+    let new: bool = PREF_FOLLOW_HOSTS.get() != Some(true);
+
+    if PREF_FOLLOW_HOSTS.set(new).is_ok() {
+        alert_basic(
+            if new {
+                "Twitch hosts will now be followed to the target channel."
+            } else {
+                "Twitch hosts will NOT be followed to the target channel."
+            }
+        );
+    } else {
+        alert_error("FAILED to set Preference.");
+    }
+
+    EatMode::All
+}
+
+
 pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
     let new: bool = PREF_DEBUG.get() != Some(true);
 

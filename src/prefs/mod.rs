@@ -34,6 +34,9 @@ pub const PREF_DEBUG: PrefMigrating<PrefBool> = PrefMigrating {
 };
 
 
+pub const PREF_FOLLOW_HOSTS: PrefBool = PrefBool::new(pref!("follow_hosts"));
+
+
 /// Preference: Whether incoming whispers should be displayed in the current
 ///     channel in addition to their respective tabs.
 pub const PREF_WHISPERS: PrefBool = PrefBool::new(pref!("whispers_in_current"));

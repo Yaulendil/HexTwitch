@@ -7,6 +7,7 @@ use crate::ht_core::{
     cb_join,
     cb_print,
     cb_server,
+    cmd_follow_hosts,
     cmd_ht_debug,
     cmd_prediction,
     cmd_reward,
@@ -60,7 +61,7 @@ impl Plugin for HexTwitch {
 
     fn new() -> Self {
         let mut plugin = Self {
-            hooks: Vec::with_capacity(17),
+            hooks: Vec::with_capacity(18),
             menus: create_menus(),
         };
 
@@ -69,6 +70,11 @@ impl Plugin for HexTwitch {
             "HTDEBUG",
             "Toggle whether unknown UserNotices should show the full plain IRC.",
             cmd_ht_debug,
+        );
+        plugin.hook_command(
+            "HOSTFOLLOW",
+            "Toggle whether Twitch Hosts will be followed through to the target channel.",
+            cmd_follow_hosts,
         );
         plugin.hook_command(
             "PREDICTION",
