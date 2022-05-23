@@ -18,22 +18,25 @@ pub use pref_types::*;
 pub use reward::Reward;
 
 
+macro_rules! pref {($($t:tt)*) => {concat!("PREF_", $($t)*)}}
+
+
 /// Prefix indicating an actual preference setting (as opposed to stored
 ///     "Reward" data).
 #[allow(dead_code)]
-const PREFIX: &'static str = "PREF_";
+const PREFIX: &'static str = pref!();
 
 
 /// Preference: Debug mode for the plugin.
 pub const PREF_DEBUG: PrefMigrating<PrefBool> = PrefMigrating {
-    new: PrefBool::new("PREF_debug"),
-    old: PrefBool::new("PREF_htdebug"),
+    new: PrefBool::new(pref!("debug")),
+    old: PrefBool::new(pref!("htdebug")),
 };
 
 
 /// Preference: Whether incoming whispers should be displayed in the current
 ///     channel in addition to their respective tabs.
-pub const PREF_WHISPERS: PrefBool = PrefBool::new("PREF_whispers_in_current");
+pub const PREF_WHISPERS: PrefBool = PrefBool::new(pref!("whispers_in_current"));
 
 
 /// Perform all necessary Preference migrations, printing a report for each one.
