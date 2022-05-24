@@ -1,12 +1,12 @@
-#![allow(dead_code)]
-
+use std::ops::{Deref, Neg};
+use hexchat::print_plain;
 use super::prediction::*;
 
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Change<T> {
-    old: T,
-    new: T,
+    pub old: T,
+    pub new: T,
 }
 
 impl<T: Copy> Change<T> {
@@ -18,7 +18,15 @@ impl<T: Copy> Change<T> {
     }
 }
 
-impl<T> std::ops::Neg for Change<T> {
+impl<T> Deref for Change<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.new
+    }
+}
+
+impl<T> Neg for Change<T> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -124,9 +132,63 @@ impl RoomState {
     }
 }
 
+impl RoomState {
+    pub fn report_id(&self) {
+        match self.room_id {
+            Some(id) => print_plain(&format!("Room ID is set to {}.", id)),
+            None => print_plain("Room ID is not set."),
+        }
+    }
+
+    pub fn report_rituals(&self) {
+        match self.rituals {
+            Some(n) => print_plain(&format!("Ritual value is set to {}.", n)),
+            None => print_plain("Ritual value is disabled."),
+        }
+    }
+
+    pub fn report_slow(&self) {
+        match self.slow {
+            Some(sec) => print_plain(&format!("Slow mode is set to {}s.", sec)),
+            None => print_plain("Slow mode is disabled."),
+        }
+    }
+
+    pub fn report_followers(&self) {
+        match self.followers {
+            FollowMode::Off => print_plain("Followers-Only mode is disabled."),
+            FollowMode::FollowAny => print_plain("Followers-Only mode is enabled."),
+            FollowMode::ForMinutes(min) => print_plain(
+                &format!("{}-minute Followers-Only mode is enabled.", min)
+            ),
+        }
+    }
+
+    pub fn report_unique(&self) {
+        match self.unique {
+            true => print_plain("Unique mode is enabled."),
+            false => print_plain("Unique mode is NOT enabled."),
+        }
+    }
+
+    pub fn report_emotes(&self) {
+        match self.emotes {
+            true => print_plain("Emote Only mode is enabled."),
+            false => print_plain("Emote Only mode is NOT enabled."),
+        }
+    }
+
+    pub fn report_subscribers(&self) {
+        match self.subscribers {
+            true => print_plain("Subscribers-Only mode is enabled."),
+            false => print_plain("Subscribers-Only mode is NOT enabled."),
+        }
+    }
+}
+
 
 #[derive(Debug, Default)]
 pub struct ChannelData {
     pub predictions: Predict,
-    pub room_state: RoomState,
+    pub roomstate: RoomState,
 }

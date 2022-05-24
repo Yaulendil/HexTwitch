@@ -1,4 +1,7 @@
-use std::{collections::{hash_map::HashMap, HashSet}, ops::{Deref, DerefMut}};
+use std::{
+    collections::{hash_map::{Entry, HashMap}, HashSet},
+    ops::{Deref, DerefMut},
+};
 use parking_lot::{
     Mutex,
     RwLock,
@@ -45,18 +48,20 @@ impl BadgesUnknown {
 pub struct Channels(RwLock<HashMap<String, ChannelData>>);
 
 impl Channels {
-    pub fn ensure<'s>(&'s self, channel: &str)
+    pub fn current(&self) -> impl DerefMut<Target=ChannelData> + '_ {
+        self.ensure(hexchat::get_channel_name())
+    }
+
+    pub fn ensure<'s>(&'s self, channel: String)
         -> impl DerefMut<Target=ChannelData> + 's
     {
-        RwLockWriteGuard::try_map(
+        RwLockWriteGuard::map(
             self.0.write(),
-            |map| {
-                if !map.contains_key(channel) {
-                    map.insert(channel.to_owned(), Default::default());
-                }
-                map.get_mut(channel)
+            |map| match map.entry(channel) {
+                Entry::Occupied(e) => e.into_mut(),
+                Entry::Vacant(e) => e.insert(Default::default()),
             }
-        ).unwrap()
+        )
     }
 
     pub fn get_prediction<'s>(&'s self, channel: &str)
@@ -79,10 +84,7 @@ impl Channels {
         -> Option<bool>
     {
         match variant.parse::<PredictionBadge>() {
-            Ok(pb) => {
-                let mut cref = self.ensure(&channel);
-                Some(cref.predictions.set_label(pb, label))
-            }
+            Ok(pb) => Some(self.ensure(channel).predictions.set_label(pb, label)),
             Err(_) => None,
         }
     }
