@@ -4,7 +4,7 @@ use std::{collections::HashMap, fmt::{Display, Formatter}};
 const UNK: &str = "Unknown";
 
 
-#[derive(Clone, Copy, Hash, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Hash, Eq, Ord, PartialEq, PartialOrd)]
 pub enum PredColor {
     Blue,
     Pink,
@@ -49,7 +49,7 @@ impl std::str::FromStr for PredColor {
 }
 
 
-#[derive(Clone, Copy, Hash, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Hash, Eq, Ord, PartialEq, PartialOrd)]
 pub struct PredictionBadge {
     color: PredColor,
     index: u32,
@@ -115,7 +115,7 @@ impl<'s> Display for BadgeLabel<'s> {
 //
 //  TODO: Keep track of which form of the above is currently in use, and drop
 //      unused values when it changes.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Predict {
     map: HashMap<PredictionBadge, String>,
 }

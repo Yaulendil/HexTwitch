@@ -1,3 +1,4 @@
+mod channels;
 pub(super) mod prediction;
 mod printing;
 mod statics;
