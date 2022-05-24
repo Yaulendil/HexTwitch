@@ -8,6 +8,7 @@ use crate::ht_core::{
     cb_print,
     cb_server,
     cmd_follow_hosts,
+    cmd_ht_info,
     cmd_ht_debug,
     cmd_prediction,
     cmd_reward,
@@ -70,6 +71,11 @@ impl Plugin for HexTwitch {
             "HTDEBUG",
             "Toggle whether unknown UserNotices should show the full plain IRC.",
             cmd_ht_debug,
+        );
+        plugin.hook_command(
+            "HTINFO",
+            "Print information about the HexTwitch plugin.",
+            cmd_ht_info,
         );
         plugin.hook_command(
             "HOSTFOLLOW",

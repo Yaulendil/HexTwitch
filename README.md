@@ -31,7 +31,7 @@ You will need to have [Cargo](https://github.com/rust-lang/cargo) installed. Car
 cargo build --release
 ```
 
-After Cargo compiles the plugin, its Binary should be in `target/release/`, and should be named something like `libhextwitchr` or `libhextwitchr.so`. Move this File into the `addons` Directory in your HexChat config Directory; On Linux, this should be at `$XDG_CONFIG_HOME/hexchat/addons/`.
+After Cargo compiles the plugin, its Binary should be in `target/release/`, and should be named something like `libhextwitch` or `libhextwitch.so`. Move this File into the `addons` Directory in your HexChat config Directory; On Linux, this should be at `$XDG_CONFIG_HOME/hexchat/addons/`.
 
 If you have not patched HexChat, it will probably crash. Otherwise, you should now have Twitch features.
 

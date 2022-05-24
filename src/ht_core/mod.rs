@@ -302,6 +302,12 @@ pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
 }
 
 
+pub fn cmd_ht_info(_arg_full: &[String]) -> EatMode {
+    hexchat::print_plain(crate::PLUGIN_INFO);
+    EatMode::All
+}
+
+
 pub fn cmd_prediction(_arg_full: &[String]) -> EatMode {
     alert_basic(&format!(
         "Current Prediction: {}",
@@ -317,16 +323,6 @@ pub fn cmd_reward(arg_full: &[String]) -> EatMode {
         [] => {
             //  Print the current Reward Names.
             alert_basic("REWARD EVENTS:");
-
-            // for pref in get_prefs() {
-            //     if !pref.is_empty() && !pref.starts_with(Pref::PREFIX) {
-            //         alert_basic(&format!(
-            //             "{}: '{}'",
-            //             pref,
-            //             get_pref_string(&pref).unwrap_or_default(),
-            //         ));
-            //     }
-            // }
 
             for reward in Reward::get_all() {
                 alert_basic(&format!(

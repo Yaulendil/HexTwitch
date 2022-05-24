@@ -61,7 +61,7 @@ pub fn create_menus() -> Vec<MenuGroup> {
         twitch.add_separator();
         twitch.add_item(MenuPrefToggle {
             pref: PREF_DEBUG,
-            desc: "Enable Debug mode",
+            desc: "Enable debug mode",
             set: "HTDEBUG",
             unset: None,
         });
@@ -73,9 +73,22 @@ pub fn create_menus() -> Vec<MenuGroup> {
         });
         twitch.add_item(MenuPrefToggle {
             pref: PREF_WHISPERS,
-            desc: "Show Whispers in current tab",
+            desc: "Show whispers in current tab",
             set: "WHISPERHERE",
             unset: None,
+        });
+    }
+
+    //  Main menu: Section 4: Plugin misc.
+    {
+        twitch.add_separator();
+        twitch.add_item(MenuCommand {
+            cmd: concat!("RELOAD ", env!("CARGO_PKG_NAME")),
+            desc: "Reload plugin",
+        });
+        twitch.add_item(MenuCommand {
+            cmd: "HTINFO",
+            desc: "About HexTwitch",
         });
     }
 

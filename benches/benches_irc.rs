@@ -2,7 +2,7 @@
 
 extern crate test;
 
-use hextwitchr::irc::*;
+use hextwitch::irc::*;
 use test::Bencher;
 
 const MSG_WITHOUT_TAGS: &str =
