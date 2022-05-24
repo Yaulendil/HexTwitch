@@ -1,4 +1,4 @@
-use std::{collections::{hash_map::{HashMap, Entry}, HashSet}, ops::Deref};
+use std::{collections::{hash_map::HashMap, HashSet}, ops::{Deref, DerefMut}};
 use parking_lot::{
     Mutex,
     RwLock,
@@ -7,6 +7,7 @@ use parking_lot::{
 };
 use super::{
     Badges,
+    channels::*,
     tabs::{TabColor, Tabs},
     prediction::{MaybePredict, Predict, PredictionBadge},
     printing::States,
@@ -15,7 +16,7 @@ use super::{
 
 safe_static! {
     pub static lazy BADGES_UNKNOWN: BadgesUnknown = Default::default();
-    pub static lazy PREDICTIONS: Predictions = Default::default();
+    pub static lazy CHANNELS: Channels = Default::default();
     pub static lazy TABCOLORS: TabColors = Default::default();
     pub static lazy USERSTATE: UserState = Default::default();
 }
@@ -41,15 +42,29 @@ impl BadgesUnknown {
 
 
 #[derive(Default)]
-pub struct Predictions(RwLock<HashMap<String, Predict>>);
+pub struct Channels(RwLock<HashMap<String, ChannelData>>);
 
-impl Predictions {
-    pub fn get<'s>(&'s self, channel: &str)
+impl Channels {
+    pub fn ensure<'s>(&'s self, channel: &str)
+        -> impl DerefMut<Target=ChannelData> + 's
+    {
+        RwLockWriteGuard::try_map(
+            self.0.write(),
+            |map| {
+                if !map.contains_key(channel) {
+                    map.insert(channel.to_owned(), Default::default());
+                }
+                map.get_mut(channel)
+            }
+        ).unwrap()
+    }
+
+    pub fn get_prediction<'s>(&'s self, channel: &str)
         -> MaybePredict<impl Deref<Target=Predict> + 's>
     {
         let guard = RwLockReadGuard::try_map(
             self.0.read(),
-            |map| map.get(channel),
+            |map| map.get(channel).map(|c| &c.predictions),
         );
 
         let inner = match guard {
@@ -60,18 +75,13 @@ impl Predictions {
         MaybePredict(inner)
     }
 
-    pub fn update(&self, channel: String, variant: &str, label: &str)
+    pub fn update_prediction(&self, channel: String, variant: &str, label: &str)
         -> Option<bool>
     {
         match variant.parse::<PredictionBadge>() {
             Ok(pb) => {
-                let mut map = self.0.write();
-                let pred: &mut Predict = match map.entry(channel) {
-                    Entry::Vacant(entry) => entry.insert(Default::default()),
-                    Entry::Occupied(entry) => entry.into_mut(),
-                };
-
-                Some(pred.set_label(pb, label))
+                let mut cref = self.ensure(&channel);
+                Some(cref.predictions.set_label(pb, label))
             }
             Err(_) => None,
         }

@@ -22,7 +22,7 @@ pub use printing::{
     EVENT_NORMAL,
     EVENT_REWARD,
 };
-pub use statics::{BADGES_UNKNOWN, PREDICTIONS, TABCOLORS, USERSTATE};
+pub use statics::{BADGES_UNKNOWN, CHANNELS, TABCOLORS, USERSTATE};
 pub use tabs::TabColor;
 
 

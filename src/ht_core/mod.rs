@@ -19,7 +19,7 @@ use output::{
     alert_error,
     BADGES_UNKNOWN,
     change_topic,
-    PREDICTIONS,
+    CHANNELS,
     print_with_irc,
     print_without_irc,
     TABCOLORS,
@@ -311,7 +311,7 @@ pub fn cmd_ht_info(_arg_full: &[String]) -> EatMode {
 pub fn cmd_prediction(_arg_full: &[String]) -> EatMode {
     alert_basic(&format!(
         "Current Prediction: {}",
-        PREDICTIONS.get(&get_channel_name()),
+        CHANNELS.get_prediction(&get_channel_name()),
     ));
 
     EatMode::All

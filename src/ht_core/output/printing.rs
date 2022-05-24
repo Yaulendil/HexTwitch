@@ -4,7 +4,7 @@ use hexchat::{print_event, PrintEvent};
 use crate::irc::split_at_char;
 use super::{
     prediction::PredictionBadge,
-    statics::{BADGES_UNKNOWN, PREDICTIONS, TABCOLORS},
+    statics::{BADGES_UNKNOWN, CHANNELS, TABCOLORS},
     tabs::TabColor,
 };
 
@@ -357,14 +357,14 @@ impl Badges {
                     let variant = &rank[LEN..];
                     let label = &info[LEN..];
 
-                    if let Some(true) = PREDICTIONS.update(
+                    if let Some(true) = CHANNELS.update_prediction(
                         channel.to_owned(),
                         variant,
                         label,
                     ) {
                         alert_basic(&format!(
                             "Prediction Updated: {}",
-                            PREDICTIONS.get(channel),
+                            CHANNELS.get_prediction(channel),
                         ));
                         return true;
                     }
