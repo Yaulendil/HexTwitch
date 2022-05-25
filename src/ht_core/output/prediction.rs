@@ -3,61 +3,43 @@ use std::{collections::HashMap, fmt::{Display, Formatter}};
 
 const UNK: &str = "Unknown";
 
+const I_BLUE: [char; 10] = ['❶', '❷', '❸', '❹', '❺', '❻', '❼', '❽', '❾', '❿'];
+const I_PINK: [char; 2] = ['❶', '❷'];
+const I_GRAY: [char; 2] = ['⧲', '⧳'];
 
-#[derive(Clone, Copy, Debug, Hash, Eq, Ord, PartialEq, PartialOrd)]
-pub enum PredColor {
-    Blue,
-    Pink,
-    Gray,
-}
-
-impl PredColor {
-    pub const fn color(&self) -> &'static str {
-        match self {
-            Self::Blue => "blue",
-            Self::Pink => "pink",
-            Self::Gray => "gray",
-        }
-    }
-
-    pub const fn badge(&self, number: usize) -> char {
-        let icons = self.icons();
-        let index = number - 1;
-        icons[index % icons.len()]
-    }
-
-    const fn icons(&self) -> &'static [char] {
-        match self {
-            Self::Blue => &['❶', '❷', '❸', '❹', '❺', '❻', '❼', '❽', '❾', '❿'],
-            Self::Pink => &['❶', '❷'],
-            Self::Gray => &['⧲', '⧳'],
-        }
-    }
-}
-
-impl std::str::FromStr for PredColor {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "blue" => Ok(Self::Blue),
-            "pink" => Ok(Self::Pink),
-            "gray" => Ok(Self::Gray),
-            _ => Err(()),
-        }
-    }
-}
+const LABEL_BLUE: &str = "blue";
+const LABEL_PINK: &str = "pink";
+const LABEL_GRAY: &str = "gray";
 
 
 #[derive(Clone, Copy, Debug, Hash, Eq, Ord, PartialEq, PartialOrd)]
-pub struct PredictionBadge {
-    color: PredColor,
-    index: u32,
+pub enum PredictionBadge {
+    Blue(u32),
+    Pink(u32),
+    Gray(u32),
 }
 
 impl PredictionBadge {
     pub const fn badge(&self) -> char {
-        self.color.badge(self.index as usize)
+        let icons: &[char];
+        let value: usize;
+
+        match self {
+            Self::Blue(n) => {
+                icons = &I_BLUE;
+                value = *n as _;
+            }
+            Self::Pink(n) => {
+                icons = &I_PINK;
+                value = *n as _;
+            }
+            Self::Gray(n) => {
+                icons = &I_GRAY;
+                value = *n as _;
+            }
+        }
+
+        icons[value.saturating_sub(1) % icons.len()]
     }
 }
 
@@ -65,15 +47,15 @@ impl PredictionBadge {
 #[allow(dead_code)]
 impl PredictionBadge {
     pub const fn is_blue(&self) -> bool {
-        matches!(self.color, PredColor::Blue)
+        matches!(self, Self::Blue(_))
     }
 
     pub const fn is_pink(&self) -> bool {
-        matches!(self.color, PredColor::Pink)
+        matches!(self, Self::Pink(_))
     }
 
     pub const fn is_gray(&self) -> bool {
-        matches!(self.color, PredColor::Gray)
+        matches!(self, Self::Gray(_))
     }
 }
 
@@ -81,54 +63,74 @@ impl PredictionBadge {
 #[allow(dead_code)]
 impl PredictionBadge {
     const fn can_be_blue_pink(&self) -> bool {
-        match self.color {
-            PredColor::Blue => self.index == 1,
-            PredColor::Pink => true,
-            PredColor::Gray => false,
+        match self {
+            Self::Blue(1) => true,
+            Self::Blue(_) => false,
+            Self::Pink(_) => true,
+            Self::Gray(_) => false,
         }
     }
 
     const fn must_be_blue10(&self) -> bool {
-        match self.color {
-            PredColor::Blue => 1 < self.index,
-            PredColor::Pink => false,
-            PredColor::Gray => false,
+        match self {
+            Self::Blue(1) => false,
+            Self::Blue(_) => true,
+            Self::Pink(_) => false,
+            Self::Gray(_) => false,
         }
     }
 
     const fn likely_mode(&self) -> Option<PredictMode> {
-        match self.color {
+        match self {
             //  Blue 1. Maybe 10 blues, or maybe blue/pink.
-            PredColor::Blue if self.index == 1 => None,
+            Self::Blue(1) => None,
 
             //  Pink 2. Most likely blue/pink. If they add another mode using
             //      pinks, this will need to be changed. Probably with a very
             //      extensive rework of the whole thing. Again.
-            PredColor::Pink if self.index == 2 => Some(PredictMode::BluePink),
+            Self::Pink(2) => Some(PredictMode::BluePink),
 
             //  Blue higher than 1.
-            PredColor::Blue => Some(PredictMode::Blue10),
+            Self::Blue(_) => Some(PredictMode::Blue10),
 
             //  Pink, but not 2. Does not fit into any currently known mode.
-            PredColor::Pink => None,
+            Self::Pink(_) => None,
 
             //  Grays do not seem to be mixed with other colors.
-            PredColor::Gray => Some(PredictMode::Gray2),
+            Self::Gray(_) => Some(PredictMode::Gray2),
         }
     }
 
     const fn guess_mode(&self) -> PredictMode {
-        match self.color {
-            PredColor::Blue => PredictMode::Blue10,
-            PredColor::Pink => PredictMode::BluePink,
-            PredColor::Gray => PredictMode::Gray2,
+        match self {
+            Self::Blue(_) => PredictMode::Blue10,
+            Self::Pink(_) => PredictMode::BluePink,
+            Self::Gray(_) => PredictMode::Gray2,
         }
     }
 }
 
 impl Display for PredictionBadge {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}-{}", self.color.color(), self.index)
+        let color: &'static str;
+        let value: u32;
+
+        match self {
+            Self::Blue(n) => {
+                color = LABEL_BLUE;
+                value = *n;
+            }
+            Self::Pink(n) => {
+                color = LABEL_PINK;
+                value = *n;
+            }
+            Self::Gray(n) => {
+                color = LABEL_GRAY;
+                value = *n;
+            }
+        }
+
+        write!(f, "{}-{}", color, value)
     }
 }
 
@@ -136,12 +138,15 @@ impl std::str::FromStr for PredictionBadge {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (color, index) = s.split_once("-").ok_or(())?;
+        let (color, value) = s.split_once("-").ok_or(())?;
+        let n = value.parse().or(Err(()))?;
 
-        Ok(Self {
-            color: color.parse()?,
-            index: index.parse().map_err(|_| ())?,
-        })
+        match color {
+            LABEL_BLUE => Ok(Self::Blue(n)),
+            LABEL_PINK => Ok(Self::Pink(n)),
+            LABEL_GRAY => Ok(Self::Gray(n)),
+            _ => Err(()),
+        }
     }
 }
 
