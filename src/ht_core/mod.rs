@@ -1,7 +1,7 @@
 mod events;
 mod output;
 
-use std::collections::HashSet;
+use std::{collections::HashSet, ops::Deref};
 use chrono::{DateTime, Utc};
 use hexchat::{
     ChannelRef,
@@ -309,11 +309,20 @@ pub fn cmd_ht_info(_arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_prediction(_arg_full: &[String]) -> EatMode {
-    alert_basic(&format!(
-        "Current Prediction: {}",
-        CHANNELS.get_prediction(&get_channel_name()),
-    ));
+    let owned: String;
+    let alert: &str = match CHANNELS.get_prediction(&get_channel_name()).0 {
+        None => "No active Prediction.",
+        Some(pred) => {
+            owned = format!(
+                "Current Prediction ({}): {}",
+                pred.mode().desc(),
+                pred.deref(),
+            );
+            &owned
+        }
+    };
 
+    alert_basic(alert);
     EatMode::All
 }
 

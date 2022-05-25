@@ -12,7 +12,7 @@ use super::{
     Badges,
     channels::*,
     tabs::{TabColor, Tabs},
-    prediction::{MaybePredict, Predict, PredictionBadge},
+    prediction::{MaybePredict, Predict, PredictionBadge, PredictUpdate},
     printing::States,
 };
 
@@ -81,7 +81,7 @@ impl Channels {
     }
 
     pub fn update_prediction(&self, channel: String, variant: &str, label: &str)
-        -> Option<bool>
+        -> Option<PredictUpdate>
     {
         match variant.parse::<PredictionBadge>() {
             Ok(pb) => Some(self.ensure(channel).predictions.set_label(pb, label)),
