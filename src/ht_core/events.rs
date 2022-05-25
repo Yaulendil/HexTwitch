@@ -187,6 +187,31 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
     let stype: String = msg.get_tag("msg-id")?;
 
     match stype.as_str() {
+        "announcement" => {
+            let author = msg.get_tag("login")?;
+            // let badges = super::output::badge_parse(
+            //     msg.get_tag("badges").unwrap_or_default(),
+            //     msg.get_tag("badge-info").unwrap_or_default(),
+            // );
+            // let name = format!("{}{}", badges.as_str(), author);
+
+            // echo(
+            //     PrintEvent::NOTICE,
+            //     &[name, msg.trail],
+            //     TabColor::Message,
+            // );
+
+            let text = msg.trail.clone();
+            let mode = String::from("[!] ");
+            let bstr = String::new();
+
+            super::output::print_with_irc(
+                &get_channel_name(),
+                PrintEvent::CHANNEL_MSG_HILIGHT,
+                &[author, text, mode, bstr],
+                msg,
+            );
+        }
         "raid" => {
             alert_basic(&format!(
                 "A raid of {} arrives from #{}",
