@@ -5,7 +5,7 @@ mod statics;
 mod tabs;
 
 use hexchat::{EatMode, PrintEvent, send_command};
-use crate::irc::{Message, Signature};
+use crate::irc::{Message, Prefix, Signature};
 use super::{events, mark_processed};
 pub use printing::{
     alert_basic,
@@ -24,6 +24,42 @@ pub use printing::{
 };
 pub use statics::{BADGES_UNKNOWN, CHANNELS, TABCOLORS, USERSTATE};
 pub use tabs::TabColor;
+
+
+pub fn print_announcement(mut msg: Message) -> Option<EatMode> {
+    let color = msg.get_tag("msg-param-color").unwrap_or_else(||
+        String::from("ANNOUNCE")
+    );
+    let author = msg.get_tag("login")?;
+    // let badges = super::output::badge_parse(
+    //     msg.get_tag("badges").unwrap_or_default(),
+    //     msg.get_tag("badge-info").unwrap_or_default(),
+    // );
+    // let name = format!("{}{}", badges.as_str(), author);
+
+    // echo(
+    //     PrintEvent::NOTICE,
+    //     &[name, msg.trail],
+    //     TabColor::Message,
+    // );
+
+    msg.prefix = Prefix::User{
+        nick: author.clone(),
+        user: None,
+        host: None,
+    };
+
+    let text = msg.trail.clone();
+    let mode = format!("[{}] ", color);
+    let bstr = String::new();
+
+    Some(print_with_irc(
+        &hexchat::get_channel_name(),
+        PrintEvent::CHANNEL_MSG_HILIGHT,
+        &[author, text, mode, bstr],
+        msg,
+    ))
+}
 
 
 /// Message comes from Server. IRC Representation available.
@@ -77,10 +113,15 @@ pub fn print_with_irc(
             badges.update_prediction(&channel);
 
             if msg.get_tag("anonymous-cheerer").is_none() {
-                send_command(&format!(
-                    "RECV :{0}!twitch.tv/{0} JOIN {1}",
-                    msg.author(), channel,
-                ));
+                let author = msg.author();
+                let user = hexchat::get_nickname();
+
+                if author != user {
+                    send_command(&format!(
+                        "RECV :{0}!twitch.tv/{0} JOIN {1}",
+                        author, channel,
+                    ));
+                }
             }
 
             EatMode::All
