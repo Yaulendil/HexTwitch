@@ -134,7 +134,7 @@ pub struct MenuPrefToggle<P: HexPrefGet<Output=bool>> {
 
 impl<P: HexPrefGet<Output=bool>> MenuItem for MenuPrefToggle<P> {
     fn opts(&self) -> String {
-        let initial = if self.pref.get() == Some(true) {
+        let initial = if self.pref.is(&true) {
             "-t1"
         } else {
             "-t0"

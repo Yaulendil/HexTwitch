@@ -61,6 +61,9 @@ impl Plugin for HexTwitch {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
     fn new() -> Self {
+        crate::prefs::migrate_prefs();
+        crate::prefs::init_prefs();
+
         let mut plugin = Self {
             hooks: Vec::with_capacity(18),
             menus: create_menus(),
@@ -141,9 +144,6 @@ impl Plugin for HexTwitch {
 
         //  Report loadedness.
         print_plain(&format!("{} {} loaded.", Self::NAME, Self::VERSION));
-
-        crate::prefs::migrate_prefs();
-
         plugin
     }
 }

@@ -122,7 +122,7 @@ pub fn reconnect(msg: Message) -> Option<EatMode> {
 pub fn roomstate(msg: Message) -> Option<EatMode> {
     let tags: &HashMap<String, String> = msg.tags.as_ref()?;
     let join: bool = tags.len() > 2;
-    let debug: bool = PREF_DEBUG.get() == Some(true);
+    let debug: bool = PREF_DEBUG.is(&true);
 
     let roomstate: &mut RoomState = &mut CHANNELS.current().roomstate;
     let mut tags_vec: Vec<(&String, &String)> = tags.iter().collect();
@@ -396,7 +396,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
         )),
 
         _ => {
-            if PREF_DEBUG.get() == Some(true) {
+            if PREF_DEBUG.is(&true) {
                 alert_error(&format!(
                     "Unknown UserNotice ID {:?}: {}",
                     stype, msg,

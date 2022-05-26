@@ -3,7 +3,7 @@
 //! Preferences are persistent across Hexchat restarts, and are plugin-specific.
 //!
 //! The types and constants in this module provide a measure of strong typing
-//!     for Hexchat preferences, which are not enforced by Hexchat itself. There
+//!     for Hexchat preferences, which is not enforced by Hexchat itself. There
 //!     can be no automatic safeguard, however, against simply calling the
 //!     relevant Hexchat functions directly.
 
@@ -40,6 +40,23 @@ pub const PREF_FOLLOW_HOSTS: PrefBool = PrefBool::new(pref!("follow_hosts"));
 /// Preference: Whether incoming whispers should be displayed in the current
 ///     channel in addition to their respective tabs.
 pub const PREF_WHISPERS: PrefBool = PrefBool::new(pref!("whispers_in_current"));
+
+
+/// Set preferences to initial values, printing warnings if they cannot be set.
+pub fn init_prefs() {
+    fn init_report<T>(pref: impl HexPrefGet + HexPrefSet<T>, value: T) {
+        if let Err(()) = pref.init(value) {
+            hexchat::print_plain(&format!(
+                "Failed to set initial value for preference: {}",
+                pref.name(),
+            ));
+        }
+    }
+
+    init_report(PREF_DEBUG, false);
+    init_report(PREF_FOLLOW_HOSTS, false);
+    init_report(PREF_WHISPERS, false);
+}
 
 
 /// Perform all necessary Preference migrations, printing a report for each one.

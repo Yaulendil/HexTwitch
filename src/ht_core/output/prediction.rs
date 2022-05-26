@@ -322,7 +322,7 @@ impl Predict {
             //  Need to change mode.
             self.mode = mode;
             true
-        } else if PREF_DEBUG.get() == Some(true) {
+        } else if PREF_DEBUG.is(&true) {
             //  Need to change, but no idea to what. Debug enabled, so set to
             //      unknown. This way all values will be printed.
             self.mode = PredictMode::Unknown;

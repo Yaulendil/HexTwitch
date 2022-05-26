@@ -265,9 +265,7 @@ pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
 
 
 pub fn cmd_follow_hosts(_arg_full: &[String]) -> EatMode {
-    let new: bool = PREF_FOLLOW_HOSTS.get() != Some(true);
-
-    if PREF_FOLLOW_HOSTS.set(new).is_ok() {
+    if let Ok(new) = PREF_FOLLOW_HOSTS.toggle() {
         alert_basic(
             if new {
                 "Twitch hosts will now be followed to the target channel."
@@ -284,9 +282,7 @@ pub fn cmd_follow_hosts(_arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
-    let new: bool = PREF_DEBUG.get() != Some(true);
-
-    if PREF_DEBUG.set(new).is_ok() {
+    if let Ok(new) = PREF_DEBUG.toggle() {
         alert_basic(
             if new {
                 "Unrecognized UserNotices will now show the full Message."
@@ -421,9 +417,7 @@ pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_whisper_here(_arg_full: &[String]) -> EatMode {
-    let new: bool = !PREF_WHISPERS.is(&true);
-
-    if PREF_WHISPERS.set(new).is_ok() {
+    if let Ok(new) = PREF_WHISPERS.toggle() {
         alert_basic(
             if new {
                 "Twitch Whispers will also show in the current Tab."
