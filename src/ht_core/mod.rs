@@ -196,7 +196,7 @@ pub fn cb_print(etype: PrintEvent, word: &[String], dt: DateTime<Utc>) -> EatMod
         hexchat::print_plain(&format!(
             "{} < {}",
             etype.get_id(),
-            Signature::new(Some(&channel), Ok(author)),
+            Signature::new(Some(&channel), Ok(strip_formatting(author))),
         ));
 
         //  Determine what should be done with this message.
