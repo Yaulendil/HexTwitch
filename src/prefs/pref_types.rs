@@ -13,10 +13,6 @@ impl PrefBool {
     pub(super) const fn new(name: &'static str) -> Self {
         Self(name)
     }
-
-    pub fn is(&self, value: bool) -> bool {
-        self.get() == Some(value)
-    }
 }
 
 impl HexPref for PrefBool {

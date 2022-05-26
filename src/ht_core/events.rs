@@ -510,7 +510,7 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         let text: &str = &msg.trail[ME_LEN..]; // Slice off the `/me `.
 
         //  If the Whisper Tab is not focused, also post it here.
-        if PREF_WHISPERS.is(true) && get_channel_name() != user {
+        if PREF_WHISPERS.is(&true) && get_channel_name() != user {
             echo(PrintEvent::PRIVATE_ACTION, &[user, text], TabColor::Message);
         }
 
@@ -518,7 +518,7 @@ pub fn whisper_recv(mut msg: Message) -> Option<EatMode> {
         msg.trail = format!("\x01ACTION {}\x01", &text);
     } else {
         //  If the Whisper Tab is not focused, also post it here.
-        if PREF_WHISPERS.is(true) && get_channel_name() != user {
+        if PREF_WHISPERS.is(&true) && get_channel_name() != user {
             echo(
                 PrintEvent::PRIVATE_MESSAGE,
                 &[user, &msg.trail],
@@ -588,7 +588,7 @@ pub fn hosttarget(msg: Message) -> Option<EatMode> {
         let hashtarg: String = format!("#{}", target);
 
         //  Check whether we should try to follow the host.
-        if PREF_FOLLOW_HOSTS.is(true) {
+        if PREF_FOLLOW_HOSTS.is(&true) {
             let current = get_current_channel();
             let focused = get_focused_channel();
 

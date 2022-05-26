@@ -421,7 +421,7 @@ pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_whisper_here(_arg_full: &[String]) -> EatMode {
-    let new: bool = !PREF_WHISPERS.is(true);
+    let new: bool = !PREF_WHISPERS.is(&true);
 
     if PREF_WHISPERS.set(new).is_ok() {
         alert_basic(

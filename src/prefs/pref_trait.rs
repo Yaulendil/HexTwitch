@@ -1,8 +1,52 @@
+/// A `Result` where both `Ok` and `Err` contain the same `Option` type. Meant
+///     to represent a case where an indicator of success or failure is needed,
+///     but the same value is returned in either case.
+#[allow(dead_code)] // Possibly bugged lint?
+type ResOpt<T> = Result<Option<T>, Option<T>>;
+
+
 /// A Hexchat plugin preference.
 pub trait HexPref {
     /// The name of this preference. This is the identifier passed into Hexchat
     ///     functions to interact with the stored value.
     fn name(&self) -> &str;
+
+    /// Check whether a value is equal to the current value of this preference.
+    ///     Returns `false` if this preference is not set.
+    fn is<T>(&self, value: &T) -> bool where
+        Self: HexPrefGet,
+        <Self as HexPrefGet>::Output: PartialEq<T>,
+    {
+        match self.get() {
+            Some(current) => current.eq(value),
+            None => false,
+        }
+    }
+
+    /// Set a new value for this preference, and return the previous value.
+    fn replace<T>(&self, new: T) -> ResOpt<Self::Output> where
+        Self: HexPrefGet + HexPrefSet<T>,
+    {
+        let old = self.get();
+
+        match self.set(new) {
+            Err(_) => Err(old),
+            Ok(_) => Ok(old),
+        }
+    }
+
+    /// Read the value of this preference while also unsetting it.
+    fn take(&self) -> ResOpt<Self::Output> where
+        Self: HexPrefGet + HexPrefUnset,
+    {
+        match self.get() {
+            Some(value) => match self.unset() {
+                Err(_) => Err(Some(value)),
+                Ok(_) => Ok(Some(value)),
+            }
+            None => Ok(None),
+        }
+    }
 }
 
 
@@ -13,19 +57,6 @@ pub trait HexPrefGet: HexPref {
 
     /// Read the value of this preference.
     fn get(&self) -> Option<Self::Output>;
-
-    /// Read the value of this preference while also unsetting it.
-    fn take(&self) -> Option<Result<Self::Output, Self::Output>> where
-        Self: HexPrefUnset,
-    {
-        match self.get() {
-            Some(value) => Some(match self.unset() {
-                Err(_) => Err(value),
-                Ok(_) => Ok(value),
-            }),
-            None => None,
-        }
-    }
 }
 
 
