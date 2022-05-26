@@ -192,6 +192,13 @@ pub fn cb_print(etype: PrintEvent, word: &[String], dt: DateTime<Utc>) -> EatMod
         let channel: String = get_channel_name();
         let author: &String = &word[0];
 
+        #[cfg(feature = "full-debug")]
+        hexchat::print_plain(&format!(
+            "{} < {}",
+            etype.get_id(),
+            Signature::new(Some(&channel), Ok(author)),
+        ));
+
         //  Determine what should be done with this message.
         match check_message(&channel, author, dt) {
             //  Message was already processed. Ignore it.
@@ -213,6 +220,14 @@ pub fn cb_print(etype: PrintEvent, word: &[String], dt: DateTime<Utc>) -> EatMod
 pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
     if this_is_twitch() {
         let msg: Message = raw.parse().expect("Failed to parse IRC Message");
+
+        #[cfg(feature = "full-debug")]
+        hexchat::print_plain(&format!(
+            "{} < {}",
+            msg.command,
+            msg.get_signature(),
+        ));
+
         let opt_eat: Option<EatMode> = match msg.command.as_str() {
             //  Chat Messages.
             "PRIVMSG" => {

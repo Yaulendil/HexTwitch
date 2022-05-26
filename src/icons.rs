@@ -38,6 +38,9 @@ impl Icon {
         path.push(DIR_ICONS);
         path.push(self.path());
 
+        #[cfg(feature = "full-debug")]
+        hexchat::print_plain(&path.display().to_string());
+
         if !path.exists() {
             let parent: &Path = path.parent()?;
             if !parent.exists() {

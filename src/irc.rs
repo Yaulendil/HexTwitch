@@ -139,6 +139,12 @@ impl Signature {
     }
 }
 
+impl fmt::Display for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 
 /// Prefix: A string used by Servers "to indicate the true origin of a message".
 ///     It may be either the hostname of a Server, or a string describing a User
