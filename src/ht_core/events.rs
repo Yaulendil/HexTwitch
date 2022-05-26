@@ -234,7 +234,7 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
             if let Some(plan) = msg.get_tag("msg-param-sub-plan") {
                 match plan.as_str() {
                     "Prime" => line.push_str(" with Prime"),
-                    "1000" => { /*line.push_str(" at Tier 1 ($5)")*/ }
+                    "1000" => line.push_str(" at Tier 1 ($5)"),
                     "2000" => line.push_str(" at Tier 2 ($10)"),
                     "3000" => line.push_str(" at Tier 3 ($25)"),
                     plan => write!(&mut line, " with plan {:?}", plan).ok()?,
