@@ -1,4 +1,5 @@
 use std::{collections::HashMap, fmt::{Display, Formatter}};
+use crate::prefs::*;
 
 
 const UNK: &str = "Unknown";
@@ -12,11 +13,15 @@ const LABEL_PINK: &str = "pink";
 const LABEL_GRAY: &str = "gray";
 
 
+type PredictionValue = u32;
+// type PredictionValue = NonZeroU32; // TODO?
+
+
 #[derive(Clone, Copy, Debug, Hash, Eq, Ord, PartialEq, PartialOrd)]
 pub enum PredictionBadge {
-    Blue(u32),
-    Pink(u32),
-    Gray(u32),
+    Blue(PredictionValue),
+    Pink(PredictionValue),
+    Gray(PredictionValue),
 }
 
 impl PredictionBadge {
@@ -40,6 +45,14 @@ impl PredictionBadge {
         }
 
         icons[value.saturating_sub(1) % icons.len()]
+    }
+
+    pub const fn value(&self) -> PredictionValue {
+        match self {
+            Self::Blue(n) => *n,
+            Self::Pink(n) => *n,
+            Self::Gray(n) => *n,
+        }
     }
 }
 
@@ -113,7 +126,7 @@ impl PredictionBadge {
 impl Display for PredictionBadge {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let color: &'static str;
-        let value: u32;
+        let value: PredictionValue;
 
         match self {
             Self::Blue(n) => {
@@ -299,6 +312,13 @@ impl Predict {
         let changed_label: bool = match self.map.get(&badge) {
             Some(s) if label == s => false,
             _ => {
+                if badge.value() == 0 && PREF_DEBUG.is(&true) {
+                    hexchat::print_plain(&format!(
+                        "Zero-value Prediction badge received: {}",
+                        badge,
+                    ));
+                }
+
                 self.map.insert(badge, label.to_owned());
                 true
             }
@@ -313,8 +333,6 @@ impl Predict {
     }
 
     fn switch_mode(&mut self, badge: &PredictionBadge) -> bool {
-        use crate::prefs::{HexPrefGet, PREF_DEBUG};
-
         if self.mode.can_include(badge) {
             //  No need to change.
             false
