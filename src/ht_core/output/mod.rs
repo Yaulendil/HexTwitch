@@ -6,7 +6,7 @@ mod tabs;
 
 use std::borrow::Cow;
 use hexchat::{EatMode, PrintEvent, send_command, strip_formatting};
-use crate::irc::{Message, Prefix, Signature};
+use crate::{irc::{Message, Prefix, Signature}, prefs::{HexPref, PREF_ANNOUNCE}};
 use super::{events, mark_processed};
 pub use printing::{
     alert_basic,
@@ -99,26 +99,28 @@ pub fn print_announcement(mut msg: Message) -> Option<EatMode> {
     };
     cmd!("RECV {}", msg);
 
-    //  If the announcement content was a `/me` invocation, it must be extracted
-    //      from the `ACTION` frame and presented differently.
-    let (content, is_me) = match msg.trail.strip_prefix("\x01ACTION ") {
-        Some(action_x01) => match action_x01.strip_suffix('\x01') {
-            Some(action) => (action, true),
+    if PREF_ANNOUNCE.is(&true) {
+        //  If the announcement content was a `/me` invocation, it must be
+        //      extracted from the `ACTION` frame and presented differently.
+        let (content, is_me) = match msg.trail.strip_prefix("\x01ACTION ") {
+            Some(action_x01) => match action_x01.strip_suffix('\x01') {
+                Some(action) => (action, true),
+                None => (msg.trail.as_str(), false),
+            }
             None => (msg.trail.as_str(), false),
-        }
-        None => (msg.trail.as_str(), false),
-    };
+        };
 
-    hexchat::print_plain(&format!(
-        "\x0302{mode}\x02{color}{text}\x0F",
-        color = color.color(),
-        mode = color.mode(),
-        text = if is_me {
-            Cow::Owned(format!("\x1D{} \x02{}", author, content))
-        } else {
-            Cow::Borrowed(content)
-        },
-    ));
+        hexchat::print_plain(&format!(
+            "\x0302{mode}\x02{color}{text}\x0F",
+            color = color.color(),
+            mode = color.mode(),
+            text = if is_me {
+                Cow::Owned(format!("\x1D{} \x02{}", author, content))
+            } else {
+                Cow::Borrowed(content)
+            },
+        ));
+    }
 
     Some(EatMode::All)
 }

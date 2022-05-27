@@ -70,6 +70,12 @@ pub fn create_menus() -> Vec<MenuGroup> {
     {
         twitch.add_separator();
         twitch.add_item(MenuPrefToggle {
+            pref: PREF_ANNOUNCE,
+            desc: "Enable announcements",
+            set: "HTANNOUNCE",
+            unset: None,
+        });
+        twitch.add_item(MenuPrefToggle {
             pref: PREF_DEBUG,
             desc: "Enable debug mode",
             set: "HTDEBUG",

@@ -296,6 +296,23 @@ pub fn cmd_follow_hosts(_arg_full: &[String]) -> EatMode {
 }
 
 
+pub fn cmd_ht_announce(_arg_full: &[String]) -> EatMode {
+    if let Ok(new) = PREF_ANNOUNCE.toggle() {
+        alert_basic(
+            if new {
+                "Announcements will now be shown with colored messages."
+            } else {
+                "Announcements will NOT be shown with colored messages."
+            }
+        );
+    } else {
+        alert_error("FAILED to set Preference.");
+    }
+
+    EatMode::All
+}
+
+
 pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
     if let Ok(new) = PREF_DEBUG.toggle() {
         alert_basic(

@@ -50,11 +50,16 @@ impl Plugin for HexTwitch {
         crate::prefs::init_prefs();
 
         let mut plugin = Self {
-            hooks: Vec::with_capacity(18),
+            hooks: Vec::with_capacity(20),
             menus: create_menus(),
         };
 
         //  Register Plugin Commands, with helptext.
+        plugin.hook_command(
+            "HTANNOUNCE",
+            "Toggle whether Twitch Announcements should be distinctly colored.",
+            cmd_ht_announce,
+        );
         plugin.hook_command(
             "HTDEBUG",
             "Toggle whether unknown UserNotices should show the full plain IRC.",

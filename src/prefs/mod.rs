@@ -27,6 +27,11 @@ macro_rules! pref {($($t:tt)*) => {concat!("PREF_", $($t)*)}}
 const PREFIX: &'static str = pref!();
 
 
+/// Preference: Whether Twitch "Announcement" messages should be distinguished
+///     with colors.
+pub const PREF_ANNOUNCE: PrefBool = PrefBool::new(pref!("color_announcements"));
+
+
 /// Preference: Debug mode for the plugin.
 pub const PREF_DEBUG: PrefMigrating<PrefBool> = PrefMigrating {
     new: PrefBool::new(pref!("debug")),
@@ -53,6 +58,7 @@ pub fn init_prefs() {
         }
     }
 
+    init_report(PREF_ANNOUNCE, true);
     init_report(PREF_DEBUG, false);
     init_report(PREF_FOLLOW_HOSTS, false);
     init_report(PREF_WHISPERS, false);
