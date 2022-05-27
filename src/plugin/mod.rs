@@ -58,22 +58,22 @@ impl Plugin for HexTwitch {
         plugin.hook_command(
             "HTANNOUNCE",
             "Toggle whether Twitch Announcements should be distinctly colored.",
-            cmd_ht_announce,
+            cmd_pref_announce,
         );
         plugin.hook_command(
             "HTDEBUG",
             "Toggle whether unknown UserNotices should show the full plain IRC.",
-            cmd_ht_debug,
+            cmd_pref_debug,
         );
         plugin.hook_command(
             "HTINFO",
             "Print information about the HexTwitch plugin.",
-            cmd_ht_info,
+            cmd_htinfo,
         );
         plugin.hook_command(
             "HOSTFOLLOW",
             "Toggle whether Twitch Hosts will be followed through to the target channel.",
-            cmd_follow_hosts,
+            cmd_pref_follow_hosts,
         );
         plugin.hook_command(
             "PREDICTION",
@@ -107,7 +107,7 @@ impl Plugin for HexTwitch {
         plugin.hook_command(
             "WHISPERHERE",
             "Toggle whether Twitch Whispers should be duplicated in the current Tab.",
-            cmd_whisper_here,
+            cmd_pref_whisper_here,
         );
         plugin.hook_command(
             "UNKNOWNS",

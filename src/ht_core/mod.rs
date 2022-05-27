@@ -279,58 +279,51 @@ pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
 }
 
 
-pub fn cmd_follow_hosts(_arg_full: &[String]) -> EatMode {
-    if let Ok(new) = PREF_FOLLOW_HOSTS.toggle() {
-        alert_basic(
-            if new {
-                "Twitch hosts will now be followed to the target channel."
-            } else {
-                "Twitch hosts will NOT be followed to the target channel."
-            }
-        );
-    } else {
-        alert_error("FAILED to set Preference.");
+pub fn cmd_pref_follow_hosts(_arg_full: &[String]) -> EatMode {
+    match PREF_FOLLOW_HOSTS.toggle() {
+        Ok(false) => alert_basic("Twitch hosts will NOT be followed to the target channel."),
+        Ok(true) => alert_basic("Twitch hosts will now be followed to the target channel."),
+        Err(..) => alert_error("FAILED to set Preference."),
     }
 
     EatMode::All
 }
 
 
-pub fn cmd_ht_announce(_arg_full: &[String]) -> EatMode {
-    if let Ok(new) = PREF_ANNOUNCE.toggle() {
-        alert_basic(
-            if new {
-                "Announcements will now be shown with colored messages."
-            } else {
-                "Announcements will NOT be shown with colored messages."
-            }
-        );
-    } else {
-        alert_error("FAILED to set Preference.");
+pub fn cmd_pref_announce(_arg_full: &[String]) -> EatMode {
+    match PREF_ANNOUNCE.toggle() {
+        Ok(false) => alert_basic("Announcements will NOT be shown with colored messages."),
+        Ok(true) => alert_basic("Announcements will now be shown with colored messages."),
+        Err(..) => alert_error("FAILED to set Preference."),
     }
 
     EatMode::All
 }
 
 
-pub fn cmd_ht_debug(_arg_full: &[String]) -> EatMode {
-    if let Ok(new) = PREF_DEBUG.toggle() {
-        alert_basic(
-            if new {
-                "Unrecognized UserNotices will now show the full Message."
-            } else {
-                "Unrecognized UserNotices will NOT show the full Message."
-            }
-        );
-    } else {
-        alert_error("FAILED to set Preference.");
+pub fn cmd_pref_debug(_arg_full: &[String]) -> EatMode {
+    match PREF_DEBUG.toggle() {
+        Ok(false) => alert_basic("Unrecognized UserNotices will NOT show the full Message."),
+        Ok(true) => alert_basic("Unrecognized UserNotices will now show the full Message."),
+        Err(..) => alert_error("FAILED to set Preference."),
     }
 
     EatMode::All
 }
 
 
-pub fn cmd_ht_info(_arg_full: &[String]) -> EatMode {
+pub fn cmd_pref_whisper_here(_arg_full: &[String]) -> EatMode {
+    match PREF_WHISPERS.toggle() {
+        Ok(false) => alert_basic("Twitch whispers will ONLY be shown in their own Tab"),
+        Ok(true) => alert_basic("Twitch whispers will also show in the current Tab."),
+        Err(..) => alert_error("FAILED to set Preference."),
+    }
+
+    EatMode::All
+}
+
+
+pub fn cmd_htinfo(_arg_full: &[String]) -> EatMode {
     hexchat::print_plain(crate::PLUGIN_INFO);
     EatMode::All
 }
@@ -442,23 +435,6 @@ pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
             //  Send through Whisper.
             cmd!("SAY .w {} {}", name, words.join(" "));
         }
-    }
-
-    EatMode::All
-}
-
-
-pub fn cmd_whisper_here(_arg_full: &[String]) -> EatMode {
-    if let Ok(new) = PREF_WHISPERS.toggle() {
-        alert_basic(
-            if new {
-                "Twitch Whispers will also show in the current Tab."
-            } else {
-                "Twitch Whispers will ONLY be shown in their own Tabs."
-            }
-        );
-    } else {
-        alert_error("FAILED to set Preference.");
     }
 
     EatMode::All
