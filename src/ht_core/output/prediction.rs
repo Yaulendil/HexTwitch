@@ -282,6 +282,7 @@ pub struct Predict {
 }
 
 impl Predict {
+    pub fn is_empty(&self) -> bool { self.map.is_empty() }
     pub const fn mode(&self) -> PredictMode { self.mode }
 
     fn pairs(&self) -> Vec<BadgeLabel> {
