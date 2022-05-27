@@ -62,7 +62,7 @@ impl Plugin for HexTwitch {
         );
         plugin.hook_command(
             "HTDEBUG",
-            "Toggle whether unknown UserNotices should show the full plain IRC.",
+            "Toggle whether extra debug information should be printed.",
             cmd_pref_debug,
         );
         plugin.hook_command(

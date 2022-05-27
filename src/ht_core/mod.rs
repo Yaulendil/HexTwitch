@@ -303,8 +303,8 @@ pub fn cmd_pref_announce(_arg_full: &[String]) -> EatMode {
 
 pub fn cmd_pref_debug(_arg_full: &[String]) -> EatMode {
     match PREF_DEBUG.toggle() {
-        Ok(false) => alert_basic("Unrecognized UserNotices will NOT show the full Message."),
-        Ok(true) => alert_basic("Unrecognized UserNotices will now show the full Message."),
+        Ok(false) => alert_basic("Extra debug info will NOT be shown."),
+        Ok(true) => alert_basic("Extra debug info will now be shown."),
         Err(..) => alert_error("FAILED to set Preference."),
     }
 
