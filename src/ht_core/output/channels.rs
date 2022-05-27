@@ -132,6 +132,7 @@ impl RoomState {
     }
 }
 
+#[allow(dead_code)]
 impl RoomState {
     pub fn report_id(&self) {
         match self.room_id {

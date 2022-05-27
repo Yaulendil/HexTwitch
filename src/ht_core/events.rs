@@ -122,7 +122,7 @@ pub fn reconnect(msg: Message) -> Option<EatMode> {
 pub fn roomstate(msg: Message) -> Option<EatMode> {
     let tags: &HashMap<String, String> = msg.tags.as_ref()?;
     let join: bool = tags.len() > 2;
-    let debug: bool = PREF_DEBUG.is(&true);
+    // let debug: bool = PREF_DEBUG.is(&true);
 
     let roomstate: &mut RoomState = &mut CHANNELS.current().roomstate;
     let mut tags_vec: Vec<(&String, &String)> = tags.iter().collect();
@@ -148,31 +148,34 @@ pub fn roomstate(msg: Message) -> Option<EatMode> {
             // };
             // let print: bool = !(join && !*val);
             // let print: bool = !join || *val;
-            Ok(StateChange::Emotes(val)) => if !join || *val {
+            //
+            //  Only print on join when enabled:
+            // let print: bool = join && *val;
+            Ok(StateChange::Emotes(val)) => if join && *val {
                 roomstate.report_emotes();
             }
-            Ok(StateChange::Unique(val)) => if !join || *val {
+            Ok(StateChange::Unique(val)) => if join && *val {
                 roomstate.report_unique();
             }
-            Ok(StateChange::Subscribers(val)) => if !join || *val {
+            Ok(StateChange::Subscribers(val)) => if join && *val {
                 roomstate.report_subscribers();
             }
-            Ok(StateChange::Followers(val)) => match *val {
-                FollowMode::Off if join => {} // No print on Join update.
+            Ok(StateChange::Followers(val)) if join => match *val {
+                FollowMode::Off => {} // No print on Join update.
                 _ => roomstate.report_followers(),
             }
-            Ok(StateChange::Slow(val)) => match *val {
-                None if join => {} // No print on Join update.
+            Ok(StateChange::Slow(val)) if join => match *val {
+                None => {} // No print on Join update.
                 _ => roomstate.report_slow(),
             }
-            Ok(StateChange::Rituals(val)) if debug => match *val {
-                None if join => {} // No print on Join update.
-                _ => roomstate.report_rituals(),
-            }
-            Ok(StateChange::RoomId(val)) if debug => match *val {
-                None if join => {} // No print on Join update.
-                _ => roomstate.report_id(),
-            }
+            // Ok(StateChange::Rituals(val)) if debug => match *val {
+            //     None if join => {} // No print on Join update.
+            //     _ => roomstate.report_rituals(),
+            // }
+            // Ok(StateChange::RoomId(val)) if debug => match *val {
+            //     None if join => {} // No print on Join update.
+            //     _ => roomstate.report_id(),
+            // }
             Ok(..) => {}
             Err(_) => print_plain(&format!(
                 "Unknown RoomState key {k:?} has value {v:?}.",
