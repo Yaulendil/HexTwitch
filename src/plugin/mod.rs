@@ -2,22 +2,7 @@ mod hooks;
 mod menu;
 
 use hexchat::{Plugin, print_plain, PrintEvent, WindowEvent};
-use crate::ht_core::{
-    cb_focus,
-    cb_join,
-    cb_print,
-    cb_server,
-    cmd_follow_hosts,
-    cmd_ht_info,
-    cmd_ht_debug,
-    cmd_prediction,
-    cmd_reward,
-    cmd_title,
-    cmd_tjoin,
-    cmd_unk_badges,
-    cmd_whisper,
-    cmd_whisper_here,
-};
+use crate::ht_core::*;
 use hooks::{CbCommand, CbPrint, CbPrintPlugin, CbServer, CbWindow, Hook};
 use menu::*;
 
