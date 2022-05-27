@@ -434,6 +434,12 @@ pub fn userstate(msg: Message) -> Option<EatMode> {
     const HEADER: &'static str = "BADGES";
 
     let channel: String = get_channel_name();
+    if !channel.starts_with::<&[char]>(&['#', '&']) {
+        //  If the channel is neither a #channel nor a &channel, return
+        //      immediately. This is likely a whisper, which has no badges.
+        return Some(EatMode::All);
+    }
+
     let replacing: bool = USERSTATE.has(&channel);
 
     if let Some(badges) = USERSTATE.set(
