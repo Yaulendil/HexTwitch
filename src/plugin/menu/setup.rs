@@ -2,18 +2,29 @@ use crate::{icons::*, prefs::*};
 use super::*;
 
 
-// TODO: Running this command is broken on the HexChat side. Find a workaround.
+macro_rules! quote_args {
+    ($cmd:literal$(, $arg:literal)*$(,)?) => {concat!(
+        $cmd,
+        $(' ', '"', $arg, '"',)*
+    )};
+}
+#[allow(unused)]
+macro_rules! getbool {
+    ($cmd:literal, $title:literal, $text:literal $(,)?) => {
+        quote_args!("GETBOOL", $cmd, $title, $text)
+    };
+}
+#[allow(unused)]
+macro_rules! getint {
+    ($default:literal, $cmd:literal, $prompt:literal $(,)?) => {
+        quote_args!("GETINT", $default, $cmd, $prompt)
+    };
+}
 #[allow(unused)]
 macro_rules! getstr {
-    ($default:literal, $cmd:literal, $prompt:literal $(,)?) => {concat!(
-        "GETSTR",
-        " ",
-        concat!('"', $default, '"'),
-        " ",
-        concat!('"', $cmd, '"'),
-        " ",
-        concat!('"', $prompt, '"'),
-    )};
+    ($default:literal, $cmd:literal, $prompt:literal $(,)?) => {
+        quote_args!("GETSTR", $default, $cmd, $prompt)
+    };
 }
 
 
@@ -92,15 +103,39 @@ pub fn create_menus() -> Vec<MenuGroup> {
         });
     }
 
-    //  Channel utility submenu.
+    //  Channel management submenu.
     {
         twitch_ch_admin.add_item(MenuCommand {
-            cmd: "SAY .marker",
-            desc: "Set _Marker",
+            cmd: getstr!(
+                " ",
+                "SAY .marker",
+                "Enter comment for Marker (optional)",
+            ),
+            desc: "Set a _marker",
         });
         twitch_ch_admin.add_item(MenuCommand {
-            cmd: "SAY .commercial",
+            cmd: getstr!(
+                30,
+                "SAY .commercial",
+                "Enter duration for ad break (in seconds)",
+            ),
             desc: "Run advertisements",
+        });
+        twitch_ch_admin.add_item(MenuCommand {
+            cmd: getstr!(
+                "BobRoss",
+                "SAY .host",
+                "Enter channel to host",
+            ),
+            desc: "_Host a channel",
+        });
+        twitch_ch_admin.add_item(MenuCommand {
+            cmd: getstr!(
+                "BobRoss",
+                "SAY .raid",
+                "Enter channel to raid",
+            ),
+            desc: "_Raid a channel",
         });
         twitch_ch_admin.add_separator();
         twitch_ch_admin.add_item(MenuCommand {
@@ -120,12 +155,11 @@ pub fn create_menus() -> Vec<MenuGroup> {
     //  Channel mode submenu.
     {
         twitch_ch_modes.add_item(MenuCommand {
-            // cmd: getstr!(
-            //     "30",
-            //     "SAY .slow",
-            //     "Enter delay for Slow Mode",
-            // ),
-            cmd: "SAY .slow",
+            cmd: getstr!(
+                30,
+                "SAY .slow",
+                "Enter delay for Slow Mode (in seconds)",
+            ),
             desc: "Enable Slo_w mode",
         });
         twitch_ch_modes.add_item(MenuCommand {
@@ -134,7 +168,11 @@ pub fn create_menus() -> Vec<MenuGroup> {
         });
         twitch_ch_modes.add_separator();
         twitch_ch_modes.add_item(MenuCommand {
-            cmd: "SAY .followers",
+            cmd: getstr!(
+                "0m",
+                "SAY .followers",
+                "Enter minimum follow time",
+            ),
             desc: "Enable _Followers mode",
         });
         twitch_ch_modes.add_item(MenuCommand {
@@ -199,28 +237,32 @@ pub fn create_menus() -> Vec<MenuGroup> {
     user.add_separator();
     user.add_item(MenuCommand {
         cmd: "SAY .ban %s",
-        desc: "_Ban",
+        desc: "_Ban user",
     });
     user.add_item(MenuCommand {
-        cmd: "SAY .timeout %s",
-        desc: "_Timeout",
+        cmd: getstr!(
+            600,
+            "SAY .timeout %s",
+            "Enter duration for timeout (in seconds)",
+        ),
+        desc: "_Timeout user",
     });
     user.add_item(MenuCommand {
         cmd: "SAY .unban %s",
-        desc: "_Unban",
+        desc: "_Unban user",
     });
     user.add_item(MenuCommand {
         cmd: "SAY .timeout %s 1",
-        desc: "_Purge History",
+        desc: "_Purge messages",
     });
     user.add_separator();
     user.add_item(MenuCommand {
         cmd: "SAY .mod %s",
-        desc: "Add Mod",
+        desc: "Add Moderator",
     }.with_icon(&I_MOD));
     user.add_item(MenuCommand {
         cmd: "SAY .unmod %s",
-        desc: "Remove Mod",
+        desc: "Remove Moderator",
     }.with_icon(&I_UNMOD));
     user.add_item(MenuCommand {
         cmd: "SAY .vip %s",

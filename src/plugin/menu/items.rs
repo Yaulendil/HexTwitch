@@ -97,7 +97,7 @@ impl MenuItem for MenuCommand {
     }
 
     fn tail(&self) -> String {
-        format!("{:?}", self.cmd)
+        format!("\"{}\"", self.cmd.replace("\"", "\"\""))
     }
 }
 
