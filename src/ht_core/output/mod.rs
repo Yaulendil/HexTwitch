@@ -55,7 +55,10 @@ pub fn print_announcement(mut msg: Message) -> Option<EatMode> {
 
     Some(print_with_irc(
         &hexchat::get_channel_name(),
-        PrintEvent::CHANNEL_MSG_HILIGHT,
+        //  TODO: Figure out how to leverage native HexChat ping detection to
+        //      decide whether to highlight. May require a RECV command, which
+        //      somewhat complicates faking the mode.
+        PrintEvent::CHANNEL_MESSAGE,
         &[author, text, mode, bstr],
         msg,
     ))
