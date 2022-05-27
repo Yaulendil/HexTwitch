@@ -4,7 +4,7 @@ mod printing;
 mod statics;
 mod tabs;
 
-use hexchat::{EatMode, PrintEvent, send_command};
+use hexchat::{EatMode, PrintEvent, send_command, strip_formatting};
 use crate::irc::{Message, Prefix, Signature};
 use super::{events, mark_processed};
 pub use printing::{
@@ -148,6 +148,14 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
         events::whisper_send_channel(etype, &channel, word);
 
         EatMode::All
+    } else if let Some(cmd) = twitch_command(&word[1]) {
+        echo(
+            PrintEvent::NOTICE_SEND,
+            &[channel, &format!("/{}", cmd)],
+            TabColor::None,
+        );
+
+        EatMode::All
     } else {
         let author: &str = &word[0];
 
@@ -157,12 +165,22 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
         //      clear why.
         //  User has spoken in a normal Channel, but has not yet been given
         //      Badges. Add the Badges from the User State and re-emit.
-        mark_processed(Signature::new(Some(channel), Ok(author)));
+        mark_processed(Signature::new(Some(channel), strip_formatting(author)));
         echo(etype, &[
             author, &*word[1], &*word[2],
             &USERSTATE.get(&channel),
         ], TabColor::Message);
 
         EatMode::All
+    }
+}
+
+
+fn twitch_command(line: &str) -> Option<&str> {
+    match line.as_bytes() {
+        [] => None,
+        [b'.', b'.', ..] => None,
+        [b'.' | b'/', ..] => Some(&line[1..]),
+        _ => None,
     }
 }
