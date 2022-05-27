@@ -4,6 +4,7 @@ mod printing;
 mod statics;
 mod tabs;
 
+use std::borrow::Cow;
 use hexchat::{EatMode, PrintEvent, send_command, strip_formatting};
 use crate::irc::{Message, Prefix, Signature};
 use super::{events, mark_processed};
@@ -26,42 +27,100 @@ pub use statics::{BADGES_UNKNOWN, CHANNELS, TABCOLORS, USERSTATE};
 pub use tabs::TabColor;
 
 
+enum AnnounceType {
+    /// Command: /announce (via IRC)
+    None,
+    /// Command: /announce (via website)
+    Primary,
+    /// Command: /announceblue
+    Blue,
+    /// Command: /announcegreen
+    Green,
+    /// Command: /announceorange
+    Orange,
+    /// Command: /announcepurple
+    Purple,
+    Unknown(String),
+}
+
+impl AnnounceType {
+    fn from_tag(param: Option<String>) -> Self {
+        match param {
+            None => Self::None,
+            Some(color) => match color.as_str() {
+                "PRIMARY" => Self::Primary,
+                "BLUE" => Self::Blue,
+                "GREEN" => Self::Green,
+                "ORANGE" => Self::Orange,
+                "PURPLE" => Self::Purple,
+                _ => Self::Unknown(color),
+            }
+        }
+    }
+
+    const fn color(&self) -> &'static str {
+        match self {
+            Self::Blue => "\x0311",
+            Self::Green => "\x0309",
+            Self::Orange => "\x0307",
+            Self::Purple => "\x0313",
+            _ => "\x0300",
+        }
+    }
+
+    fn mode(&self) -> Cow<'static, str> {
+        match self {
+            Self::Unknown(color) => Cow::Owned(format!("![{}] ", color)),
+            Self::Primary => Cow::Borrowed("[WEB] "),
+            Self::None => Cow::Borrowed("[IRC] "),
+
+            Self::Blue => Cow::Borrowed("[B] "),
+            Self::Green => Cow::Borrowed("[G] "),
+            Self::Orange => Cow::Borrowed("[O] "),
+            Self::Purple => Cow::Borrowed("[P] "),
+            // _ => Cow::Borrowed(""),
+        }
+    }
+}
+
+
 pub fn print_announcement(mut msg: Message) -> Option<EatMode> {
-    let color = msg.get_tag("msg-param-color").unwrap_or_else(||
-        String::from("ANNOUNCE")
-    );
     let author = msg.get_tag("login")?;
-    // let badges = super::output::badge_parse(
-    //     msg.get_tag("badges").unwrap_or_default(),
-    //     msg.get_tag("badge-info").unwrap_or_default(),
-    // );
-    // let name = format!("{}{}", badges.as_str(), author);
+    let color = AnnounceType::from_tag(msg.get_tag("msg-param-color"));
 
-    // echo(
-    //     PrintEvent::NOTICE,
-    //     &[name, msg.trail],
-    //     TabColor::Message,
-    // );
-
-    msg.prefix = Prefix::User{
+    //  Change the message to a `PRIVMSG` and pretend to receive it anew. This
+    //      will cause the plugin to properly process it, and then, back in this
+    //      function, we will generate a fancy colored representation.
+    msg.command = String::from("PRIVMSG");
+    msg.prefix = Prefix::User {
         nick: author.clone(),
         user: None,
         host: None,
     };
+    cmd!("RECV {}", msg);
 
-    let text = msg.trail.clone();
-    let mode = format!("[{}] ", color);
-    let bstr = String::new();
+    //  If the announcement content was a `/me` invocation, it must be extracted
+    //      from the `ACTION` frame and presented differently.
+    let (content, is_me) = match msg.trail.strip_prefix("\x01ACTION ") {
+        Some(action_x01) => match action_x01.strip_suffix('\x01') {
+            Some(action) => (action, true),
+            None => (msg.trail.as_str(), false),
+        }
+        None => (msg.trail.as_str(), false),
+    };
 
-    Some(print_with_irc(
-        &hexchat::get_channel_name(),
-        //  TODO: Figure out how to leverage native HexChat ping detection to
-        //      decide whether to highlight. May require a RECV command, which
-        //      somewhat complicates faking the mode.
-        PrintEvent::CHANNEL_MESSAGE,
-        &[author, text, mode, bstr],
-        msg,
-    ))
+    hexchat::print_plain(&format!(
+        "\x0302{mode}\x02{color}{text}\x0F",
+        color = color.color(),
+        mode = color.mode(),
+        text = if is_me {
+            Cow::Owned(format!("\x1D{} \x02{}", author, content))
+        } else {
+            Cow::Borrowed(content)
+        },
+    ));
+
+    Some(EatMode::All)
 }
 
 
@@ -87,10 +146,27 @@ pub fn print_with_irc(
         | PrintEvent::YOUR_ACTION
         => {
             mark_processed(msg.get_signature());
-            echo(etype, &[
-                &*word[0], &*word[1], &*word[2],
-                &USERSTATE.get(&channel),
-            ], TabColor::Message);
+            let badges;
+            let state;
+            let bstr = match msg.get_tag("badges") {
+                Some(tag) => {
+                    badges = badge_parse(
+                        tag,
+                        msg.get_tag("badge-info").unwrap_or_default(),
+                    );
+                    badges.as_str()
+                }
+                None => {
+                    state = USERSTATE.get(&channel);
+                    &state
+                }
+            };
+
+            echo(
+                etype,
+                &[&*word[0], &*word[1], &*word[2], bstr],
+                TabColor::Message,
+            );
 
             EatMode::All
         }
