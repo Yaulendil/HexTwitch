@@ -2,6 +2,17 @@ use crate::{icons::Icon, prefs::HexPrefGet};
 
 
 pub trait MenuItem: Sized {
+    /// Indicates whether this item type will deregister its own name when it is
+    ///     dropped. If it does not, it will need to be deregistered by whatever
+    ///     called its [`add()`] method.
+    ///
+    /// This behavior is NOT automatic; it is possible for this constant to lie,
+    ///     and any implementor that sets it to `true` should have a [`Drop`]
+    ///     impl.
+    ///
+    /// [`add()`]: Self::add
+    const CLEANS_SELF: bool = false;
+
     fn add(&self) { menu_add!(struct self); }
     fn del(&self) { menu_del!(struct self); }
 
@@ -15,6 +26,7 @@ pub struct MenuGroup {
     path: String,
     subpaths: Vec<String>,
     icon: Option<&'static Icon>,
+    pos: Option<isize>,
 }
 
 #[allow(dead_code)]
@@ -24,10 +36,11 @@ impl MenuGroup {
             path: path.into(),
             subpaths: Vec::new(),
             icon: None,
+            pos: None,
         }
     }
 
-    pub fn add_item(&mut self, item: impl MenuItem) {
+    pub fn add_item<M: MenuItem>(&mut self, item: M) {
         let opts = item.opts();
         let path = item.path();
         let tail = item.tail();
@@ -35,7 +48,10 @@ impl MenuGroup {
         let subpath = format!("{}/{}", self.path(), path);
 
         menu_add!(opts, subpath, tail);
-        self.subpaths.push(subpath);
+
+        if !M::CLEANS_SELF {
+            self.subpaths.push(subpath);
+        }
     }
 
     pub fn add_separator(&mut self) {
@@ -53,17 +69,30 @@ impl MenuGroup {
         self.icon = Some(icon);
         self
     }
+
+    pub fn with_pos(mut self, position: isize) -> Self {
+        self.pos = Some(position);
+        self
+    }
 }
 
 impl MenuItem for MenuGroup {
+    const CLEANS_SELF: bool = true;
+
     fn opts(&self) -> String {
-        match &self.icon {
-            Some(icon) => match icon.path_asset() {
-                Some(path) => format!("-i{}", path.display()),
-                None => String::new(),
+        let mut opts = Vec::with_capacity(2);
+
+        if let Some(icon) = &self.icon {
+            if let Some(path) = icon.path_asset() {
+                opts.push(format!("-i{}", path.display()));
             }
-            None => String::new(),
         }
+
+        if let Some(p) = self.pos {
+            opts.push(format!("-p{}", p));
+        }
+
+        opts.join(" ")
     }
 
     fn path(&self) -> String { self.path.clone() }

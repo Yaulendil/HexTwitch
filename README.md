@@ -92,3 +92,6 @@ Note that some typefaces may render some of these characters in an Emoji style, 
 - `❶`/`❷` (![blue-1](img/badges/predictions-blue-1.png),![pink-2](img/badges/predictions-pink-2.png)): User has bet channel points on a blue/pink prediction, with only two possible outcomes.
 - `⧲`/`⧳` (![gray-1](img/badges/predictions-gray-1.png),![gray-2](img/badges/predictions-gray-2.png)): User has bet channel points on a gray prediction, with only two possible outcomes.
 - `p`: This codepoint represents an unknown Prediction badge, likely because Twitch added a new one again. If this is seen, an Issue should be opened in this repository, including the output of running the `/UNKNOWNS` command.
+
+
+[Breeze Icons](https://develop.kde.org/frameworks/breeze-icons/) used for HexChat GUI menu items © KDE, licensed under the GNU LGPL 3 or later.

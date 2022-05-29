@@ -30,9 +30,10 @@ macro_rules! getstr {
 pub fn create_menus() -> Vec<MenuGroup> {
     let mut menus = Vec::with_capacity(5);
 
-    let mut twitch = MenuGroup::new("_Twitch");
-    let mut twitch_ch_admin = twitch.sub_menu("Channel _Admin");
-    let mut twitch_ch_modes = twitch.sub_menu("Channel _Modes");
+    let mut twitch = MenuGroup::new("_Twitch").with_pos(-1);
+    let mut twitch_ch_admin = twitch.sub_menu("Channel _Editor");
+    let mut twitch_ch_modes = twitch.sub_menu("Channel _Moderator")
+        .with_icon(I_MOD);
 
     //  Main menu: Section 1: Output of static data.
     {
@@ -40,15 +41,15 @@ pub fn create_menus() -> Vec<MenuGroup> {
         twitch.add_item(MenuCommand {
             cmd: "PREDICTION",
             desc: "Show channel _Prediction",
-        });
+        }.with_icon(I_PREDICT));
         twitch.add_item(MenuCommand {
             cmd: "REWARD",
             desc: "Show configured _Rewards",
-        });
+        }.with_icon(I_REWARDS));
         twitch.add_item(MenuCommand {
             cmd: "UNKNOWNS",
             desc: "Show unknown _Badge tags",
-        });
+        }.with_icon(I_UNKNOWN));
     }
 
     //  Main menu: Section 2: Channel utils.
@@ -59,11 +60,11 @@ pub fn create_menus() -> Vec<MenuGroup> {
         twitch.add_item(MenuCommand {
             cmd: ttv!("mods"),
             desc: "List channel Moderators",
-        }.with_icon(&I_MOD));
+        }.with_icon(I_MOD));
         twitch.add_item(MenuCommand {
             cmd: ttv!("vips"),
             desc: "List channel VIPs",
-        }.with_icon(&I_VIP));
+        }.with_icon(I_VIP));
     }
 
     //  Main menu: Section 3: Plugin config.
@@ -101,11 +102,11 @@ pub fn create_menus() -> Vec<MenuGroup> {
         twitch.add_item(MenuCommand {
             cmd: concat!("RELOAD ", env!("CARGO_PKG_NAME")),
             desc: "Reload plugin",
-        });
+        }.with_icon(I_RELOAD));
         twitch.add_item(MenuCommand {
             cmd: "HTINFO",
             desc: "About HexTwitch",
-        });
+        }.with_icon(I_INFO));
     }
 
     //  Channel management submenu.
@@ -117,7 +118,7 @@ pub fn create_menus() -> Vec<MenuGroup> {
                 "Enter comment for Marker (optional)",
             ),
             desc: "Set a _marker",
-        });
+        }.with_icon(I_TAG));
         twitch_ch_admin.add_item(MenuCommand {
             cmd: getstr!(
                 30,
@@ -132,7 +133,7 @@ pub fn create_menus() -> Vec<MenuGroup> {
                 ttv!("host"),
                 "Enter channel to host",
             ),
-            desc: "_Host a channel",
+            desc: "_Host a channel...",
         });
         twitch_ch_admin.add_item(MenuCommand {
             cmd: getstr!(
@@ -140,25 +141,26 @@ pub fn create_menus() -> Vec<MenuGroup> {
                 ttv!("raid"),
                 "Enter channel to raid",
             ),
-            desc: "_Raid a channel",
+            desc: "_Raid a channel...",
         });
         twitch_ch_admin.add_separator();
         twitch_ch_admin.add_item(MenuCommand {
-            cmd: ttv!("clear"),
-            desc: "Clear channel history",
-        });
-        twitch_ch_admin.add_item(MenuCommand {
             cmd: ttv!("unhost"),
-            desc: "Cancel channel _host",
-        });
+            desc: "Cancel _host",
+        }.with_icon(I_STOP));
         twitch_ch_admin.add_item(MenuCommand {
             cmd: ttv!("unraid"),
-            desc: "Cancel channel _raid",
-        });
+            desc: "Cancel _raid",
+        }.with_icon(I_STOP));
     }
 
     //  Channel mode submenu.
     {
+        twitch_ch_modes.add_item(MenuCommand {
+            cmd: ttv!("clear"),
+            desc: "Clear channel history",
+        }.with_icon(I_CLEAR));
+        twitch_ch_modes.add_separator();
         twitch_ch_modes.add_item(MenuCommand {
             cmd: getstr!(
                 30,
@@ -166,11 +168,11 @@ pub fn create_menus() -> Vec<MenuGroup> {
                 "Enter delay for Slow Mode (in seconds)",
             ),
             desc: "Enable Slo_w mode",
-        });
+        }.with_icon(I_MODE_ON));
         twitch_ch_modes.add_item(MenuCommand {
             cmd: ttv!("slowoff"),
             desc: "Disable Slow mode",
-        });
+        }.with_icon(I_MODE_OFF));
         twitch_ch_modes.add_separator();
         twitch_ch_modes.add_item(MenuCommand {
             cmd: getstr!(
@@ -179,45 +181,45 @@ pub fn create_menus() -> Vec<MenuGroup> {
                 "Enter minimum follow time",
             ),
             desc: "Enable _Followers mode",
-        });
+        }.with_icon(I_MODE_ON));
         twitch_ch_modes.add_item(MenuCommand {
             cmd: ttv!("followersoff"),
             desc: "Disable Followers mode",
-        });
+        }.with_icon(I_MODE_OFF));
         twitch_ch_modes.add_separator();
         twitch_ch_modes.add_item(MenuCommand {
             cmd: ttv!("subscribers"),
             desc: "Enable _Subscribers mode",
-        });
+        }.with_icon(I_MODE_ON));
         twitch_ch_modes.add_item(MenuCommand {
             cmd: ttv!("subscribersoff"),
             desc: "Disable Subscribers mode",
-        });
+        }.with_icon(I_MODE_OFF));
         twitch_ch_modes.add_separator();
         twitch_ch_modes.add_item(MenuCommand {
             cmd: ttv!("uniquechat"),
             desc: "Enable Uni_que mode",
-        });
+        }.with_icon(I_MODE_ON));
         twitch_ch_modes.add_item(MenuCommand {
             cmd: ttv!("uniquechatoff"),
             desc: "Disable Unique mode",
-        });
+        }.with_icon(I_MODE_OFF));
         twitch_ch_modes.add_separator();
         twitch_ch_modes.add_item(MenuCommand {
             cmd: ttv!("emoteonly"),
             desc: "Enable _Emote mode",
-        });
+        }.with_icon(I_MODE_ON));
         twitch_ch_modes.add_item(MenuCommand {
             cmd: ttv!("emoteonlyoff"),
             desc: "Disable Emote mode",
-        });
+        }.with_icon(I_MODE_OFF));
     }
 
     menus.push(twitch_ch_admin);
     menus.push(twitch_ch_modes);
     menus.push(twitch);
 
-    let mut tab = MenuGroup::new("$TAB/_Twitch Channel");
+    let mut tab = MenuGroup::new("$TAB/_Twitch channel").with_pos(4);
     tab.add();
     tab.add_item(MenuCommand {
         cmd: ttv!("host %s"),
@@ -229,12 +231,12 @@ pub fn create_menus() -> Vec<MenuGroup> {
     });
     menus.push(tab);
 
-    let mut user = MenuGroup::new("$NICK/_Twitch Actions");
+    let mut user = MenuGroup::new("$NICK/_Twitch user").with_pos(1);
     user.add();
     user.add_item(MenuCommand {
         cmd: "JOIN #%s",
         desc: "Join Chat",
-    });
+    }.with_icon(I_PLUS));
     // user.add_item(MenuCommand {
     //     cmd: "EXEC ",
     //     desc: "View Channel",
@@ -243,7 +245,7 @@ pub fn create_menus() -> Vec<MenuGroup> {
     user.add_item(MenuCommand {
         cmd: ttv!("ban %s"),
         desc: "_Ban user",
-    });
+    }.with_icon(I_BAN));
     user.add_item(MenuCommand {
         cmd: getstr!(
             600,
@@ -251,32 +253,32 @@ pub fn create_menus() -> Vec<MenuGroup> {
             "Enter duration for timeout (in seconds)",
         ),
         desc: "_Timeout user",
-    });
+    }.with_icon(I_TIMEOUT));
     user.add_item(MenuCommand {
         cmd: ttv!("unban %s"),
         desc: "_Unban user",
-    });
+    }.with_icon(I_UNBAN));
     user.add_item(MenuCommand {
         cmd: ttv!("timeout %s 1"),
         desc: "_Purge messages",
-    });
+    }.with_icon(I_CLEAR));
     user.add_separator();
     user.add_item(MenuCommand {
         cmd: ttv!("mod %s"),
         desc: "Add Moderator",
-    }.with_icon(&I_MOD));
+    }.with_icon(I_MOD));
     user.add_item(MenuCommand {
         cmd: ttv!("unmod %s"),
         desc: "Remove Moderator",
-    }.with_icon(&I_UNMOD));
+    }.with_icon(I_UNMOD));
     user.add_item(MenuCommand {
         cmd: ttv!("vip %s"),
         desc: "Add VIP",
-    }.with_icon(&I_VIP));
+    }.with_icon(I_VIP));
     user.add_item(MenuCommand {
         cmd: ttv!("unvip %s"),
         desc: "Remove VIP",
-    }.with_icon(&I_UNVIP));
+    }.with_icon(I_UNVIP));
     menus.push(user);
 
     menus
