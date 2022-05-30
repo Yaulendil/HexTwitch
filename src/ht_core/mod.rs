@@ -1,5 +1,6 @@
 mod events;
 mod output;
+mod storage;
 
 use std::{collections::HashSet, ops::Deref};
 use chrono::{DateTime, Utc};
@@ -9,11 +10,9 @@ use hexchat::{
     get_channel_name,
     get_network_name,
     PrintEvent,
-    strip_formatting,
 };
-use parking_lot::Mutex;
 
-use crate::{irc::{Message, Signature}, NETWORK, prefs::*};
+use crate::{irc::Message, NETWORK, prefs::*};
 use output::{
     alert_basic,
     alert_error,
@@ -24,103 +23,7 @@ use output::{
     print_without_irc,
     TABCOLORS,
 };
-
-
-enum MsgSrc {
-    /// This message has already been processed, and is being emitted again. It
-    ///     should be passed through unaffected.
-    ReEmit,
-    /// This message is from the IRC Server. It should be processed, and has IRC
-    ///     data associated with it.
-    Server(Message),
-    /// This message has no associated IRC data, but it has not been processed
-    ///     already.
-    Unknown,
-}
-
-
-#[derive(Default)]
-struct Sponge {
-    signature: Option<Signature>,
-    previous: Option<Signature>,
-    message: Option<Message>,
-    dt: Option<DateTime<Utc>>,
-}
-
-impl Sponge {
-    /// Place a Message into the Sponge. The previous Message in the Sponge, if
-    ///     any, is removed. Takes Ownership of the new Message.
-    ///
-    /// Input: [`Message`]
-    fn put(&mut self, new: Message, dt: DateTime<Utc>) {
-        let sig_new = new.get_signature();
-
-        if self.previous.as_ref() == Some(&sig_new) {
-            //  New message is a re-emit of the last message finished. Ignore
-            //      it, but do NOT ignore the NEXT reoccurrence of the same
-            //      signature.
-            self.previous.take();
-        } else {
-            //  New message does not match the last emitted. Accept it.
-            self.signature = Some(sig_new);
-            self.message = Some(new);
-            self.dt = Some(dt);
-        }
-    }
-
-    /// Remove the Message from the Sponge, but only if the current Message has
-    ///     the Signature specified. Valid Message Signatures are in roughly the
-    ///     following format:
-    ///         `Some("#channel"):Ok("author")`
-    ///
-    /// Signatures are calculated from as little data as possible, so that they
-    ///     can be derived from the minimal representation provided by Hexchat
-    ///     Print Hooks. This way, that minimal representation can be associated
-    ///     with the much fuller version received through a Server Hook.
-    ///
-    /// Input: [`&Signature`], [`DateTime<Utc>`]
-    /// Return: [`MsgSrc`]
-    ///
-    /// [`&Signature`]: Signature
-    /// [`DateTime<Utc>`]: DateTime
-    fn pop(&mut self, signature: &Signature, dt: DateTime<Utc>) -> MsgSrc {
-        //  Check the last processed message signature. At the same time, clear
-        //      the last processed, because this check is the sole purpose for
-        //      its existence.
-        match self.previous.take() {
-            //  New signature matches previous. Probably a re-emit.
-            Some(prev) if signature == &prev => MsgSrc::ReEmit,
-
-            //  If the timestamp does not match, it cannot be the same message.
-            _ if self.dt != Some(dt) => MsgSrc::Unknown,
-
-            //  Compare against the currently-held signature.
-            _ => match &self.signature {
-                Some(sig) if signature == sig => match self.message.take() {
-                    //  Signature matches and message is present. Return it.
-                    Some(msg) => MsgSrc::Server(msg),
-
-                    //  Signature matches, but message is already gone.
-                    None => MsgSrc::ReEmit,
-                }
-
-                //  Signature does not match.
-                Some(_) => MsgSrc::Unknown,
-                //  Not holding a signature.
-                None => MsgSrc::Unknown,
-            }
-        }
-    }
-
-    fn set_prev(&mut self, signature: Signature) {
-        self.previous = Some(signature);
-    }
-}
-
-
-safe_static! {
-    static lazy CURRENT: Mutex<Sponge> = Default::default();
-}
+use storage::{Action, ignore_next_print_event, recover_message, store_message};
 
 
 /// Trim a slice of arguments from Hexchat into something workable. The initial
@@ -133,22 +36,6 @@ fn arg_trim(args: &[String]) -> &[String] {
         Some(i) => &args[..i],
         None => args,
     }
-}
-
-
-fn check_message(channel: &str, author: &str, dt: DateTime<Utc>) -> MsgSrc {
-    let sig = Signature::new(Some(channel), strip_formatting(author));
-    CURRENT.lock().pop(&sig, dt)
-}
-
-
-fn store_message(msg: Message, dt: DateTime<Utc>) {
-    CURRENT.lock().put(msg, dt)
-}
-
-
-fn mark_processed(sig: Signature) {
-    CURRENT.lock().set_prev(sig);
 }
 
 
@@ -179,7 +66,7 @@ pub fn cb_join(word: &[String], _dt: DateTime<Utc>) -> EatMode {
 }
 
 
-pub fn cb_print(etype: PrintEvent, word: &[String], dt: DateTime<Utc>) -> EatMode {
+pub fn cb_print(etype: PrintEvent, word: &[String], _dt: DateTime<Utc>) -> EatMode {
     fn need_irc(etype: PrintEvent) -> bool {
         match etype {
             PrintEvent::YOUR_ACTION => false,
@@ -190,25 +77,23 @@ pub fn cb_print(etype: PrintEvent, word: &[String], dt: DateTime<Utc>) -> EatMod
 
     if this_is_twitch() {
         let channel: String = get_channel_name();
-        let author: &String = &word[0];
 
         #[cfg(feature = "full-debug")]
         hexchat::print_plain(&format!(
             "{} < {}",
             etype.get_id(),
-            Signature::new(Some(&channel), Ok(strip_formatting(author))),
+            crate::irc::Signature::new(
+                Some(&channel),
+                hexchat::strip_formatting(&word[0]),
+            ),
         ));
 
-        //  Determine what should be done with this message.
-        match check_message(&channel, author, dt) {
-            //  Message was already processed. Ignore it.
-            MsgSrc::ReEmit => EatMode::None,
-            //  Message comes from Server. IRC Representation available.
-            MsgSrc::Server(msg) => print_with_irc(&channel, etype, word, msg),
-
-            //  No IRC Representation available for Message.
-            MsgSrc::Unknown if need_irc(etype) => EatMode::None,
-            MsgSrc::Unknown => print_without_irc(&channel, etype, word),
+        //  Determine what should be done with this event.
+        match recover_message() {
+            Action::Ignore => EatMode::None,
+            Action::ProcPrint if need_irc(etype) => EatMode::None,
+            Action::ProcPrint => print_without_irc(&channel, etype, word),
+            Action::ProcIrc(msg) => print_with_irc(&channel, etype, word, msg),
         }
     } else {
         EatMode::None
@@ -217,7 +102,7 @@ pub fn cb_print(etype: PrintEvent, word: &[String], dt: DateTime<Utc>) -> EatMod
 
 
 /// Handle a Server Message, received by the Hook for "RAW LINE".
-pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
+pub fn cb_server(_word: &[String], _dt: DateTime<Utc>, raw: String) -> EatMode {
     if this_is_twitch() {
         let msg: Message = raw.parse().expect("Failed to parse IRC Message");
 
@@ -231,7 +116,7 @@ pub fn cb_server(_word: &[String], dt: DateTime<Utc>, raw: String) -> EatMode {
         let opt_eat: Option<EatMode> = match msg.command.as_str() {
             //  Chat Messages.
             "PRIVMSG" => {
-                store_message(msg, dt);
+                store_message(msg);
                 Some(EatMode::None)
             }
             "WHISPER" => events::whisper_recv(msg),
