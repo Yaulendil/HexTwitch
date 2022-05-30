@@ -58,8 +58,17 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
         match id.parse::<Reward>() {
             //  [CUSTOM] (No ID) username: message
             Err(()) if id.is_empty() => {
-                reward_name = REWARD_UNKNOWN;
-                author_name = format!("(No ID) {}:", msg.author());
+                //  Found an instance of this class of message. It is not a
+                //      highlight. It is not a reward. It is just a regular
+                //      standard message. Twitch. Why.
+
+                if PREF_DEBUG.is(&true) {
+                    msg.debug();
+                }
+
+                // reward_name = REWARD_UNKNOWN;
+                // author_name = format!("(No ID) {}:", msg.author());
+                return None;
             }
 
             //  [CUSTOM] (1334121037) username: message
