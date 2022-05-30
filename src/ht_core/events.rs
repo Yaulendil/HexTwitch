@@ -63,7 +63,7 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
                 //      standard message. Twitch. Why.
 
                 if PREF_DEBUG.is(&true) {
-                    msg.debug();
+                    twitch_print!("RAW MESSAGE: {msg}");
                 }
 
                 // reward_name = REWARD_UNKNOWN;

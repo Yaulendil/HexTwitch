@@ -280,13 +280,6 @@ impl Message {
         self.tags.as_mut().ok_or(())
             .map(|tags| tags.insert(String::from(key), escape(value)))
     }
-
-    /// Print this message to the Twitch network tab.
-    pub fn debug(&self) {
-        let text = format!("RAW MESSAGE: {self}");
-        hexchat::print_plain(&text);
-        cmd!("DOAT Twitch ECHO {}", text);
-    }
 }
 
 impl fmt::Display for Message {
