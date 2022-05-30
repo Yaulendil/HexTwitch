@@ -265,6 +265,9 @@ fn prediction_badge(pred: &str) -> char {
 }
 
 
+const ICONS_OP: &[char] = &['🜲', '🜨', '⛨', '🗡'];
+
+
 /// Badges: A Struct storing the Input and Output of the process of breaking
 ///     down a badge value. This effectively serves the purpose of a Cached
 ///     Function.
@@ -338,6 +341,14 @@ impl Badges {
 
     pub const fn is_empty(&self) -> bool {
         self.output.is_none()
+    }
+
+    #[allow(dead_code)]
+    pub fn is_op(&self) -> bool {
+        match &self.output {
+            Some(s) => s.contains(ICONS_OP),
+            None => false,
+        }
     }
 
     /// Update the map of Predictions to include the data in the message used to

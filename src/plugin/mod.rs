@@ -50,7 +50,7 @@ impl Plugin for HexTwitch {
         crate::prefs::init_prefs();
 
         let mut plugin = Self {
-            hooks: Vec::with_capacity(20),
+            hooks: Vec::with_capacity(22),
             menus: create_menus(),
         };
 
@@ -117,6 +117,10 @@ impl Plugin for HexTwitch {
 
         //  Hook for User Joins.
         plugin.hook_print(PrintEvent::JOIN, cb_join);
+
+        //  Hook for User Modes.
+        plugin.hook_print(PrintEvent::CHANNEL_OPERATOR, cb_mode);
+        plugin.hook_print(PrintEvent::CHANNEL_DEOP, cb_mode);
 
         //  Hooks for User Messages.
         plugin.hook_print_plugin(PrintEvent::CHANNEL_MESSAGE, cb_print);

@@ -23,8 +23,10 @@ crate-type = ["cdylib", "rlib"]
 
 
 [features]
-default = []
+default = ["fake-joins", "fake-modes"]
 
+fake-joins = []
+fake-modes = []
 full-debug = []
 nightly = []
 strict-reward-uuids = []

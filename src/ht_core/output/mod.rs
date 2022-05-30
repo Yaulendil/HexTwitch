@@ -5,7 +5,7 @@ mod statics;
 mod tabs;
 
 use std::borrow::Cow;
-use hexchat::{EatMode, PrintEvent, send_command};
+use hexchat::{EatMode, print_plain, PrintEvent};
 use crate::{irc::{Message, Prefix}, prefs::{HexPref, PREF_ANNOUNCE}};
 use super::{events, ignore_next_print_event};
 pub use printing::{
@@ -25,6 +25,33 @@ pub use printing::{
 };
 pub use statics::{BADGES_UNKNOWN, CHANNELS, TABCOLORS, USERSTATE};
 pub use tabs::TabColor;
+
+
+pub const FAKE_MODE_NAME: &str = "HexTwitch";
+
+
+#[cfg(feature = "fake-joins")]
+pub(super) fn fake_join(channel: &str, user: &str) {
+    if user != hexchat::get_nickname() {
+        cmd!(
+            "RECV :{user}!twitch.tv/{user} JOIN {channel}",
+            channel = channel,
+            user = user,
+        );
+    }
+}
+
+
+#[cfg(feature = "fake-modes")]
+pub(super) fn fake_mode(channel: &str, user: &str, op: bool) {
+    cmd!(
+        "RECV :{by} MODE {channel} {mode} {user}",
+        by = FAKE_MODE_NAME,
+        mode = if op { "+o" } else { "-o" },
+        channel = channel,
+        user = user,
+    );
+}
 
 
 enum AnnounceType {
@@ -110,7 +137,7 @@ pub fn print_announcement(mut msg: Message) -> Option<EatMode> {
             None => (msg.trail.as_str(), false),
         };
 
-        hexchat::print_plain(&format!(
+        print_plain(&format!(
             "\x0302{mode}\x02{color}{text}\x0F",
             color = color.color(),
             mode = color.mode(),
@@ -133,14 +160,18 @@ pub fn print_with_irc(
     word: &[String],
     msg: Message,
 ) -> EatMode {
+    let author: &str = msg.author();
+
     if msg.has_tags() {
         if let Some(bits) = msg.get_tag("bits") {
             if let Ok(n) = bits.parse::<usize>() {
-                events::cheer(msg.author(), n);
+                events::cheer(author, n);
             }
         }
 
-        if let Some(eat) = events::reward(word, &msg) { return eat; }
+        if let Some(eat) = events::reward(word, &msg) {
+            return eat;
+        }
     }
 
     match etype {
@@ -164,11 +195,12 @@ pub fn print_with_irc(
             };
 
             ignore_next_print_event();
-            echo(
-                etype,
-                &[&*word[0], &*word[1], &*word[2], bstr],
-                TabColor::Message,
-            );
+            echo(etype, &[
+                word[0].as_str(), // Name
+                word[1].as_str(), // Text
+                bstr, // Mode
+                word[3].as_str(), // "Identified text"
+            ], TabColor::Message);
 
             EatMode::All
         }
@@ -181,29 +213,29 @@ pub fn print_with_irc(
                 msg.get_tag("badges").unwrap_or_default(),
                 msg.get_tag("badge-info").unwrap_or_default(),
             );
-
-            ignore_next_print_event();
-            echo(
-                etype,
-                &[&*word[0], &*word[1], &*word[2], badges.as_str()],
-                if etype == PrintEvent::CHANNEL_MSG_HILIGHT
-                    || etype == PrintEvent::CHANNEL_ACTION_HILIGHT
-                { TabColor::Highlight } else { TabColor::Message },
-            );
-
-            badges.update_prediction(&channel);
+            let color: TabColor = match etype {
+                PrintEvent::CHANNEL_ACTION_HILIGHT
+                | PrintEvent::CHANNEL_MSG_HILIGHT
+                => TabColor::Highlight,
+                _ => TabColor::Message,
+            };
 
             if msg.get_tag("anonymous-cheerer").is_none() {
-                let author = msg.author();
-                let user = hexchat::get_nickname();
-
-                if author != user {
-                    send_command(&format!(
-                        "RECV :{0}!twitch.tv/{0} JOIN {1}",
-                        author, channel,
-                    ));
-                }
+                #[cfg(feature = "fake-joins")]
+                fake_join(channel, author);
+                #[cfg(feature = "fake-modes")]
+                fake_mode(channel, author, badges.is_op());
             }
+
+            ignore_next_print_event();
+            echo(etype, &[
+                word[0].as_str(), // Name
+                word[1].as_str(), // Text
+                badges.as_str(), // Mode
+                word[3].as_str(), // "Identified text"
+            ], color);
+
+            badges.update_prediction(&channel);
 
             EatMode::All
         }
@@ -235,8 +267,6 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
 
         EatMode::All
     } else {
-        let author: &str = &word[0];
-
         //  FIXME: Currently, a `/ME` Command executed by the User is not given
         //      the User Badges, while it IS given Badges when received from the
         //      Server. This seems to be where that goes wrong, but it is not
@@ -245,8 +275,10 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
         //      Badges. Add the Badges from the User State and re-emit.
         ignore_next_print_event();
         echo(etype, &[
-            author, &*word[1], &*word[2],
-            &USERSTATE.get(&channel),
+            word[0].as_str(), // Name
+            word[1].as_str(), // Text
+            &USERSTATE.get(channel), // Mode
+            word[3].as_str(), // "Identified text"
         ], TabColor::Message);
 
         EatMode::All

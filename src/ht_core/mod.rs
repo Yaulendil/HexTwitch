@@ -19,6 +19,7 @@ use output::{
     BADGES_UNKNOWN,
     change_topic,
     CHANNELS,
+    FAKE_MODE_NAME,
     print_with_irc,
     print_without_irc,
     TABCOLORS,
@@ -58,7 +59,30 @@ pub fn cb_focus(_channel: ChannelRef) -> EatMode {
 
 /// Hide a Join Event if it is fake.
 pub fn cb_join(word: &[String], _dt: DateTime<Utc>) -> EatMode {
-    if this_is_twitch() && !word[2].contains("tmi.twitch.tv") {
+    if this_is_twitch() {
+        // let user = &word[0];
+        // let channel = &word[1];
+        //
+        // if let Some(hannel) = channel.strip_prefix("#") {
+        //     if user == hannel {
+        //         output::fake_mode(channel, user, true);
+        //     }
+        // }
+
+        if !word[2].contains("tmi.twitch.tv") {
+            EatMode::All
+        } else {
+            EatMode::None
+        }
+    } else {
+        EatMode::None
+    }
+}
+
+
+/// Hide a Mode Event if it is fake.
+pub fn cb_mode(word: &[String], _dt: DateTime<Utc>) -> EatMode {
+    if this_is_twitch() && word[0] == FAKE_MODE_NAME {
         EatMode::All
     } else {
         EatMode::None

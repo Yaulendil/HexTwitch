@@ -26,6 +26,8 @@ use super::output::{
     TabColor,
     USERSTATE,
 };
+#[cfg(feature = "fake-modes")]
+use super::output::fake_mode;
 
 
 /// Invocation of a self-action command.
@@ -464,6 +466,9 @@ pub fn userstate(msg: Message) -> Option<EatMode> {
         if empty {
             echo(EVENT_REWARD, &[HEADER, phrase, ""], TabColor::None);
         } else {
+            #[cfg(feature = "fake-modes")]
+            fake_mode(&channel, &hexchat::get_nickname(), badges.is_op());
+
             echo(EVENT_REWARD, &[
                 HEADER,
                 phrase,
