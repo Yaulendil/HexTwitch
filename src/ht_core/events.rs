@@ -425,25 +425,24 @@ pub fn usernotice(msg: Message) -> Option<EatMode> {
 }
 
 
-const fn badge_phrase(replacing: bool, empty: bool) -> &'static str {
-    const INITIAL: bool = false;
-    const REPLACE: bool = true;
-    const SOME: bool = false;
-    const NONE: bool = true;
-
-    match (replacing, empty) {
-        (INITIAL, NONE) => "No Badges received.",
-        (REPLACE, NONE) => "Badges cleared.",
-
-        (INITIAL, SOME) => "Badges received:",
-        (REPLACE, SOME) => "New Badges received:",
-    }
-}
-
-
 pub fn userstate(msg: Message) -> Option<EatMode> {
     /// The title put in brackets at the start of a state update message.
     const HEADER: &'static str = "BADGES";
+
+    const fn badge_phrase(replacing: bool, empty: bool) -> &'static str {
+        const INITIAL: bool = false;
+        const REPLACE: bool = true;
+        const SOME: bool = false;
+        const NONE: bool = true;
+
+        match (replacing, empty) {
+            (INITIAL, NONE) => "No Badges received.",
+            (REPLACE, NONE) => "Badges cleared.",
+
+            (INITIAL, SOME) => "Badges received:",
+            (REPLACE, SOME) => "New Badges received:",
+        }
+    }
 
     let channel: String = get_channel_name();
     if !channel.starts_with::<&[char]>(&['#', '&']) {
