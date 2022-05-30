@@ -357,11 +357,11 @@ impl Badges {
                     let variant = &rank[LEN..];
                     let label = &info[LEN..];
 
-                    if let Some(update) = CHANNELS.update_prediction(
-                        channel.to_owned(),
-                        variant,
-                        label,
-                    ) {
+                    if let Ok(badge) = variant.parse::<PredictionBadge>() {
+                        let mut cref = CHANNELS.ensure(channel.to_owned());
+                        let predict = &mut cref.predictions;
+                        let update = predict.set_label(badge, label);
+
                         if let Some(mode) = update.new_mode() {
                             alert_basic(&format!(
                                 "Prediction type changed to {}.",
@@ -371,8 +371,8 @@ impl Badges {
 
                         if update.changed_label() {
                             alert_basic(&format!(
-                                "Prediction updated: {}",
-                                CHANNELS.get_prediction(channel),
+                                "Prediction labels updated: {}",
+                                predict,
                             ));
                         }
 

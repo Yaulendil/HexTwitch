@@ -215,20 +215,18 @@ pub fn cmd_htinfo(_arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_prediction(_arg_full: &[String]) -> EatMode {
-    let owned: String;
-    let alert: &str = match CHANNELS.get_prediction(&get_channel_name()).0 {
-        Some(pred) if !pred.is_empty() => {
-            owned = format!(
-                "Current Prediction ({}): {}",
-                pred.mode().desc(),
-                pred.deref(),
-            );
-            &owned
-        }
-        _ => "No active Prediction.",
-    };
+    let predict = &CHANNELS.current().predictions;
 
-    alert_basic(alert);
+    if predict.is_empty() {
+        alert_basic("No active Prediction.");
+    } else {
+        alert_basic(format!(
+            "Current Prediction ({}): {}",
+            predict.mode().desc(),
+            predict.deref(),
+        ));
+    }
+
     EatMode::All
 }
 

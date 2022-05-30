@@ -2,17 +2,11 @@ use std::{
     collections::{hash_map::{Entry, HashMap}, HashSet},
     ops::{Deref, DerefMut},
 };
-use parking_lot::{
-    Mutex,
-    RwLock,
-    RwLockReadGuard,
-    RwLockWriteGuard,
-};
+use parking_lot::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use super::{
     Badges,
-    channels::*,
+    channels::ChannelData,
     tabs::{TabColor, Tabs},
-    prediction::{MaybePredict, Predict, PredictionBadge, PredictUpdate},
     printing::States,
 };
 
@@ -62,31 +56,6 @@ impl Channels {
                 Entry::Vacant(e) => e.insert(Default::default()),
             }
         )
-    }
-
-    pub fn get_prediction<'s>(&'s self, channel: &str)
-        -> MaybePredict<impl Deref<Target=Predict> + 's>
-    {
-        let guard = RwLockReadGuard::try_map(
-            self.0.read(),
-            |map| map.get(channel).map(|c| &c.predictions),
-        );
-
-        let inner = match guard {
-            Ok(inner) => Some(inner),
-            Err(_) => None,
-        };
-
-        MaybePredict(inner)
-    }
-
-    pub fn update_prediction(&self, channel: String, variant: &str, label: &str)
-        -> Option<PredictUpdate>
-    {
-        match variant.parse::<PredictionBadge>() {
-            Ok(pb) => Some(self.ensure(channel).predictions.set_label(pb, label)),
-            Err(_) => None,
-        }
     }
 }
 
