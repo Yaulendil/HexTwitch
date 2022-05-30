@@ -71,7 +71,7 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
                 return None;
             }
 
-            //  [CUSTOM] (1334121037) username: message
+            //  [CUSTOM] (00000000-0000-0000-0000-000000000000) username: message
             Err(()) => {
                 reward_name = REWARD_UNKNOWN;
                 author_name = format!("({}) {}:", id, msg.author());
