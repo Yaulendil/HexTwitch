@@ -1,3 +1,4 @@
+mod callbacks;
 mod events;
 mod output;
 mod storage;
@@ -83,6 +84,15 @@ pub fn cb_join(word: &[String], _dt: DateTime<Utc>) -> EatMode {
 /// Hide a Mode Event if it is fake.
 pub fn cb_mode(word: &[String], _dt: DateTime<Utc>) -> EatMode {
     if this_is_twitch() && word[0] == FAKE_MODE_NAME {
+        EatMode::All
+    } else {
+        EatMode::None
+    }
+}
+
+
+pub fn cb_notice(word: &[String], _dt: DateTime<Utc>) -> EatMode {
+    if this_is_twitch() && callbacks::run(&word[0]) {
         EatMode::All
     } else {
         EatMode::None
