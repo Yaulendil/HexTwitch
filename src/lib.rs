@@ -15,6 +15,7 @@ macro_rules! cmd {
 }
 
 /// Print text to the Twitch network tab in HexChat.
+#[allow(unused_macros)]
 macro_rules! twitch_print {
     ($($t:tt)*) => {
         ::hexchat::send_command(&format!(
