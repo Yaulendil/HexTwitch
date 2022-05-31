@@ -228,7 +228,9 @@ pub fn print_with_irc(
             }
 
             let name_owned: String;
-            let name: &str = match msg.get_tag("display-name") {
+            let name: &str = match msg.get_tag("display-name").as_ref()
+                .map(|s| s.trim())
+            {
                 Some(display) if !display.eq_ignore_ascii_case(author) => {
                     name_owned = format!("{} / {}", word[0], display);
                     &name_owned
