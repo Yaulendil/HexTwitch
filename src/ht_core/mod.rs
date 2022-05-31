@@ -310,7 +310,8 @@ pub fn cmd_title(arg_full: &[String]) -> EatMode {
 
 pub fn cmd_tjoin(arg_full: &[String]) -> EatMode {
     cmd!(
-        "JOIN {}",
+        "DOAT {} JOIN {}",
+        NETWORK,
         arg_trim(&arg_full[1..]).join(" "),
     );
 
