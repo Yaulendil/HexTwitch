@@ -588,7 +588,7 @@ pub fn whisper_send_command(etype: PrintEvent, channel: &str, word: &[String]) {
         };
 
         print_event_to_channel(&ensure_tab(user), etype_dm, &[
-            word[0].as_str(), text, word[2].as_str(),
+            word[0].as_str(), text, "",
         ]);
     }
 }

@@ -246,7 +246,7 @@ pub fn print_with_irc(
 
 /// No IRC Representation available for Message.
 pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> EatMode {
-    if word[1].starts_with(".w ") {
+    if word[1].starts_with(".w ") || word[1].starts_with("/w ") {
         //  User has executed `.w`. We must take the message typed, and forward
         //      it to the Whisper Handler.
         events::whisper_send_command(etype, &channel, word);
@@ -267,10 +267,6 @@ pub fn print_without_irc(channel: &str, etype: PrintEvent, word: &[String]) -> E
 
         EatMode::All
     } else {
-        //  FIXME: Currently, a `/ME` Command executed by the User is not given
-        //      the User Badges, while it IS given Badges when received from the
-        //      Server. This seems to be where that goes wrong, but it is not
-        //      clear why.
         //  User has spoken in a normal Channel, but has not yet been given
         //      Badges. Add the Badges from the User State and re-emit.
         ignore_next_print_event();
