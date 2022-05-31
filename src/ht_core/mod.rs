@@ -92,8 +92,8 @@ pub fn cb_mode(word: &[String], _dt: DateTime<Utc>) -> EatMode {
 
 
 pub fn cb_notice(word: &[String], _dt: DateTime<Utc>) -> EatMode {
-    if this_is_twitch() && callbacks::run(&word[0]) {
-        EatMode::All
+    if this_is_twitch()  {
+        callbacks::run(&word[0])
     } else {
         EatMode::None
     }
