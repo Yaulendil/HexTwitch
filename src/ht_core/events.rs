@@ -64,9 +64,9 @@ pub fn reward(word: &[String], msg: &Message) -> Option<EatMode> {
                 //      highlight. It is not a reward. It is just a regular
                 //      standard message. Twitch. Why.
 
-                if PREF_DEBUG.is(&true) {
-                    twitch_print!("RAW MESSAGE: {msg}");
-                }
+                // if PREF_DEBUG.is(&true) {
+                //     twitch_print!("RAW MESSAGE: {msg}");
+                // }
 
                 // reward_name = REWARD_UNKNOWN;
                 // author_name = format!("(No ID) {}:", msg.author());
