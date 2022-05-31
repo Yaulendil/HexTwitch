@@ -6,7 +6,7 @@ mod tabs;
 
 use std::borrow::Cow;
 use hexchat::{EatMode, print_plain, PrintEvent};
-use crate::{irc::{Message, Prefix}, prefs::{HexPref, PREF_ANNOUNCE}};
+use crate::{irc::{Message, Prefix}, prefs::*};
 use super::{events, ignore_next_print_event};
 pub use printing::{
     alert_basic,
@@ -227,9 +227,18 @@ pub fn print_with_irc(
                 fake_mode(channel, author, badges.is_op());
             }
 
+            let name_owned: String;
+            let name: &str = match msg.get_tag("display-name") {
+                Some(display) if !display.eq_ignore_ascii_case(author) => {
+                    name_owned = format!("{} / {}", word[0], display);
+                    &name_owned
+                }
+                _ => &word[0],
+            };
+
             ignore_next_print_event();
             echo(etype, &[
-                word[0].as_str(), // Name
+                name, // Name
                 word[1].as_str(), // Text
                 badges.as_str(), // Mode
                 word[3].as_str(), // "Identified text"
