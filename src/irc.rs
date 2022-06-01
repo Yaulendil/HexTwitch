@@ -3,7 +3,7 @@
 use std::{
     collections::HashMap,
     convert::Infallible,
-    fmt,
+    fmt::{Display, Formatter},
 };
 
 
@@ -76,6 +76,11 @@ fn owned_not_empty(instr: &str) -> Option<String> {
 }
 
 
+fn first_byte_eq(line: &str, byte: u8) -> bool {
+    !line.is_empty() && line.as_bytes()[0] == byte
+}
+
+
 fn find_byte(line: &str, delim: u8) -> Option<usize> {
     for (i, b) in line.as_bytes().iter().enumerate() {
         if delim.eq(b) {
@@ -139,8 +144,8 @@ impl Signature {
     }
 }
 
-impl fmt::Display for Signature {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Display for Signature {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
     }
 }
@@ -180,8 +185,8 @@ impl Prefix {
     }
 }
 
-impl fmt::Display for Prefix {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Display for Prefix {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
             Self::ServerName(server) => f.write_str(server),
 
@@ -210,8 +215,8 @@ impl std::str::FromStr for Prefix {
         if nick_user_host.contains('.') && !nick_user_host.contains('@') {
             Ok(Self::ServerName(String::from(nick_user_host)))
         } else {
-            let (nick_user, hostname) = split_at_char(nick_user_host, '@');
-            let (nickname, username) = split_at_char(nick_user, '!');
+            let (nick_user, hostname) = split_at_byte(nick_user_host, b'@');
+            let (nickname, username) = split_at_byte(nick_user, b'!');
 
             Ok(Self::User {
                 nick: String::from(nickname),
@@ -282,15 +287,14 @@ impl Message {
     }
 }
 
-impl fmt::Display for Message {
+impl Display for Message {
     /// Format this `Message` into a format which is suitable for sending over
     ///     IRC.
     ///
     /// Return: `fmt::Result`
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         if let Some(tags) = &self.tags {
-            let mut tagseq: Vec<String> = tags
-                .iter()
+            let mut tagseq: Vec<String> = tags.iter()
                 .map(|(key, val)|
                     if val.is_empty() {
                         key.to_owned()
@@ -324,22 +328,18 @@ impl std::str::FromStr for Message {
 
         //  Break the line down.
         let (full_message, tags): (&str, Option<HashMap<String, String>>) = {
-            if full_str.starts_with('@') {
+            if first_byte_eq(full_str, b'@') {
                 //  The Tags String is the first half of the original message
                 //      received by IRC. The "regular" message begins after the
                 //      first space.
-                let (tag_str, main_str) = split_at_char(&full_str, ' ');
+                let (tag_str, main_str) = split_at_byte(&full_str, b' ');
 
-                (main_str, Some(
-                    tag_str[1..]
-                        .split(';')
-                        .map(|kvp| {
-                            let (key, val) = split_at_char(kvp, '=');
+                let tag_map = tag_str[1..].split(';').map(|kvp| {
+                    let (key, val) = split_at_byte(kvp, b'=');
+                    (key.to_owned(), val.to_owned())
+                }).collect();
 
-                            (key.to_owned(), val.to_owned())
-                        })
-                        .collect::<HashMap<String, String>>()
-                ))
+                (main_str, Some(tag_map))
             } else {
                 (full_str, None)
             }
@@ -349,10 +349,10 @@ impl std::str::FromStr for Message {
 
         //  Now, parse the message itself.
         //  This format is specified in Section 2.3.1 of RFC 1459.
-        let (prefix, message) = if full_message.starts_with(':') {
+        let (prefix, message) = if first_byte_eq(full_message, b':') {
             //  This Message has a Prefix. The Prefix is most likely hostname
             //      and/or server info. It ends at the first space.
-            split_at_char(&full_message[1..], ' ')
+            split_at_byte(&full_message[1..], b' ')
         } else {
             ("", full_message)
         };
@@ -366,7 +366,7 @@ impl std::str::FromStr for Message {
         //  "this is a message"
 
         //  The Command is the first word before any Arguments.
-        let (command, args_str) = split_at_char(cmd_and_args, ' ');
+        let (command, args_str) = split_at_byte(cmd_and_args, b' ');
         //  "PRIVMSG"
         //  "#zxcv arg2"
 
