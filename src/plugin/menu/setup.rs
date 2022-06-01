@@ -64,6 +64,12 @@ pub fn create_menus() -> Vec<MenuGroup> {
             cmd: ttv!("vips"),
             desc: "List channel VIPs",
         }.with_icon(I_VIP));
+
+        #[cfg(feature = "fake-modes")]
+        twitch.add_item(MenuCommand {
+            cmd: "HTMODES",
+            desc: "Apply Op char to Moderators",
+        });
     }
 
     //  Main menu: Section 3: Plugin config.
