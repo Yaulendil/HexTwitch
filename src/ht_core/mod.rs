@@ -244,7 +244,7 @@ pub fn cmd_pref_whisper_here(_arg_full: &[String]) -> EatMode {
 
 pub fn cmd_automodes(_arg_full: &[String]) -> EatMode {
     eat_next_print_event();
-    cmd!("SAY .mods");
+    cmd_ttv!("mods");
 
     #[cfg(feature = "fake-modes")]
     callbacks::register(|s: &String| match s.strip_prefix(

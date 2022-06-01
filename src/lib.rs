@@ -6,25 +6,8 @@ extern crate cached;
 #[macro_use]
 extern crate hexchat;
 
-
-/// Execute a command as if typed into HexChat.
-macro_rules! cmd {
-    // ($($t:tt)*) => { ::hexchat::send_command(&format!($($t)*)) };
-    ($text:literal) => { hexchat::send_command($text) };
-    ($f:literal, $($t:tt)*) => { hexchat::send_command(&format!($f, $($t)*)) };
-}
-
-/// Print text to the Twitch network tab in HexChat.
-#[allow(unused_macros)]
-macro_rules! twitch_print {
-    ($($t:tt)*) => {
-        ::hexchat::send_command(&format!(
-            "DOAT Twitch ECHO {}",
-            format_args!($($t)*),
-        ))
-    };
-}
-
+#[macro_use]
+mod macros;
 
 mod ht_core;
 mod icons;

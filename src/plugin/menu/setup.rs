@@ -4,7 +4,6 @@ use crate::{icons::*, prefs::*};
 use super::*;
 
 
-macro_rules! ttv {($command:literal) => {concat!("SAY .", $command)}}
 macro_rules! quote_args {
     ($cmd:expr $(, $arg:expr)* $(,)?) => {concat!(
         $cmd, $(' ', '"', $arg, '"',)*
