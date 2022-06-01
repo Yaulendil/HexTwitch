@@ -7,7 +7,6 @@ use hooks::{CbCommand, CbPrint, CbPrintPlugin, CbServer, CbWindow, Hook};
 use menu::*;
 
 
-#[derive(Default)]
 pub struct HexTwitch {
     hooks: Vec<Hook>,
     #[allow(dead_code)]
