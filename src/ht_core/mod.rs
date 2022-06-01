@@ -253,6 +253,10 @@ pub fn cmd_automodes(_arg_full: &[String]) -> EatMode {
         Some(list) => {
             let channel = get_channel_name();
 
+            if let Some(owner) = channel.strip_prefix('#') {
+                output::fake_mode_op(&channel, owner, true);
+            }
+
             for name in list.split(", ") {
                 output::fake_mode_op(&channel, name, true);
             }
