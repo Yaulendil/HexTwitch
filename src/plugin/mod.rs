@@ -66,6 +66,11 @@ impl Plugin for HexTwitch {
             cmd_pref_debug,
         );
         plugin.hook_command(
+            "HTMODES",
+            "Automatically assign fake IRC modes to channel moderators.",
+            cmd_automodes,
+        );
+        plugin.hook_command(
             "HTINFO",
             "Print information about the HexTwitch plugin.",
             cmd_htinfo,

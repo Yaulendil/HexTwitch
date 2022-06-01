@@ -220,11 +220,18 @@ pub fn print_with_irc(
                 _ => TabColor::Message,
             };
 
+            #[cfg(any(
+            feature = "fake-joins",
+            feature = "fake-modes",
+            ))]
             if msg.get_tag("anonymous-cheerer").is_none() {
                 #[cfg(feature = "fake-joins")]
                 fake_join(channel, author);
+
                 #[cfg(feature = "fake-modes")]
-                fake_mode(channel, author, badges.is_op());
+                if badges.is_op() {
+                    fake_mode(channel, author, true);
+                }
             }
 
             let name_owned: String;

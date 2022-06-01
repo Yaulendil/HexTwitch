@@ -25,7 +25,7 @@ use output::{
     print_without_irc,
     TABCOLORS,
 };
-use storage::{Action, ignore_next_print_event, recover_message, store_message};
+use storage::*;
 
 
 /// Trim a slice of arguments from Hexchat into something workable. The initial
@@ -124,7 +124,7 @@ pub fn cb_print(etype: PrintEvent, word: &[String], _dt: DateTime<Utc>) -> EatMo
 
         //  Determine what should be done with this event.
         match recover_message() {
-            Action::Ignore => EatMode::None,
+            Action::Eat(eat) => eat,
             Action::ProcPrint if need_irc(etype) => EatMode::None,
             Action::ProcPrint => print_without_irc(&channel, etype, word),
             Action::ProcIrc(msg) => print_with_irc(&channel, etype, word, msg),
@@ -237,6 +237,30 @@ pub fn cmd_pref_whisper_here(_arg_full: &[String]) -> EatMode {
         Ok(true) => alert_basic("Twitch whispers will also show in the current Tab."),
         Err(..) => alert_error("FAILED to set Preference."),
     }
+
+    EatMode::All
+}
+
+
+pub fn cmd_automodes(_arg_full: &[String]) -> EatMode {
+    eat_next_print_event();
+    cmd!("SAY .mods");
+
+    #[cfg(feature = "fake-modes")]
+    callbacks::register(|s: &String| match s.strip_prefix(
+        "The moderators of this channel are: ",
+    ) {
+        Some(list) => {
+            let channel = get_channel_name();
+
+            for name in list.split(", ") {
+                output::fake_mode(&channel, name, true);
+            }
+
+            EatMode::All
+        }
+        None => EatMode::None,
+    });
 
     EatMode::All
 }

@@ -1,5 +1,6 @@
 //! Storage of IRC [`Message`]s across the period between reception and output.
 
+use hexchat::EatMode;
 use parking_lot::Mutex;
 use crate::irc::Message;
 
@@ -9,10 +10,22 @@ safe_static! {
 }
 
 
+/// After calling this function, the next print event will be suppressed.
+pub fn eat_next_print_event() {
+    CURRENT.lock().set_next(EatMode::All);
+}
+
+
 /// After calling this function, the next print event will not be processed.
 pub fn ignore_next_print_event() {
-    CURRENT.lock().skip_next();
+    CURRENT.lock().set_next(EatMode::None);
 }
+
+
+// /// Nullifies the effect of previous calls to ignore functions.
+// pub fn process_next_print_event() {
+//     CURRENT.lock().next = None;
+// }
 
 
 /// Get the IRC [`Message`], if it is set.
@@ -29,10 +42,8 @@ pub fn store_message(msg: Message) {
 
 /// What to do after reading the [`Storage`] state.
 pub enum Action {
-    // /// Eat the event.
-    // Eat(EatMode),
-    /// Ignore the event.
-    Ignore,
+    /// Eat the event.
+    Eat(EatMode),
     /// Process the event without IRC, if possible.
     ProcPrint,
     /// Process the event with an IRC [`Message`] for context.
@@ -43,15 +54,14 @@ pub enum Action {
 #[derive(Default)]
 struct Storage {
     irc: Option<Message>,
-    skip: bool,
+    next: Option<EatMode>,
 }
 
 impl Storage {
     fn get(&mut self) -> Action {
-        if self.swap_skip() {
-            Action::Ignore
-        } else {
-            match self.irc.take() {
+        match self.next.take() {
+            Some(eat) => Action::Eat(eat),
+            None => match self.irc.take() {
                 Some(msg) => Action::ProcIrc(msg),
                 None => Action::ProcPrint,
             }
@@ -62,13 +72,7 @@ impl Storage {
         self.irc = Some(msg);
     }
 
-    fn skip_next(&mut self) {
-        self.skip = true;
-    }
-
-    fn swap_skip(&mut self) -> bool {
-        let value = self.skip;
-        self.skip = false;
-        value
+    fn set_next(&mut self, eat: EatMode) {
+        self.next = Some(eat);
     }
 }
