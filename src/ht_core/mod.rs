@@ -254,7 +254,7 @@ pub fn cmd_automodes(_arg_full: &[String]) -> EatMode {
             let channel = get_channel_name();
 
             for name in list.split(", ") {
-                output::fake_mode(&channel, name, true);
+                output::fake_mode_op(&channel, name, true);
             }
 
             EatMode::All

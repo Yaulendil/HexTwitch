@@ -43,14 +43,28 @@ pub(super) fn fake_join(channel: &str, user: &str) {
 
 
 #[cfg(feature = "fake-modes")]
-pub(super) fn fake_mode(channel: &str, user: &str, op: bool) {
+fn fake_mode(channel: &str, user: &str, add: bool, mode: char) {
     cmd!(
-        "RECV :{by} MODE {channel} {mode} {user}",
+        "RECV :{by} MODE {channel} {op}{mode} {user}",
         by = FAKE_MODE_NAME,
-        mode = if op { "+o" } else { "-o" },
+        op = if add { "+" } else { "-" },
+        mode = mode,
         channel = channel,
         user = user,
     );
+}
+
+
+#[cfg(feature = "fake-modes")]
+pub(super) fn fake_mode_op(channel: &str, user: &str, add: bool) {
+    fake_mode(channel, user, add, 'o')
+}
+
+
+#[allow(dead_code)]
+#[cfg(feature = "fake-modes")]
+pub(super) fn fake_mode_voice(channel: &str, user: &str, add: bool) {
+    fake_mode(channel, user, add, 'v')
 }
 
 
@@ -230,8 +244,13 @@ pub fn print_with_irc(
 
                 #[cfg(feature = "fake-modes")]
                 if badges.is_op() {
-                    fake_mode(channel, author, true);
+                    fake_mode_op(channel, author, true);
                 }
+
+                // #[cfg(feature = "fake-modes")]
+                // if badges.is_voiced() {
+                //     fake_mode_voice(channel, author, true);
+                // }
             }
 
             let name_owned: String;

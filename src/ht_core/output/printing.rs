@@ -276,6 +276,8 @@ pub struct Badges {
     badges: String,
     badge_info: String,
     pub output: Option<String>,
+    // mode_op: bool,
+    // mode_voiced: bool,
 }
 
 impl Badges {
@@ -350,6 +352,11 @@ impl Badges {
             None => false,
         }
     }
+
+    // #[allow(dead_code)]
+    // pub const fn is_voiced(&self) -> bool {
+    //     self.mode_voiced
+    // }
 
     /// Update the map of Predictions to include the data in the message used to
     ///     create these badges.
