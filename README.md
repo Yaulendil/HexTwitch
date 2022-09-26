@@ -12,6 +12,12 @@ There are various IRC clients built specifically for Twitch, such as [Chatty](ht
 
 One problem, however, stands in the way: The HexChat Plugin interface does not provide Callbacks with the IRC Tags. Therefore we must modify HexChat to add this functionality, using the Patch File mentioned above (This could be submitted as a Pull Request, but currently, my C sucks and I would rather not waste their time).
 
+## Regarding the Coming Update
+
+Twitch is [deprecating several key IRC commands](https://discuss.dev.twitch.tv/t/deprecation-of-chat-commands-through-irc/40486). They will be removed on or around 2023-02-18. This removal includes ***all*** of the most important moderation and channel editor capabilities.
+
+As a result, this plugin may see a great decrease in utility; At the very least, all installations of current and past versions will stop working for functions such as banning users and setting a channel to slow mode. I am going to try to implement access to the main API, and hopefully keep as much of the current functionality as possible, but updating the plugin will be required.
+
 ## Patching HexChat
 
 With [Git](https://git-scm.com) and [GNU Patch](https://savannah.gnu.org/projects/patch) installed, the following commands should download and patch the latest HexChat source code:
