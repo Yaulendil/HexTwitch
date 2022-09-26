@@ -49,6 +49,7 @@ Note that some typefaces may render some of these characters in an Emoji style, 
 - `⛨` (![admin](img/badges/admin.png)): Twitch administrator.
 - `✓` (![partner](img/badges/partner.png)): Twitch partner.
 - `a` (![ambassador](img/badges/ambassador.png)): Community "Ambassador", handpicked by Twitch.
+- `Δ` (![game-developer](img/badges/game-developer.png)): This account is registered with Twitch as a game developer or publisher.
 - `+` (![turbo](img/badges/turbo.png)): Twitch Turbo member.
 - `±` (![premium](img/badges/premium.png)): Twitch Prime member.
 - `~` (![glhf-pledge](img/badges/glhf-pledge.png)): User has taken the "GLHF Pledge".

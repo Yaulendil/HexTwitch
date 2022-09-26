@@ -233,6 +233,7 @@ fn get_badge(class: &str, rank: &str) -> char {
         "no_video"          /**/ => 'Ⓥ', // Alternatively '👁'?
 
         "glhf-pledge"       /**/ => '~',
+        "game-developer"    /**/ => 'Δ',
         "anonymous-cheerer" /**/ => '*',
 
         "ambassador"        /**/ => 'a',
