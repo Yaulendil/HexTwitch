@@ -78,7 +78,7 @@ Note that some typefaces may render some of these characters in an Emoji style, 
 - `⬠` (![bits](img/badges/bits-1000.png)): User has given at least 1,000 bits ($10.00).
 - `⬡` (![bits](img/badges/bits-5000.png)): User has given at least 5,000 bits ($50.00).
 - `🟋` (![bits](img/badges/bits-10000.png)): User has given at least 10,000 bits ($100.00).
-- `🟎` (![bits](img/badges/bits-100000.png)): User has given at least 100,000 bits ($1000.00).
+- `🟎` (![bits](img/badges/bits-100000.png)): User has given at least 100,000 bits ($1,000.00).
 
 ### Subscriptions (![subscriber](img/badges/subscriber-0.png))
 - `⁘` (![sub-gift-leader](img/badges/sub-gift-leader-1.png),![sub-gift-leader](img/badges/sub-gift-leader-2.png),![sub-gift-leader](img/badges/sub-gift-leader-3.png)): User is one of the top three givers of gift subscriptions in this channel.
