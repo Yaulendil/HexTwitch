@@ -12,8 +12,9 @@ use hexchat::{
     get_network_name,
     PrintEvent,
 };
+use twitchapi::Api;
 
-use crate::{irc::Message, NETWORK, prefs::*};
+use crate::{api::API, irc::Message, NETWORK, prefs::*};
 use output::{
     alert_basic,
     alert_error,
@@ -384,4 +385,30 @@ pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
     }
 
     EatMode::All
+}
+
+
+pub fn cmd_api_check(_arg_full: &[String]) -> EatMode {
+    let mut api = API.write();
+
+    if api.validate() {
+        alert_basic("API token validated.");
+    } else if let Some(url) = api.url() {
+        alert_basic(format!(
+            "The application must be authorized to access the Twitch API. \
+            Do so by following this link: {}",
+            url,
+        ));
+    } else {
+        alert_basic("Failed.");
+    }
+
+    EatMode::All
+}
+
+
+pub fn wrap_api_cmd<F>(cmd: F) -> impl Fn(&[String]) -> EatMode
+    where F: Fn(&[String], Option<&Api>) -> EatMode,
+{
+    move |args| cmd(args, API.read().api())
 }

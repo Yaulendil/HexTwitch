@@ -27,6 +27,10 @@ macro_rules! pref {($($t:tt)*) => {concat!("PREF_", $($t)*)}}
 const PREFIX: &'static str = pref!();
 
 
+// pub const PREF_API_CLIENT: PrefStr = PrefStr::new(pref!("api_client"));
+pub const PREF_API_OAUTH2: PrefStr = PrefStr::new(pref!("api_token"));
+
+
 /// Preference: Whether Twitch "Announcement" messages should be distinguished
 ///     with colors.
 pub const PREF_ANNOUNCE: PrefBool = PrefBool::new(pref!("color_announcements"));

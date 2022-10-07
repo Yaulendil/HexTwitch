@@ -7,6 +7,7 @@ extern crate hexchat;
 #[macro_use]
 mod macros;
 
+mod api;
 mod ht_core;
 mod icons;
 pub mod irc;

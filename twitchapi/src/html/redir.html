@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Checking authorization...</title>
+  </head>
+  <body>
+    <h1>Redirecting...</h1>
+    <p>Wait...</p>
+  </body>
+  <script>
+  let query = window.location.hash.substring(1);
+  window.location.replace(`URL_REDIRECT/?${query}`);
+  </script>
+</html>

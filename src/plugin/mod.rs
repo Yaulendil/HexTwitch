@@ -2,7 +2,7 @@ mod hooks;
 mod menu;
 
 use hexchat::{Plugin, print_plain, PrintEvent, WindowEvent};
-use crate::ht_core::*;
+use crate::{api::API, ht_core::*};
 use hooks::{CbCommand, CbPrint, CbPrintPlugin, CbServer, CbWindow, Hook};
 use menu::*;
 
@@ -11,6 +11,7 @@ pub struct HexTwitch {
     hooks: Vec<Hook>,
     #[allow(dead_code)]
     menus: Vec<MenuGroup>,
+    // api: ApiHandler,
 }
 
 impl HexTwitch {
@@ -51,7 +52,20 @@ impl Plugin for HexTwitch {
         let mut plugin = Self {
             hooks: Vec::with_capacity(32),
             menus: create_menus(),
+            // api: ApiHandler::new(),
         };
+
+        // plugin.hook_command(
+        //     "HTSTATUS",
+        //     "Read the channel status from the Twitch API.",
+        //     cmd_api_read_status,
+        // );
+
+        plugin.hook_command(
+            "TWITCHAUTH",
+            "Authorize the Twitch API.",
+            cmd_api_check,
+        );
 
         //  Register Plugin Commands, with helptext.
         plugin.hook_command(
@@ -150,5 +164,8 @@ impl Plugin for HexTwitch {
 }
 
 impl Drop for HexTwitch {
-    fn drop(&mut self) { self.hooks.drain(..).for_each(Hook::unhook); }
+    fn drop(&mut self) {
+        API.write().stop();
+        self.hooks.drain(..).for_each(Hook::unhook);
+    }
 }
