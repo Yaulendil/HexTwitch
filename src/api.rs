@@ -69,6 +69,13 @@ impl ApiHandler {
         }
     }
 
+    pub fn api_mut(&mut self) -> Option<&mut Api> {
+        match &mut self.state {
+            ApiState::Active(api) => Some(api),
+            _ => None,
+        }
+    }
+
     pub const fn url(&self) -> Option<&Url> {
         match &self.state {
             ApiState::Waiting(wait) => Some(&wait.url),

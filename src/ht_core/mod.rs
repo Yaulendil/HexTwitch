@@ -412,3 +412,10 @@ pub fn wrap_api_cmd<F>(cmd: F) -> impl Fn(&[String]) -> EatMode
 {
     move |args| cmd(args, API.read().api())
 }
+
+
+pub fn wrap_api_cmd_mut<F>(cmd: F) -> impl Fn(&[String]) -> EatMode
+    where F: Fn(&[String], Option<&mut Api>) -> EatMode,
+{
+    move |args| cmd(args, API.write().api_mut())
+}
