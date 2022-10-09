@@ -12,9 +12,10 @@ use hexchat::{
     get_network_name,
     PrintEvent,
 };
+use parking_lot::RwLockWriteGuard;
 use twitchapi::Api;
 
-use crate::{api::API, irc::Message, NETWORK, prefs::*};
+use crate::{api::{API, ApiHandler}, irc::Message, NETWORK, prefs::*};
 use output::{
     alert_basic,
     alert_error,
@@ -27,6 +28,39 @@ use output::{
     TABCOLORS,
 };
 use storage::*;
+
+
+/// A result containing the same type in both variants.
+type Symmetric<T> = Result<T, T>;
+
+
+/// Print a message to inform the user that the plugin must be authorized, along
+///     with an optional URL at which to do the authorization.
+fn auth_required(url: Option<&twitchapi::Url>) {
+    const NEED_AUTH: &str = "The plugin must be authorized in order to access \
+        the Twitch API.";
+
+    alert_error(match url {
+        Some(url) => format!("{NEED_AUTH} Do so by following this link: {url}"),
+        None => String::from(NEED_AUTH),
+    });
+}
+
+
+/// Validate the Twitch API, and return a [`Symmetric`] [`Result`] containing
+///     the [`ApiHandler`].
+///
+/// Prints a message if authorization is required.
+fn api_validate() -> Symmetric<RwLockWriteGuard<'static, ApiHandler>> {
+    let mut api = API.write();
+
+    if api.validate() {
+        Ok(api)
+    } else {
+        auth_required(api.url());
+        Err(api)
+    }
+}
 
 
 /// Trim a slice of arguments from Hexchat into something workable. The initial
@@ -389,18 +423,9 @@ pub fn cmd_whisper(arg_full: &[String]) -> EatMode {
 
 
 pub fn cmd_api_check(_arg_full: &[String]) -> EatMode {
-    let mut api = API.write();
-
-    if api.validate() {
-        alert_basic("API token validated.");
-    } else if let Some(url) = api.url() {
-        alert_basic(format!(
-            "The application must be authorized to access the Twitch API. \
-            Do so by following this link: {}",
-            url,
-        ));
-    } else {
-        alert_basic("Failed.");
+    match api_validate() {
+        Ok(_) => alert_basic("API token is valid."),
+        Err(_) => alert_error("Validation failed."),
     }
 
     EatMode::All
@@ -410,12 +435,18 @@ pub fn cmd_api_check(_arg_full: &[String]) -> EatMode {
 pub fn wrap_api_cmd<F>(cmd: F) -> impl Fn(&[String]) -> EatMode
     where F: Fn(&[String], Option<&Api>) -> EatMode,
 {
-    move |args| cmd(args, API.read().api())
+    move |args| match api_validate() {
+        Ok(valid) => cmd(args, valid.api()),
+        Err(invalid) => cmd(args, invalid.api()),
+    }
 }
 
 
 pub fn wrap_api_cmd_mut<F>(cmd: F) -> impl Fn(&[String]) -> EatMode
     where F: Fn(&[String], Option<&mut Api>) -> EatMode,
 {
-    move |args| cmd(args, API.write().api_mut())
+    move |args| match api_validate() {
+        Ok(mut valid) => cmd(args, valid.api_mut()),
+        Err(mut invalid) => cmd(args, invalid.api_mut()),
+    }
 }

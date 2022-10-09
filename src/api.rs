@@ -33,6 +33,7 @@ impl ImplicitAuthWait {
         let client = client(ClientId::new(CLIENT_ID.into()));
         let (url, csrf) = implicit::auth_pre(&client);
 
+        //  TODO: Implement a way to stop the thread.
         let handle = std::thread::spawn(move || implicit::authorize(csrf));
 
         Self { url, handle }
