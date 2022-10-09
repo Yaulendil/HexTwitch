@@ -5,7 +5,7 @@ extern crate serde;
 #[macro_use]
 extern crate thiserror;
 
-// pub mod data;
+pub mod data;
 pub mod implicit;
 mod token;
 mod url;
@@ -20,7 +20,7 @@ use oauth2::{
     http::Method,
     RequestTokenError,
 };
-// use data::{ChannelData, Endpoint, Streams, TagData, Tags, Users};
+use data::{ChannelData, Endpoint, Streams, TagData, Tags, Users};
 use implicit::authorize;
 use url::{url_auth, url_token};
 
@@ -163,7 +163,7 @@ impl Api {
 }
 
 impl Api {
-    /*/// Construct an HTTP [`Request`] from [`URL`], [`Method`], parameter, and a
+    /// Construct an HTTP [`Request`] from [`URL`], [`Method`], parameter, and a
     ///     sequence of values for the parameter.
     ///
     /// [`Request`]: http::Request
@@ -176,10 +176,10 @@ impl Api {
         values: impl IntoIterator<Item=V>,
     ) -> http::Request {
         {
-            let mut pairs = url.query_pairs_mut();
-            // pairs.clear();
-            pairs.extend_pairs(values.into_iter().map(|v| (&param, v)));
-            // pairs.finish();
+            let mut query = url.query_pairs_mut();
+            // query.clear();
+            query.extend_pairs(values.into_iter().map(|v| (&param, v)));
+            // query.finish();
         }
 
         http::Request {
@@ -207,7 +207,7 @@ impl Api {
     {
         let req = self.req_new(T::url(), Method::GET, param, values);
 
-        if cfg!(debug_assertions) {
+        /*if cfg!(debug_assertions) {
             let res = http::send(req.clone())?;
 
             match serde_json::from_slice(&res.body) {
@@ -231,6 +231,11 @@ impl Api {
             let out = serde_json::from_slice(&res.body)?;
 
             Ok(out)
-        }
-    }*/
+        }*/
+
+        let res = http::send(req)?;
+        let out = serde_json::from_slice(&res.body)?;
+
+        Ok(out)
+    }
 }
