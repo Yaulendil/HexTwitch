@@ -11,6 +11,7 @@ pub static API: RwLock<ApiHandler> = RwLock::const_new(
     ApiHandler::new(),
 );
 
+const API_SCOPES: &[&str] = &[];
 const CLIENT_ID: &str = "";
 
 
@@ -31,7 +32,7 @@ impl ImplicitAuthWait {
 
     fn spawn() -> Self {
         let client = client(ClientId::new(CLIENT_ID.into()));
-        let (url, csrf) = implicit::auth_pre(&client);
+        let (url, csrf) = implicit::auth_pre(&client, API_SCOPES);
 
         //  TODO: Implement a way to stop the thread.
         let handle = std::thread::spawn(move || implicit::authorize(csrf));

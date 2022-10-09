@@ -8,8 +8,6 @@ use const_format::{formatcp, str_replace};
 use oauth2::{AccessToken, basic::BasicClient, CsrfToken, RedirectUrl, Scope, url::Url};
 
 
-const SCOPES: &[&str] = &[];
-
 const HOST: &str = "localhost";
 const PORT: u16 = 8137;
 const URL_REDIRECT: &str = formatcp!("http://{HOST}:{PORT}");
@@ -97,12 +95,12 @@ fn try_receive(
 }
 
 
-pub fn auth_pre(client: &BasicClient) -> (Url, CsrfToken) {
+pub fn auth_pre(client: &BasicClient, scopes: &[&str]) -> (Url, CsrfToken) {
     let url_redirect = RedirectUrl::new(String::from(URL_REDIRECT))
             .expect("Invalid Redirect URL");
 
     client.authorize_url(CsrfToken::new_random)
-        .add_scopes(SCOPES.iter().map(|s: &&str| -> Scope {
+        .add_scopes(scopes.iter().map(|s: &&str| -> Scope {
             Scope::new(String::from(*s))
         }))
         .set_redirect_uri(Cow::Owned(url_redirect))
