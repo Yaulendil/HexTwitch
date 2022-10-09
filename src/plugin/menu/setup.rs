@@ -135,14 +135,6 @@ pub fn create_menus() -> Vec<MenuGroup> {
         twitch_ch_admin.add_item(MenuCommand {
             cmd: getstr!(
                 "BobRoss",
-                ttv!("host"),
-                "Enter channel to host",
-            ),
-            desc: "_Host a channel...",
-        });
-        twitch_ch_admin.add_item(MenuCommand {
-            cmd: getstr!(
-                "BobRoss",
                 ttv!("raid"),
                 "Enter channel to raid",
             ),
@@ -150,12 +142,8 @@ pub fn create_menus() -> Vec<MenuGroup> {
         });
         twitch_ch_admin.add_separator();
         twitch_ch_admin.add_item(MenuCommand {
-            cmd: ttv!("unhost"),
-            desc: "Cancel _host",
-        }.with_icon(I_STOP));
-        twitch_ch_admin.add_item(MenuCommand {
             cmd: ttv!("unraid"),
-            desc: "Cancel _raid",
+            desc: "_Cancel raid",
         }.with_icon(I_STOP));
     }
 
@@ -226,10 +214,6 @@ pub fn create_menus() -> Vec<MenuGroup> {
 
     let mut tab = MenuGroup::new("$TAB/_Twitch channel").with_pos(4);
     tab.add();
-    tab.add_item(MenuCommand {
-        cmd: ttv!("host %s"),
-        desc: "_Host",
-    });
     tab.add_item(MenuCommand {
         cmd: ttv!("raid %s"),
         desc: "_Raid",
