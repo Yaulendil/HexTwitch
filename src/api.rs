@@ -11,7 +11,30 @@ pub static API: RwLock<ApiHandler> = RwLock::const_new(
     ApiHandler::new(),
 );
 
-const API_SCOPES: &[&str] = &[];
+const API_SCOPES: &[&str] = &[
+    // "bits:read",
+    // "clips:edit", // Create clips.
+
+    //  Channel actions.
+    "channel:edit:commercial", // Run ads.
+    "channel:manage:broadcast", // Set stream markers.
+    "channel:manage:moderators", // Add/remove moderators.
+    "channel:manage:vips", // Add/remove VIPs.
+
+    /*//  Read channel state.
+    "channel:read:predictions",
+    "channel:read:redemptions",*/
+
+    //  Moderator actions.
+    "moderator:manage:banned_users",
+    "moderator:manage:chat_settings",
+    "moderator:read:chat_settings",
+
+    //  User actions.
+    "user:manage:whispers", // Send whispers.
+    // "user:read:follows",
+    // "user:read:subscriptions",
+];
 const CLIENT_ID: &str = "";
 
 

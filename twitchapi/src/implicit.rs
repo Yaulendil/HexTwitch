@@ -87,7 +87,11 @@ fn try_receive(
         }
     }).collect();
 
-    if map.get("state")? == csrf.secret() {
+    if let Some(_e) = map.get("error_description") {
+        // Some(Err(format!("Error: {e}")))
+        // Some(Err(String::from(*e)))
+        Some(Err(format!("Error: {map:?}")))
+    } else if map.get("state")? == csrf.secret() {
         Some(Ok(String::from(*map.get("access_token")?)))
     } else {
         Some(Err(String::from("CSRF Token does not match.")))
@@ -99,13 +103,24 @@ pub fn auth_pre(client: &BasicClient, scopes: &[&str]) -> (Url, CsrfToken) {
     let url_redirect = RedirectUrl::new(String::from(URL_REDIRECT))
             .expect("Invalid Redirect URL");
 
-    client.authorize_url(CsrfToken::new_random)
-        .add_scopes(scopes.iter().map(|s: &&str| -> Scope {
-            Scope::new(String::from(*s))
-        }))
+    let (mut url, csrf) = client.authorize_url(CsrfToken::new_random)
+        // .add_scopes(scopes.iter().map(|s: &&str| -> Scope {
+        //     Scope::new(String::from(*s))
+        // }))
         .set_redirect_uri(Cow::Owned(url_redirect))
         .use_implicit_flow()
-        .url()
+        .url();
+
+    if let Some(query) = url.query() {
+        //  NOTE: This must be done this way to avoid the scopes being percent
+        //      encoded. If they are encoded here, the separators will be shown
+        //      in the link in HexChat as `%3A`, which will then be *further*
+        //      encoded to `%253A` when clicked. Twitch will only decode one
+        //      level, and determine the scopes to be invalid.
+        url.set_query(Some(&format!("{query}&scope={}", scopes.join(" "))));
+    }
+
+    (url, csrf)
 }
 
 
