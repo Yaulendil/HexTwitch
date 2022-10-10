@@ -11,6 +11,6 @@ pub struct Tag {
 }
 
 impl Endpoint for Tag {
-    const PATH: &'static [&'static str] = &["tags", "streams"];
+    const PATH: &'static [&'static str] = &["streams", "tags"];
     // const PARAM: &'static str = "tag_id";
 }

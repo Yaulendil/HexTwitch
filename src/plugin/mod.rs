@@ -66,6 +66,11 @@ impl Plugin for HexTwitch {
             "Authorize the Twitch API.",
             cmd_api_check,
         );
+        plugin.hook_command(
+            "TWITCHTAGS",
+            "Read the stream tags of the current channel.",
+            wrap_threaded(wrap_api_cmd(cmd_api_tags)),
+        );
 
         //  Register Plugin Commands, with helptext.
         plugin.hook_command(

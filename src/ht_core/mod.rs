@@ -13,7 +13,7 @@ use hexchat::{
     PrintEvent,
 };
 use parking_lot::RwLockWriteGuard;
-use twitchapi::Api;
+use twitchapi::{Api, data};
 
 use crate::{api::{API, ApiHandler}, irc::Message, NETWORK, prefs::*};
 use output::{
@@ -432,8 +432,34 @@ pub fn cmd_api_check(_arg_full: &[String]) -> EatMode {
 }
 
 
-pub fn wrap_api_cmd<F>(cmd: F) -> impl Fn(&[String]) -> EatMode
-    where F: Fn(&[String], Option<&Api>) -> EatMode,
+pub fn cmd_api_tags(_arg_full: &[String], api: Option<&Api>) -> EatMode {
+    if let Some(api) = api {
+        if this_is_twitch() {
+            let channel = get_channel_name();
+            let login = channel.trim_matches('#');
+
+            let id = &api.request::<data::User>("login", &[login]).unwrap()[0].id;
+            let tags = api.request::<data::Tag>("broadcaster_id", &[id]).unwrap();
+
+            let tags = tags.iter()
+                .filter_map(|tag| tag.localization_names.get("en-us"))
+                .map(String::as_str)
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            if !tags.is_empty() {
+                hexchat::print_plain(&tags);
+            }
+        }
+    }
+
+    EatMode::All
+}
+
+
+#[allow(dead_code)]
+pub fn wrap_api_cmd<F>(cmd: F) -> impl Copy + Fn(&[String]) -> EatMode
+    where F: Copy + Fn(&[String], Option<&Api>) -> EatMode,
 {
     move |args| match api_validate() {
         Ok(valid) => cmd(args, valid.api()),
@@ -442,11 +468,28 @@ pub fn wrap_api_cmd<F>(cmd: F) -> impl Fn(&[String]) -> EatMode
 }
 
 
-pub fn wrap_api_cmd_mut<F>(cmd: F) -> impl Fn(&[String]) -> EatMode
-    where F: Fn(&[String], Option<&mut Api>) -> EatMode,
+#[allow(dead_code)]
+pub fn wrap_api_cmd_mut<F>(cmd: F) -> impl Copy + Fn(&[String]) -> EatMode
+    where F: Copy + Fn(&[String], Option<&mut Api>) -> EatMode,
 {
     move |args| match api_validate() {
         Ok(mut valid) => cmd(args, valid.api_mut()),
         Err(mut invalid) => cmd(args, invalid.api_mut()),
+    }
+}
+
+
+#[allow(dead_code)]
+pub fn wrap_threaded<F>(cmd: F) -> impl Copy + Fn(&[String]) -> EatMode
+    where
+        F: Copy + Fn(&[String]) -> EatMode,
+        F: Send + 'static,
+{
+    move |args: &[String]| -> EatMode {
+        let args = args.to_vec();
+
+        std::thread::spawn(move || cmd(&args));
+
+        EatMode::All
     }
 }
