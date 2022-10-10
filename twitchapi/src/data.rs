@@ -6,8 +6,7 @@ pub use stream::*;
 pub use tag::*;
 pub use user::*;
 
-use std::{collections::HashMap, ops::Deref};
-use chrono::{DateTime, Utc};
+use std::ops::Deref;
 use super::url::{Url, url_api_endpoint};
 
 

@@ -14,14 +14,12 @@ pub use oauth2::{AccessToken, ClientId, CsrfToken};
 pub use token::{TokenOps, TokenValid};
 pub use url::Url;
 
-use std::collections::{HashMap, HashSet};
 use oauth2::{
     basic::{BasicClient, BasicErrorResponse},
     http::Method,
     RequestTokenError,
 };
 use data::{ApiData, Endpoint};
-use implicit::authorize;
 use url::{url_auth, url_token};
 
 

@@ -5,7 +5,7 @@ use std::{
     net::{TcpListener, TcpStream},
 };
 use const_format::{formatcp, str_replace};
-use oauth2::{AccessToken, basic::BasicClient, CsrfToken, RedirectUrl, Scope, url::Url};
+use oauth2::{AccessToken, basic::BasicClient, CsrfToken, RedirectUrl, url::Url};
 
 
 const HOST: &str = "localhost";

@@ -82,6 +82,7 @@ pub struct ApiHandler {
     state: ApiState,
 }
 
+#[allow(dead_code)]
 impl ApiHandler {
     pub const fn new() -> Self {
         Self { state: ApiState::Offline }
