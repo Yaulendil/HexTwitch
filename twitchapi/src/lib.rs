@@ -169,7 +169,7 @@ impl Api {
     ///
     /// [`Request`]: http::Request
     /// [`URL`]: Url
-    fn req_new<V: AsRef<str>>(
+    pub fn req_new<V: AsRef<str>>(
         &self,
         mut url: Url,
         method: Method,
@@ -203,7 +203,7 @@ impl Api {
     ///
     /// [`req_get`]: Self::req_get
     /// [`from_slice`]: serde_json::from_slice
-    fn request<T>(&self, param: &str, values: &[&str]) -> ApiResult<ApiData<T>>
+    pub fn req_one<T>(&self, param: &str, values: &[&str]) -> ApiResult<ApiData<T>>
         where T: Endpoint + serde::de::DeserializeOwned,
     {
         let req = self.req_new(T::url(), Method::GET, param, values);
@@ -238,5 +238,24 @@ impl Api {
         let out = serde_json::from_slice(&res.body)?;
 
         Ok(out)
+    }
+
+    /// Repeatedly execute [`req_one`] over a slice of input values, in chunks
+    ///     of [`MAX_PARAMS`], until all requests have been sent.
+    ///
+    /// Returns [`ApiError`] if any [`req_one`] call returns an error.
+    ///
+    /// [`req_one`]: Self::req_one
+    pub fn request<T>(&self, param: &str, values: &[&str]) -> ApiResult<Vec<T>>
+        where T: Endpoint + serde::de::DeserializeOwned,
+    {
+        let mut vec = Vec::with_capacity(values.len());
+
+        for chunk in values.chunks(MAX_PARAMS) {
+            let data = self.req_one(param, chunk)?;
+            vec.extend(data.data);
+        }
+
+        Ok(vec)
     }
 }
