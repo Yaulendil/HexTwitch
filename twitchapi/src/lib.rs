@@ -7,6 +7,7 @@ extern crate thiserror;
 
 pub mod data;
 pub mod implicit;
+mod http;
 mod token;
 mod url;
 
@@ -23,21 +24,11 @@ use data::{ApiData, Endpoint};
 use url::{url_auth, url_token};
 
 
-const MAX_PARAMS: usize = 100;
+pub const MAX_PARAMS: usize = 100;
 
 
-mod http {
-    //! Micro module to act as a namespace for HTTP functionality. Exists mainly
-    //!     to make it less of a pain to switch backends, if ever needed.
-
-    pub type Error = oauth2::ureq::Error;
-    pub type Request = oauth2::HttpRequest;
-    pub type Response = oauth2::HttpResponse;
-    pub type Result = std::result::Result<Response, Error>;
-
-    pub fn send(request: Request) -> Result {
-        oauth2::ureq::http_client(request)
-    }
+pub fn client(id: ClientId) -> BasicClient {
+    BasicClient::new(id, None, url_auth(), Some(url_token()))
 }
 
 
@@ -55,11 +46,6 @@ pub enum ApiError {
 
 
 pub type ApiResult<T> = Result<T, ApiError>;
-
-
-pub fn client(id: ClientId) -> BasicClient {
-    BasicClient::new(id, None, url_auth(), Some(url_token()))
-}
 
 
 #[derive(Debug)]
