@@ -20,7 +20,7 @@ use oauth2::{
     http::Method,
     RequestTokenError,
 };
-use data::{ChannelData, Endpoint, Streams, TagData, Tags, Users};
+use data::{ApiData, Endpoint};
 use implicit::authorize;
 use url::{url_auth, url_token};
 
@@ -56,6 +56,9 @@ pub enum ApiError {
 }
 
 
+pub type ApiResult<T> = Result<T, ApiError>;
+
+
 pub fn client(id: ClientId) -> BasicClient {
     BasicClient::new(id, None, url_auth(), Some(url_token()))
 }
@@ -73,7 +76,7 @@ impl Api {
     }
 
     /*pub fn query_tags(&mut self, tag_set: HashSet<&str>)
-        -> Result<HashMap<String, TagData>, ApiError>
+        -> ApiResult<HashMap<String, TagData>>
     {
         let tag_vec: Vec<&str> = tag_set.into_iter().collect();
 
@@ -94,7 +97,7 @@ impl Api {
     }
 
     pub fn query_plain(&mut self, channels: Vec<&str>)
-        -> Result<Vec<ChannelData>, ApiError>
+        -> ApiResult<Vec<ChannelData>>
     {
         let len: usize = channels.len();
         let mut results = Vec::with_capacity(len);
@@ -134,7 +137,7 @@ impl Api {
     }
 
     pub fn query<'f>(&mut self, follow: FollowList<'f>)
-        -> Result<FollowData<'f>, ApiError>
+        -> ApiResult<FollowData<'f>>
     {
         let channels: Vec<&str> = prepare_query(&follow);
         let data_vec: Vec<ChannelData> = self.query_plain(channels)?;
@@ -202,8 +205,8 @@ impl Api {
     ///
     /// [`req_get`]: Self::req_get
     /// [`from_slice`]: serde_json::from_slice
-    fn request<T>(&self, param: &str, values: &[&str]) -> Result<T, ApiError>
-        where T: Endpoint,
+    fn request<T>(&self, param: &str, values: &[&str]) -> ApiResult<ApiData<T>>
+        where T: Endpoint + serde::de::DeserializeOwned,
     {
         let req = self.req_new(T::url(), Method::GET, param, values);
 

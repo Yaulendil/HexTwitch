@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Deref};
 use chrono::{DateTime, Utc};
 use super::url::{Url, url_api_endpoint};
 
@@ -21,13 +21,33 @@ pub enum BroadcasterType {
 }
 
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[repr(transparent)]
+pub struct ApiData<T> {
+    pub data: Vec<T>,
+}
+
+impl<T> AsRef<[T]> for ApiData<T> {
+    fn as_ref(&self) -> &[T] { self.data.as_slice() }
+}
+
+impl<T> Deref for ApiData<T> {
+    type Target = Vec<T>;
+    fn deref(&self) -> &Self::Target { &self.data }
+}
+
+
 /// Trait for data that can be retrieved from a specific Twitch API endpoint.
-pub trait Endpoint: serde::de::DeserializeOwned {
+pub trait Endpoint {
     const PATH: &'static [&'static str];
     // const PARAM: &'static str;
 
     fn url() -> Url { url_api_endpoint(Self::PATH) }
 }
+
+/*impl<T: Endpoint> Endpoint for ApiData<T> {
+    const PATH: &'static [&'static str] = T::PATH;
+}*/
 
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -52,13 +72,7 @@ pub struct StreamData {
     pub other: HashMap<String, serde_json::Value>,*/
 }
 
-
-#[derive(Debug, Deserialize)]
-pub struct Streams {
-    pub data: Vec<StreamData>,
-}
-
-impl Endpoint for Streams {
+impl Endpoint for StreamData {
     const PATH: &'static [&'static str] = &["streams"];
     // const PARAM: &'static str = "user_login";
 }
@@ -72,13 +86,7 @@ pub struct TagData {
     // pub localization_descriptions: HashMap<String, String>,
 }
 
-
-#[derive(Debug, Deserialize)]
-pub struct Tags {
-    pub data: Vec<TagData>,
-}
-
-impl Endpoint for Tags {
+impl Endpoint for TagData {
     const PATH: &'static [&'static str] = &["tags", "streams"];
     // const PARAM: &'static str = "tag_id";
 }
@@ -111,13 +119,7 @@ impl UserData {
     }
 }
 
-
-#[derive(Debug, Deserialize)]
-pub struct Users {
-    pub data: Vec<UserData>,
-}
-
-impl Endpoint for Users {
+impl Endpoint for UserData {
     const PATH: &'static [&'static str] = &["users"];
     // const PARAM: &'static str = "login";
 }
